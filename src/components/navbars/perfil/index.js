@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import bgFundo from '../../../assets/bg-sidebar.webp';
 import { useNavigate } from "react-router-dom";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";

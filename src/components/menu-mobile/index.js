@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import logoPaxVerde from '../../assets/svg/logos/logo-pax-branco.svg';
 import { useNavigate } from 'react-router-dom';
 import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -31,9 +30,7 @@ const MenuMobile = ({ user }) => {
 
     return (
         <div className='w-[100%] sm:hidden flex items-center p-3 justify-center z-30 md:hidden lg:hidden' style={{ backgroundColor: '#006b33' }}>
-            <div className="flex justify-center cursor-pointer w-[85%]" onClick={() => handleNavigate("/dashboard")}>
-                <img src={logoPaxVerde} alt="Logo" title={user ? "Clique para acessar a Dashboard" : ''} className="w-24" />
-            </div>
+           
             <button
                 id="basic-button"
                 aria-controls={open ? 'basic-menu' : undefined}
