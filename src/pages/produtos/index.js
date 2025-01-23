@@ -17,6 +17,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import ScaleIcon from '@mui/icons-material/Scale';
 import ModalLateral from '../../components/modal-lateral/index.js';
 import SelectTextFields from '../../components/select/index.js';
+import CustomToast from '../../components/toast/index.js';
 
 const Produtos = () => {
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
@@ -25,32 +26,27 @@ const Produtos = () => {
     const [loading, setLoading] = useState(false);
     const [dataInicial, setDataInicial] = useState('');
     const [dataFinal, setDataFinal] = useState('');
+    const [nome, setNome] = useState('');
+    const [quantidadeMinima, setQuantidadeMinima] = useState('');
+    const [rendimento, setRendimento] = useState('');
     const [produtoEditado, setProdutoEditado] = useState(null);
     const [produtos, setProdutos] = useState([]);
+    const [unidade, setUnidade] = useState('');
+    const [selectedUnidade, setSelectedUnidade] = useState("");
     const [categorias, setCategorias] = useState([]);
-    const [novoProduto, setNovoProduto] = useState({
-        nome: '',
-        quantidadeMinima: '',
-        rendimento: '',
-        categoria: '',
-        unidadeMedida: ''
-    });
- 
-    const [userOptionsUnidade, setUserOptionsUnidade] = useState([
+    const [selectedCategoria, setSelectedCategoria] = useState('');
+
+    const userOptionsUnidade = [
         { value: 'kg', label: 'Kilograma' },
         { value: 'g', label: 'Grama' },
         { value: 'l', label: 'Litro' },
         { value: 'ml', label: 'Mililitro' },
         // Adicione mais opções conforme necessário
-    ]);
+    ];
 
-    useEffect(() => {
-        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-        setProdutos(produtosSalvos);
-
-        const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
-        setCategorias(categoriasSalvas);
-    }, []);
+    const handleUnidadeChange = (event) => {
+        setSelectedUnidade(event.target.value);
+    };
 
     const handleCadastroProdutos = () => setCadastroAdicionais(true);
     const handleCloseCadastroProdutos = () => setCadastroAdicionais(false);
@@ -58,39 +54,68 @@ const Produtos = () => {
     const handleFiltro = () => setFiltro(true);
     const handleCloseFiltro = () => setFiltro(false);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setNovoProduto({ ...novoProduto, [name]: value });
-    };
-
     const handleCadastrarProduto = () => {
-        const updatedProdutos = [...produtos, novoProduto];
-        setProdutos(updatedProdutos);
-        localStorage.setItem('produtos', JSON.stringify(updatedProdutos));
-        setNovoProduto({ nome: '', quantidadeMinima: '', rendimento: '', categoria: '', unidadeMedida: '' });
-        handleCloseCadastroProdutos();
+        const novosProdutos = JSON.parse(localStorage.getItem('produtos')) || [];
+        const novoProduto = {
+            id: Date.now(), // Cria um ID único baseado no timestamp atual
+            nome,
+            quantidadeMinima,
+            rendimento,
+            categoria: categorias.find(cat => cat.id === selectedCategoria)?.nome || "Não informado", // Salva o nome da categoria
+            unidade: selectedUnidade,
+            dataCriacao: new Date().toISOString(), // Adiciona a data de criação no formato ISO
+        };
+    
+        novosProdutos.push(novoProduto);
+        localStorage.setItem('produtos', JSON.stringify(novosProdutos));
+        setProdutos(novosProdutos); // Atualiza o estado da tabela
+        handleCloseCadastroProdutos(); // Fecha o modal
+        setNome('');
+        setQuantidadeMinima('');
+        setRendimento('');
+        setSelectedCategoria('');
+        setSelectedUnidade('');
+        CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
     };
-
-    const handleEditCategoria = (produto) => {
-        setProdutoEditado(produto);
-        setEditandoCategoria(true);
-    };
-
+    
     const handleSaveEdit = () => {
-        const updatedProdutos = produtos.map(produto =>
-            produto.nome === produtoEditado.nome ? produtoEditado : produto
+        const novosProdutos = produtos.map((produto) =>
+            produto.id === produtoEditado.id
+                ? {
+                    ...produtoEditado,
+                    categoria: categorias.find(cat => cat.id === produtoEditado.categoria)?.nome || "Não informado", // Salva o nome da categoria
+                }
+                : produto
         );
-        setProdutos(updatedProdutos);
-        localStorage.setItem('produtos', JSON.stringify(updatedProdutos));
-        setEditandoCategoria(false);
-        setProdutoEditado(null);
+    
+        localStorage.setItem('produtos', JSON.stringify(novosProdutos));
+        setProdutos(novosProdutos); // Atualiza o estado
+        setEditandoCategoria(false); // Fecha o modal
+        CustomToast({ type: "success", message: "Produto editado com sucesso!" });
+    };
+    const handleDeleteProduto = (produtoId) => {
+        const produtosAtualizados = produtos.filter((produto) => produto.id !== produtoId); // Remove o produto pelo ID
+        localStorage.setItem('produtos', JSON.stringify(produtosAtualizados)); // Atualiza o localStorage
+        setProdutos(produtosAtualizados); // Atualiza o estado da tabela
+        CustomToast({ type: "success", message: "Produto deletado com sucesso!" });
+    };
+    
+
+    useEffect(() => {
+        const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
+        setCategorias(categoriasSalvas);
+    }, []);
+
+    useEffect(() => {
+        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
+        setProdutos(produtosSalvos);
+    }, []);
+
+
+    const handleCategoriaChange = (value) => {
+        setSelectedCategoria(value);
     };
 
-    const handleDeleteCategoria = (categoria) => {
-        const updatedCategorias = categorias.filter(cat => cat.nome !== categoria.nome);
-        setCategorias(updatedCategorias);
-        localStorage.setItem('categorias', JSON.stringify(updatedCategorias));
-    };
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -157,10 +182,14 @@ const Produtos = () => {
                                 rows={produtos}
                                 actionsLabel={"Ações"}
                                 actionCalls={{
-                                    edit: handleEditCategoria,
-                                    delete: handleDeleteCategoria,
+                                    edit: (produto) => {
+                                        setProdutoEditado(produto); // Define o produto selecionado para edição
+                                        setEditandoCategoria(true); // Abre o modal de edição
+                                    },
+                                    delete: (produto) => handleDeleteProduto(produto.id),
                                 }}
                             />
+
                         )}
                     </div>
 
@@ -183,9 +212,9 @@ const Produtos = () => {
                                     size="small"
                                     label="Nome do Produto"
                                     name="nome"
-                                    value={novoProduto.nome}
-                                    onChange={handleInputChange}
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '45%' }, marginLeft: '10px' }}
+                                    value={nome}
+                                    onChange={(e) => setNome(e.target.value)}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
                                     autoComplete="off"
                                     InputProps={{
                                         startAdornment: (
@@ -201,10 +230,10 @@ const Produtos = () => {
                                     size="small"
                                     label="Quantidade Mínima"
                                     name="quantidadeMinima"
-                                    value={novoProduto.quantidadeMinima}
-                                    onChange={handleInputChange}
+                                    value={quantidadeMinima}
+                                    onChange={(e) => setQuantidadeMinima(e.target.value)}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '43%' }, marginLeft: '10px' }}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '43%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -219,10 +248,10 @@ const Produtos = () => {
                                     size="small"
                                     label="Rendimento"
                                     name="rendimento"
-                                    value={novoProduto.rendimento}
-                                    onChange={handleInputChange}
+                                    value={rendimento}
+                                    onChange={(e) => setRendimento(e.target.value)}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '45%' }, marginLeft: '10px' }}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -232,15 +261,17 @@ const Produtos = () => {
                                     }}
                                 />
                                 <SelectTextFields
-                                    width={'260px'}
+                                    width={'245px'}
                                     icon={<CategoryIcon fontSize="small" />}
                                     label={'Categoria'}
                                     backgroundColor={"#D9D9D9"}
                                     name={"categoria"}
                                     fontWeight={500}
-                                    options={categorias.map(categoria => ({ value: categoria.nome, label: categoria.nome }))}
-                                    onChange={(value) => setNovoProduto({ ...novoProduto, categoria: value })}
+                                    options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+                                    onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
+                                    value={selectedCategoria} // Reflete o estado atual no componente
                                 />
+
                                 <SelectTextFields
                                     width={'260px'}
                                     icon={<ScaleIcon fontSize="small" />}
@@ -249,7 +280,8 @@ const Produtos = () => {
                                     name={"unidadeMedida"}
                                     fontWeight={500}
                                     options={userOptionsUnidade}
-                                    onChange={(value) => setNovoProduto({ ...novoProduto, unidadeMedida: value })}
+                                    onChange={handleUnidadeChange}
+                                    value={selectedUnidade}
                                 />
                             </div>
                             <div className='w-[95%] mt-2 flex items-end justify-end'>
@@ -268,9 +300,9 @@ const Produtos = () => {
                         handleClose={() => setEditandoCategoria(false)}
                         tituloModal="Editar Produto"
                         icon={<Edit />}
-                        tamanhoTitulo={'75%'}
+                        tamanhoTitulo="75%"
                         conteudo={
-                            <div className='flex gap-2 flex-wrap items-end justify-end w-full mt-2'>
+                            <div className="flex gap-2 flex-wrap items-end justify-end w-full mt-2">
                                 <TextField
                                     fullWidth
                                     variant="outlined"
@@ -279,8 +311,7 @@ const Produtos = () => {
                                     name="nome"
                                     value={produtoEditado?.nome || ''}
                                     onChange={(e) => setProdutoEditado({ ...produtoEditado, nome: e.target.value })}
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '45%' }, marginLeft: '10px' }}
-                                    autoComplete="off"
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' }}}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -297,8 +328,7 @@ const Produtos = () => {
                                     name="quantidadeMinima"
                                     value={produtoEditado?.quantidadeMinima || ''}
                                     onChange={(e) => setProdutoEditado({ ...produtoEditado, quantidadeMinima: e.target.value })}
-                                    autoComplete="off"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '43%' }, marginLeft: '10px' }}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '47%' }}}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -315,8 +345,7 @@ const Produtos = () => {
                                     name="rendimento"
                                     value={produtoEditado?.rendimento || ''}
                                     onChange={(e) => setProdutoEditado({ ...produtoEditado, rendimento: e.target.value })}
-                                    autoComplete="off"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '45%' }, marginLeft: '10px' }}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' }, }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -326,35 +355,44 @@ const Produtos = () => {
                                     }}
                                 />
                                 <SelectTextFields
-                                    width={'260px'}
+                                    width="144px"
                                     icon={<CategoryIcon fontSize="small" />}
-                                    label={'Categoria'}
-                                    backgroundColor={"#D9D9D9"}
-                                    name={"categoria"}
+                                    label="Categoria"
+                                    backgroundColor="#D9D9D9"
+                                    name="categoria"
                                     fontWeight={500}
-                                    options={categorias.map(categoria => ({ value: categoria.nome, label: categoria.nome }))}
-                                    onChange={(value) => setProdutoEditado({ ...produtoEditado, categoria: value })}
+                                    options={categorias.map((categoria) => ({ label: categoria.nome, value: categoria.id }))}
+                                    value={produtoEditado?.categoria || ''}
+                                    onChange={(e) =>
+                                        setProdutoEditado({
+                                            ...produtoEditado,
+                                            categoria: e.target.value // Salva o ID da categoria selecionada
+                                        })
+                                    }
                                 />
                                 <SelectTextFields
-                                    width={'260px'}
+                                    width="300px"
                                     icon={<ScaleIcon fontSize="small" />}
-                                    label={'Unidade'}
-                                    backgroundColor={"#D9D9D9"}
-                                    name={"unidadeMedida"}
+                                    label="Unidade"
+                                    backgroundColor="#D9D9D9"
+                                    name="unidadeMedida"
                                     fontWeight={500}
                                     options={userOptionsUnidade}
-                                    onChange={(value) => setProdutoEditado({ ...produtoEditado, unidadeMedida: value })}
+                                    value={produtoEditado?.unidade || ''}
+                                    onChange={(e) => setProdutoEditado({ ...produtoEditado, unidade: e.target.value })}
                                 />
-                                <div className='w-[95%] mt-2 flex items-end justify-end'>
+                                <div className="w-[95%] mt-2 flex items-end justify-end">
                                     <ButtonComponent
-                                        title={'Salvar'}
-                                        subtitle={'Salvar'}
+                                        title="Salvar"
+                                        subtitle="Salvar"
                                         startIcon={<Save />}
                                         onClick={handleSaveEdit}
                                     />
                                 </div>
                             </div>
-                        } />
+                        }
+                    />
+
                     <CentralModal
                         tamanhoTitulo={'82%'}
                         maxHeight={'90vh'}
@@ -374,7 +412,7 @@ const Produtos = () => {
                                     size="small"
                                     label="Nome do Produto"
                                     name="nome"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' }, marginLeft: '10px' }}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' }}}
                                     autoComplete="off"
                                     InputProps={{
                                         startAdornment: (
@@ -384,15 +422,14 @@ const Produtos = () => {
                                         ),
                                     }}
                                 />
-                                 <SelectTextFields
-                                    width={'200px'}
+                                <SelectTextFields
+                                    width={'250px'}
                                     icon={<CategoryIcon fontSize="small" />}
                                     label={'Categoria'}
                                     backgroundColor={"#D9D9D9"}
                                     name={"categoria"}
                                     fontWeight={500}
-                                    options={categorias.map(categoria => ({ value: categoria.nome, label: categoria.nome }))}
-                                    onChange={(value) => setProdutoEditado({ ...produtoEditado, categoria: value })}
+
                                 />
                                 <TextField
                                     fullWidth
@@ -401,9 +438,9 @@ const Produtos = () => {
                                     label="Data Inicial"
                                     value={dataInicial}
                                     type='date'
-                                    onChange={handleInputChange}
+                                    // onChange={handleInputChange}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '43%' }, marginLeft: '10px' }}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -419,9 +456,9 @@ const Produtos = () => {
                                     label="Data Final"
                                     type='date'
                                     value={dataFinal}
-                                    onChange={handleInputChange}
+                                    //onChange={handleInputChange}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '45%' }, marginLeft: '10px' }}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '43%' }}}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -430,7 +467,7 @@ const Produtos = () => {
                                         ),
                                     }}
                                 />
-                               
+
 
                             </div>
                             <div className='w-[95%] mt-2 flex items-end justify-end'>

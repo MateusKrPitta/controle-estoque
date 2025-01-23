@@ -6,15 +6,15 @@ import HeaderPerfil from '../../components/navbars/perfil/index.js';
 import MenuMobile from '../../components/menu-mobile/index.js';
 import ButtonComponent from '../../components/button';
 import SearchIcon from '@mui/icons-material/Search';
-import { AddCircleOutline, Save } from '@mui/icons-material';
+import { AddCircleOutline, Edit, Save, Delete } from '@mui/icons-material'; // Importando o ícone de exclusão
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import CentralModal from '../../components/modal-central/index.js';
 import ArticleIcon from '@mui/icons-material/Article';
-import CategoryIcon from '@mui/icons-material/Category';
 import ScaleIcon from '@mui/icons-material/Scale';
 import SelectTextFields from '../../components/select/index.js';
 import TableComponent from '../../components/table/index.js';
 import { headerEntradaSaida } from '../../entities/headers/header-entrada-saida.js';
+import ModalLateral from '../../components/modal-lateral/index.js';
 
 const EntradaSaida = () => {
   const [cadastro, setCadastro] = useState(false);
@@ -22,11 +22,15 @@ const EntradaSaida = () => {
   const [produtos, setProdutos] = useState([]);
   const [entradasSaidas, setEntradasSaidas] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [novoRegistro, setNovoRegistro] = useState({
-    produto: '',
-    quantidade: '',
-    tipo: 'entrada', // ou 'saida'
-  });
+  const [editando, setEditando] = useState(false);
+  
+  // Estados para o registro atual
+  const [produto, setProduto] = useState('');
+  const [quantidade, setQuantidade] = useState('');
+  const [tipo, setTipo] = useState('entrada'); // ou 'saida'
+  const [preco, setPreco] = useState('');
+  const [produtoSelecionado, setProdutoSelecionado] = useState(null);
+  const [registroEditado, setRegistroEditado] = useState(null); // Novo estado para o registro a ser editado
 
   useEffect(() => {
     const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
@@ -34,22 +38,80 @@ const EntradaSaida = () => {
 
     const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
     setCategorias(categoriasSalvas);
+
+    const entradasSaidasSalvas = JSON.parse(localStorage.getItem('entradasSaidas')) || [];
+    setEntradasSaidas(entradasSaidasSalvas);
   }, []);
 
   const handleCadastro = () => setCadastro(true);
   const handleCloseCadastro = () => setCadastro(false);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNovoRegistro({ ...novoRegistro, [name]: value });
-  };
-
   const handleCadastrarRegistro = () => {
+    const novoRegistro = {
+      produto: produtoSelecionado ? produtoSelecionado.nome : produto,
+      quantidade,
+      tipo,
+      preco,
+      categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
+    };
+
     const updatedEntradasSaidas = [...entradasSaidas, novoRegistro];
     setEntradasSaidas(updatedEntradasSaidas);
     localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
-    setNovoRegistro({ produto: '', quantidade: '', tipo: 'entrada' });
+
+    // Resetar os campos
+    setProduto('');
+    setQuantidade('');
+    setTipo('entrada');
+    setPreco('');
+    setProdutoSelecionado(null);
     handleCloseCadastro();
+  };
+
+  const handleProdutoChange = (value) => {
+    const produtoSelecionado = produtos.find(prod => prod.nome === value);
+    setProdutoSelecionado(produtoSelecionado);
+    setProduto(value);
+  };
+
+  const handleEditar = (registro) => {
+    setRegistroEditado(registro); // Armazena o registro a ser editado
+    setProduto(registro.produto);
+    setQuantidade(registro.quantidade);
+    setTipo(registro.tipo);
+    setPreco(registro.preco);
+    setProdutoSelecionado(produtos.find(prod => prod.nome === registro.produto)); // Define o produto selecionado
+    setEditando(true); // Abre a modal de edição
+  };
+
+  const handleCloseEditar = () => {
+    setEditando(false);
+    setRegistroEditado(null); // Limpa o registro editado
+  };
+
+  const handleSaveEdit = () => {
+    const updatedEntradasSaidas = entradasSaidas.map((registro) =>
+      registro === registroEditado
+        ? {
+            ...registro,
+            produto: produtoSelecionado ? produtoSelecionado.nome : produto,
+            quantidade,
+            tipo,
+            preco,
+            categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
+          }
+        : registro
+    );
+
+    setEntradasSaidas(updatedEntradasSaidas);
+    localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
+    handleCloseEditar(); // Fecha a modal de edição
+  };
+
+  const handleDelete = (registro) => {
+    const updatedEntradasSaidas = entradasSaidas.filter((item) => item !== registro);
+    setEntradasSaidas(updatedEntradasSaidas);
+    localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
   };
 
   return (
@@ -116,7 +178,8 @@ const EntradaSaida = () => {
                 rows={entradasSaidas}
                 actionsLabel={"Ações"}
                 actionCalls={{
-                  // Define actions if needed
+                  edit: handleEditar,
+                  delete: (registro) => handleDelete(registro) 
                 }}
               />
             )}
@@ -143,18 +206,34 @@ const EntradaSaida = () => {
                 name={"produto"}
                 fontWeight={500}
                 options={produtos.map(produto => ({ value: produto.nome, label: produto.nome }))}
-                onChange={(value) => setNovoRegistro({ ...novoRegistro, produto: value })}
+                onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
               />
               <TextField
                 fullWidth
                 variant="outlined"
                 size="small"
                 label="Quantidade"
-                name="quantidade"
-                value={novoRegistro.quantidade}
-                onChange={handleInputChange}
+                value={quantidade}
+                onChange={(e) => setQuantidade(e.target.value)}
                 autoComplete="off"
-                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '45%' }, marginLeft: '10px' }}
+                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <ScaleIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Preço"
+                value={preco}
+                onChange={(e) => setPreco(e.target.value)}
+                autoComplete="off"
+                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -174,9 +253,10 @@ const EntradaSaida = () => {
                   { value: 'entrada', label: 'Entrada' },
                   { value: 'saida', label: 'Saída' },
                 ]}
-                onChange={(value) => setNovoRegistro({ ...novoRegistro, tipo: value })}
+                onChange={(e) => setTipo(e.target.value)} // Passando o valor correto
               />
             </div>
+
             <div className='w-[95%] mt-2 flex items-end justify-end'>
               <ButtonComponent
                 title={'Cadastrar'}
@@ -187,6 +267,85 @@ const EntradaSaida = () => {
             </div>
           </div>
         </CentralModal>
+
+        <ModalLateral
+          open={editando}
+          handleClose={handleCloseEditar}
+          tituloModal="Editar Entrada/Saída"
+          icon={<Edit />}
+          tamanhoTitulo="75%"
+          conteudo={
+            <div className="flex gap-2 flex-wrap items-end justify-end w-full mt-2">
+              <SelectTextFields
+                width={'150px'}
+                icon={<ArticleIcon fontSize="small" />}
+                label={'Produto'}
+                backgroundColor={"#D9D9D9"}
+                name={"produto"}
+                fontWeight={500}
+                options={produtos.map(produto => ({ value: produto.nome, label: produto.nome }))}
+                value={produto} // Preenche o campo com o produto atual
+                onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Quantidade"
+                value={quantidade}
+                onChange={(e) => setQuantidade(e.target.value)}
+                autoComplete="off"
+                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <ScaleIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Preço"
+                value={preco}
+                onChange={(e) => setPreco(e.target.value)}
+                autoComplete="off"
+                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <ScaleIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <SelectTextFields
+                width={'150px'}
+                icon={<AddchartIcon fontSize="small" />}
+                label={'Tipo'}
+                backgroundColor={"#D9D9D9"}
+                name={"tipo"}
+                fontWeight={500}
+                options={[
+                  { value: 'entrada', label: 'Entrada' },
+                  { value: 'saida', label: 'Saída' },
+                ]}
+                value={tipo} // Preenche o campo com o tipo atual
+                onChange={(e) => setTipo(e.target.value)} // Passando o valor correto
+              />
+              <div className="w-[95%] mt-2 flex items-end justify-end">
+                <ButtonComponent
+                  title="Salvar"
+                  subtitle="Salvar"
+                  startIcon={<Save />}
+                  onClick={handleSaveEdit} // Chama a função para salvar as alterações
+                />
+              </div>
+            </div>
+          }
+        />
       </div>
     </div>
   );

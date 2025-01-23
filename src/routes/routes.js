@@ -7,6 +7,7 @@ import Cadastro from '../pages/cadastro/index.js';
 import Categoria from '../pages/cadastro/categoria/index.js';
 import EntradaSaida from '../pages/entrada-saida/index.js';
 import CMV from '../pages/cmv/index.js';
+import Relatorio from '../pages/relatorio/index.js';
 
 const AppRoutes = () => {
     return (
@@ -17,6 +18,7 @@ const AppRoutes = () => {
             <Route path="/login" element={<LoginPage /> }/>
             <Route path="/entrada-saida" element={<EntradaSaida /> }/>
             <Route path="/cmv" element={<CMV /> }/>
+            <Route path="/relatorios" element={<Relatorio /> }/>
 
             <Route path="/cadastro" element={<Cadastro /> }/>
            <Route path="/cadastro/categoria" element={<Categoria /> }/>
