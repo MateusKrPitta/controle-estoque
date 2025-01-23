@@ -13,6 +13,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 import TableComponent from '../../../components/table';
 import { headerCategoria } from '../../../entities/headers/header-categoria';
 import ModalLateral from '../../../components/modal-lateral';
+import CustomToast from '../../../components/toast';
 
 const Categoria = () => {
     const [cadastroCategoria, setCadastroCategoria] = useState(false);
@@ -36,35 +37,42 @@ const Categoria = () => {
     const handleCloseCadastroCategoria = () => setCadastroCategoria(false);
 
     const handleCadastrarCategoria = () => {
-        const updatedCategorias = [...categorias, categoria];
+        const novaCategoria = { id: Date.now(), nome: categoria.nome }; // Adiciona um ID único
+        const updatedCategorias = [...categorias, novaCategoria];
         setCategorias(updatedCategorias);
         localStorage.setItem('categorias', JSON.stringify(updatedCategorias));
         setCategoria({ nome: '' });
         handleCloseCadastroCategoria();
+        CustomToast({ type: "success", message: "Categoria cadastrada com sucesso!" });
     };
-
+    
     const handleEditCategoria = (categoria) => {
-        setCategoriaEditada(categoria);
+        setCategoriaEditada({ ...categoria }); // Clona a categoria para edição
         setEditandoCategoria(true);
-    };
 
-    const handleDeleteCategoria = (categoria) => {
-        const updatedCategorias = categorias.filter(cat => cat.nome !== categoria.nome);
-        setCategorias(updatedCategorias);
-        localStorage.setItem('categorias', JSON.stringify(updatedCategorias));
     };
-
+    
     const handleSaveEdit = () => {
         if (categoriaEditada) {
-            const updatedCategorias = categorias.map(cat =>
-                cat.nome === categoriaEditada.nome ? { ...cat, nome: categoriaEditada.nome } : cat
+            const updatedCategorias = categorias.map(cat => 
+                cat.id === categoriaEditada.id ? { ...cat, nome: categoriaEditada.nome } : cat
             );
+    
             setCategorias(updatedCategorias);
             localStorage.setItem('categorias', JSON.stringify(updatedCategorias));
             setEditandoCategoria(false);
             setCategoriaEditada(null);
+            CustomToast({ type: "success", message: "Categoria editada com sucesso!" });
         }
     };
+    
+    const handleDeleteCategoria = (categoria) => {
+        const updatedCategorias = categorias.filter(cat => cat.id !== categoria.id);
+        setCategorias(updatedCategorias);
+        localStorage.setItem('categorias', JSON.stringify(updatedCategorias));
+        CustomToast({ type: "success", message: "Categoria deletada com sucesso!" });
+    };
+    
     return (
         <div className="flex w-full ">
             <Navbar />

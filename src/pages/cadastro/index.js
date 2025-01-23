@@ -5,6 +5,7 @@ import Navbar from '../../components/navbars/header'
 import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
 import HeaderCadastro from '../../components/navbars/cadastro';
 import CadastroImagem from '../../assets/png/cadas.png'
+
 const Cadastro = () => {
     return (
         <div className="flex w-full ">

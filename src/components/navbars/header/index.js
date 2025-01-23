@@ -13,7 +13,7 @@ import AddchartIcon from '@mui/icons-material/Addchart';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
 import ArticleIcon from '@mui/icons-material/Article';
 import { ProductionQuantityLimitsTwoTone } from '@mui/icons-material';
-
+import DataThresholdingIcon from '@mui/icons-material/DataThresholding';
 const Navbar = ({ user }) => {
     const [activeRoute, setActiveRoute] = useState("");
     const navigate = useNavigate();
@@ -75,6 +75,14 @@ const Navbar = ({ user }) => {
                         >
                             <ProductionQuantityLimitsTwoTone style={{color:'black'}} fontSize={"small"} />
                             <span>Produtos</span>
+                        </button>
+                        <button
+                            onClick={() => handleNavigate("/relatorios")}
+                            className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/relatorios" ? "border-b-2 border-primary" : ""}`}
+                            title={'Contratos Finalizados'}
+                        >
+                            <DataThresholdingIcon fontSize={"small"} />
+                            <span>Relatórios</span>
                         </button>
                         <button
                             onClick={() => handleNavigate("/entrada-saida")}

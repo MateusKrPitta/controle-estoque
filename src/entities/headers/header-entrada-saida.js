@@ -1,10 +1,10 @@
 
 export const headerEntradaSaida= [
-    { key: "nome", label: "Nome" }, // Chave para o nome do titular
+    { key: "produto", label: "Produto" }, // Chave para o nome do titular
     { key: "quantidade", label: "Quantidade" },
-    { key: "Categoria", label: "Categoria" },
-    { key: "unidadeMedida", label: "Unidade Medida" },
-    { key: "quantidadeMinima", label: "Quantidade Minima" },
+    { key: "tipo", label: "Tipo" },
+    { key: "categoria", label: "Categoria" },
+    { key: "preco", label: "Valor" },
   ];
   
   
