@@ -6,7 +6,7 @@ import HeaderPerfil from '../../components/navbars/perfil/index.js';
 import MenuMobile from '../../components/menu-mobile/index.js';
 import ButtonComponent from '../../components/button';
 import SearchIcon from '@mui/icons-material/Search';
-import { AddCircleOutline, Edit, Save, Delete } from '@mui/icons-material'; // Importando o ícone de exclusão
+import { AddCircleOutline, Edit, Save, Delete, MoneyOutlined } from '@mui/icons-material'; // Importando o ícone de exclusão
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import CentralModal from '../../components/modal-central/index.js';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -15,6 +15,10 @@ import SelectTextFields from '../../components/select/index.js';
 import TableComponent from '../../components/table/index.js';
 import { headerEntradaSaida } from '../../entities/headers/header-entrada-saida.js';
 import ModalLateral from '../../components/modal-lateral/index.js';
+import { NumericFormat } from 'react-number-format';
+import { formatValor } from '../../utils/functions.js';
+import CustomToast from '../../components/toast/index.js';
+
 
 const EntradaSaida = () => {
   const [cadastro, setCadastro] = useState(false);
@@ -23,7 +27,7 @@ const EntradaSaida = () => {
   const [entradasSaidas, setEntradasSaidas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editando, setEditando] = useState(false);
-  
+
   // Estados para o registro atual
   const [produto, setProduto] = useState('');
   const [quantidade, setQuantidade] = useState('');
@@ -46,27 +50,9 @@ const EntradaSaida = () => {
   const handleCadastro = () => setCadastro(true);
   const handleCloseCadastro = () => setCadastro(false);
 
-  const handleCadastrarRegistro = () => {
-    const novoRegistro = {
-      produto: produtoSelecionado ? produtoSelecionado.nome : produto,
-      quantidade,
-      tipo,
-      preco,
-      categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
-    };
 
-    const updatedEntradasSaidas = [...entradasSaidas, novoRegistro];
-    setEntradasSaidas(updatedEntradasSaidas);
-    localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
 
-    // Resetar os campos
-    setProduto('');
-    setQuantidade('');
-    setTipo('entrada');
-    setPreco('');
-    setProdutoSelecionado(null);
-    handleCloseCadastro();
-  };
+
 
   const handleProdutoChange = (value) => {
     const produtoSelecionado = produtos.find(prod => prod.nome === value);
@@ -88,18 +74,47 @@ const EntradaSaida = () => {
     setEditando(false);
     setRegistroEditado(null); // Limpa o registro editado
   };
+  const handleCadastrarRegistro = () => {
+    const valorTotal = (parseFloat(quantidade) * parseFloat(preco.replace(/[^\d.-]/g, ''))).toFixed(2); // Calcula o valor total com 2 casas decimais
+
+    const novoRegistro = {
+      id: Date.now(), // Usando timestamp como ID único
+      produto: produtoSelecionado ? produtoSelecionado.nome : produto,
+      quantidade,
+      tipo,
+      preco: preco, // Armazena como string formatada
+      categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
+      valorTotal: valorTotal // Adiciona o valor total
+    };
+
+    const updatedEntradasSaidas = [...entradasSaidas, novoRegistro];
+    setEntradasSaidas(updatedEntradasSaidas);
+    localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
+
+    // Resetar os campos
+    setProduto('');
+    setQuantidade('');
+    setTipo('entrada');
+    setPreco('');
+    setProdutoSelecionado(null);
+    handleCloseCadastro();
+  };
+
 
   const handleSaveEdit = () => {
+    const valorTotal = (parseFloat(quantidade) * parseFloat(preco.replace(/[^\d.-]/g, ''))).toFixed(2); // Calcula o valor total com 2 casas decimais
+
     const updatedEntradasSaidas = entradasSaidas.map((registro) =>
       registro === registroEditado
         ? {
-            ...registro,
-            produto: produtoSelecionado ? produtoSelecionado.nome : produto,
-            quantidade,
-            tipo,
-            preco,
-            categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
-          }
+          ...registro,
+          produto: produtoSelecionado ? produtoSelecionado.nome : produto,
+          quantidade,
+          tipo,
+          preco: preco, // Armazena como string formatada
+          categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
+          valorTotal: valorTotal // Atualiza o valor total
+        }
         : registro
     );
 
@@ -109,10 +124,12 @@ const EntradaSaida = () => {
   };
 
   const handleDelete = (registro) => {
-    const updatedEntradasSaidas = entradasSaidas.filter((item) => item !== registro);
+    const updatedEntradasSaidas = entradasSaidas.filter((item) => item.id !== registro.id);
     setEntradasSaidas(updatedEntradasSaidas);
     localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
+    CustomToast({ type: "success", message: "Deletado com sucesso!" });
   };
+  
 
   return (
     <div className="flex w-full ">
@@ -175,11 +192,14 @@ const EntradaSaida = () => {
             ) : (
               <TableComponent
                 headers={headerEntradaSaida}
-                rows={entradasSaidas}
+                rows={entradasSaidas.map(registro => ({
+                  ...registro,
+                  valorTotal: formatValor(registro.valorTotal) // Formata o valor total
+                }))}
                 actionsLabel={"Ações"}
                 actionCalls={{
                   edit: handleEditar,
-                  delete: (registro) => handleDelete(registro) 
+                  delete: (registro) => handleDelete(registro)
                 }}
               />
             )}
@@ -225,23 +245,30 @@ const EntradaSaida = () => {
                   ),
                 }}
               />
-              <TextField
+              <NumericFormat
+                customInput={TextField}
                 fullWidth
                 variant="outlined"
                 size="small"
                 label="Preço"
-                value={preco}
-                onChange={(e) => setPreco(e.target.value)}
-                autoComplete="off"
                 sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
+                value={preco}
+                onValueChange={(values) => setPreco(values.value)}
+                thousandSeparator="."
+                decimalSeparator=","
+                prefix="R$ "
+                decimalScale={2}
+                fixedDecimalScale={true}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <ScaleIcon />
+                      <MoneyOutlined />
                     </InputAdornment>
                   ),
                 }}
               />
+
+
               <SelectTextFields
                 width={'260px'}
                 icon={<AddchartIcon fontSize="small" />}
@@ -304,19 +331,24 @@ const EntradaSaida = () => {
                   ),
                 }}
               />
-              <TextField
+              <NumericFormat
+                customInput={TextField}
                 fullWidth
                 variant="outlined"
                 size="small"
                 label="Preço"
-                value={preco}
-                onChange={(e) => setPreco(e.target.value)}
-                autoComplete="off"
                 sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
+                value={preco}
+                onValueChange={(values) => setPreco(values.value)}
+                thousandSeparator="."
+                decimalSeparator=","
+                prefix="R$ "
+                decimalScale={2}
+                fixedDecimalScale={true}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <ScaleIcon />
+                      <MoneyOutlined />
                     </InputAdornment>
                   ),
                 }}

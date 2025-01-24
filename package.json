@@ -12,6 +12,8 @@
     "jspdf": "^2.5.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-input-mask": "^2.0.4",
+    "react-number-format": "^5.4.3",
     "react-pdf": "^9.2.1",
     "react-router-dom": "^7.0.2",
     "react-scripts": "5.0.1",

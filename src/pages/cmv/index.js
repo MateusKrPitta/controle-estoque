@@ -8,17 +8,32 @@ import { Print, FilterAlt } from '@mui/icons-material';
 import TableComponent from '../../components/table/index.js';
 import { headerCmv } from '../../entities/headers/header-cmv.js';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
+
 const CMV = () => {
   const [produtos, setProdutos] = useState([]);
+  const [totals, setTotals] = useState({ entradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
 
   useEffect(() => {
     const entradasSaidasSalvas = JSON.parse(localStorage.getItem('entradasSaidas')) || [];
-    // Filtra apenas os registros de entrada
     const produtosEntrada = entradasSaidasSalvas.filter(registro => registro.tipo === 'entrada');
     setProdutos(produtosEntrada);
+    calculateTotals(produtosEntrada);
   }, []);
 
-  
+  const calculateTotals = (rows) => {
+    const newTotals = rows.reduce((acc, row) => {
+      acc.entradas += Number(row.entradas || 0);
+      acc.estoqueInicial += Number(row.estoqueInicial || 0);
+      acc.estoqueFinal += Number(row.estoqueFinal || 0);
+      return acc;
+    }, { entradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
+    setTotals(newTotals);
+  };
+
+  const handleRowChange = (updatedRows) => {
+    setProdutos(updatedRows);
+    calculateTotals(updatedRows);
+  };
 
   return (
     <div className="flex w-full ">
@@ -55,7 +70,14 @@ const CMV = () => {
             <TableComponent
               headers={headerCmv}
               rows={produtos}
+              onRowChange={handleRowChange} // Passa a função para lidar com mudanças nas linhas
             />
+            <div className='w-full flex items-center gap-5'>
+              <label className='w-[23%] flex items-center justify-end mr-3 font-bold text-sm'>Total:</label>
+              <span className='w-[15%] flex items-center text-sm font-bold justify-center p-2' style={{backgroundColor:'#2563eb', borderRadius:'10px', color:'white'}}> {totals.entradas}</span><br />
+              <span className='w-[15%] flex items-center text-sm font-bold justify-center p-2' style={{backgroundColor:'#1a894f', borderRadius:'10px', color:'white'}}>{totals.estoqueInicial}</span><br />
+              <span className='w-[15%] flex items-center text-sm font-bold justify-center p-2 -ml-2' style={{backgroundColor:'#69706c', borderRadius:'10px', color:'white'}}> {totals.estoqueFinal}</span>
+            </div>
           </div>
         </div>
       </div>

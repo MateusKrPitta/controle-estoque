@@ -154,3 +154,10 @@ export function validarCPF(cpf) {
     return true;
 }
 
+export const formatValor = (valor) => {
+    const parsedValor = parseFloat(valor); // Converte o valor para número
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(parsedValor);
+  };

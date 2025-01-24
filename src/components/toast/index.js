@@ -4,9 +4,9 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const toastConfig = {
     success: {
-        color: '#006b33',
-        iconColor: '#006b33',
-        progressColor: '#006b33',
+        color: '#BCDA72',
+        iconColor: '#BCDA72',
+        progressColor: '#BCDA72',
         icon: '✅'
     },
     error: {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, TextField } from '@mui/material';
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
@@ -8,10 +8,11 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import EditIcon from '@mui/icons-material/Edit';
 
-const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel }) => {
+const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowChange }) => {
     const [pageList, setPageList] = useState([]);
     const hasActions = Object.keys(actionCalls).length > 0;
     const actionTypes = Object.keys(actionCalls);
+    const [totals, setTotals] = useState({ entradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
 
     let headersList = hasActions
         ? headers.concat([{
@@ -19,6 +20,26 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel }) => {
             label: actionsLabel,
         }])
         : [...headers];
+        const handleInputChange = (rowIndex, key, value) => {
+            const updatedRows = [...pageList];
+            updatedRows[rowIndex][key] = value;
+            setPageList(updatedRows);
+            onRowChange(updatedRows); // Chama a função para atualizar os dados no componente pai
+        };
+    const calculateTotals = (rows) => {
+        const newTotals = rows.reduce((acc, row) => {
+            acc.entradas += Number(row.entradas || 0);
+            acc.estoqueInicial += Number(row.estoqueInicial || 0);
+            acc.estoqueFinal += Number(row.estoqueFinal || 0);
+            return acc;
+        }, { entradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
+        setTotals(newTotals);
+    };
+
+    useEffect(() => {
+        setPageList(rows);
+        calculateTotals(rows);
+    }, [rows]);
 
     const renderActions = (row) => {
         let actions = {
@@ -133,7 +154,7 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel }) => {
     }, [rows]);
 
     return (
-        <TableContainer component={Paper} style={{ maxHeight: '430px', overflowY: 'auto' }} className='scrollbar'>
+<TableContainer component={Paper} style={{ maxHeight: '430px', overflowY: 'auto' }} className='scrollbar'>
             <Table stickyHeader>
                 <TableHead>
                     <TableRow>
@@ -155,6 +176,16 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel }) => {
                                     key === "actions" && hasActions ? (
                                         <TableCell key={key} style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
                                             {renderActions(row)}
+                                        </TableCell>
+                                    ) : key === "entradas" || key === "estoqueInicial" || key === "estoqueFinal" ? (
+                                        <TableCell key={key}>
+                                            <TextField
+                                                type="number"
+                                                value={row[key] || ''}
+                                                onChange={(e) => handleInputChange(rowIndex, key, e.target.value)}
+                                                variant="outlined"
+                                                size="small"
+                                            />
                                         </TableCell>
                                     ) : key === "cpf" ? (
                                         <TableCell style={{ fontSize: '12px' }} key={key}>{maskCPF(row[key])}</TableCell>
