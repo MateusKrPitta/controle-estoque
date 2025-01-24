@@ -10,7 +10,7 @@ const HeaderRelatorio= () => {
     const handleNavigation = (section) => {
         switch (section) {
             case 'estoque-real': // Aqui estava 'usuario', mas o botão chama 'usuarios'
-                navigate('/cadastro/estoque-real');
+                navigate('/relatorios/estoque-real');
                 break;
             
             default:

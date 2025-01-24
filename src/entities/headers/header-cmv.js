@@ -1,6 +1,6 @@
 
 export const headerCmv = [
-  { key: "produto", label: "Produto" }, // Chave para o nome do titular
+  { key: "nome", label: "Produto" }, // Chave para o nome do titular
   { key: "categoria", label: "Categoria" },
   { key: "preco", label: "Preço" },
   { key: "estoqueInicial", label: "Estoque Inicial" },

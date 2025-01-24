@@ -8,6 +8,7 @@ import Categoria from '../pages/cadastro/categoria/index.js';
 import EntradaSaida from '../pages/entrada-saida/index.js';
 import CMV from '../pages/cmv/index.js';
 import Relatorio from '../pages/relatorio/index.js';
+import EstoqueReal from '../pages/produtos/estoque-real/index.js';
 
 const AppRoutes = () => {
     return (
@@ -19,6 +20,7 @@ const AppRoutes = () => {
             <Route path="/entrada-saida" element={<EntradaSaida /> }/>
             <Route path="/cmv" element={<CMV /> }/>
             <Route path="/relatorios" element={<Relatorio /> }/>
+            <Route path="/relatorios/estoque-real" element={<EstoqueReal /> }/>
 
             <Route path="/cadastro" element={<Cadastro /> }/>
            <Route path="/cadastro/categoria" element={<Categoria /> }/>

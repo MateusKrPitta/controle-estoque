@@ -17,7 +17,10 @@ import CategoryIcon from '@mui/icons-material/Category';
 import ScaleIcon from '@mui/icons-material/Scale';
 import ModalLateral from '../../components/modal-lateral/index.js';
 import SelectTextFields from '../../components/select/index.js';
+import { NumericFormat } from 'react-number-format';
+import { formatValor } from '../../utils/functions.js';
 import CustomToast from '../../components/toast/index.js';
+import { MoneyOutlined } from '@mui/icons-material'; // Importando o ícone de exclusão
 
 const Produtos = () => {
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
@@ -35,7 +38,7 @@ const Produtos = () => {
     const [selectedUnidade, setSelectedUnidade] = useState("");
     const [categorias, setCategorias] = useState([]);
     const [selectedCategoria, setSelectedCategoria] = useState('');
-
+    const [preco, setPreco] = useState('');
     const userOptionsUnidade = [
         { value: 'kg', label: 'Kilograma' },
         { value: 'g', label: 'Grama' },
@@ -63,9 +66,10 @@ const Produtos = () => {
             rendimento,
             categoria: categorias.find(cat => cat.id === selectedCategoria)?.nome || "Não informado", // Salva o nome da categoria
             unidade: selectedUnidade,
+            preco: preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0, // Salva o preço formatado como número
             dataCriacao: new Date().toISOString(), // Adiciona a data de criação no formato ISO
         };
-    
+
         novosProdutos.push(novoProduto);
         localStorage.setItem('produtos', JSON.stringify(novosProdutos));
         setProdutos(novosProdutos); // Atualiza o estado da tabela
@@ -75,9 +79,11 @@ const Produtos = () => {
         setRendimento('');
         setSelectedCategoria('');
         setSelectedUnidade('');
+        setPreco(''); // Limpa o preço após o cadastro
         CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
     };
-    
+
+
     const handleSaveEdit = () => {
         const novosProdutos = produtos.map((produto) =>
             produto.id === produtoEditado.id
@@ -87,7 +93,7 @@ const Produtos = () => {
                 }
                 : produto
         );
-    
+
         localStorage.setItem('produtos', JSON.stringify(novosProdutos));
         setProdutos(novosProdutos); // Atualiza o estado
         setEditandoCategoria(false); // Fecha o modal
@@ -99,7 +105,7 @@ const Produtos = () => {
         setProdutos(produtosAtualizados); // Atualiza o estado da tabela
         CustomToast({ type: "success", message: "Produto deletado com sucesso!" });
     };
-    
+
 
     useEffect(() => {
         const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
@@ -115,6 +121,15 @@ const Produtos = () => {
     const handleCategoriaChange = (value) => {
         setSelectedCategoria(value);
     };
+
+    useEffect(() => {
+        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
+        const produtosFormatados = produtosSalvos.map((produto) => ({
+            ...produto,
+            precoFormatado: formatValor(produto.preco),
+        }));
+        setProdutos(produtosFormatados);
+    }, []);
 
     return (
         <div className="flex w-full ">
@@ -283,6 +298,28 @@ const Produtos = () => {
                                     onChange={handleUnidadeChange}
                                     value={selectedUnidade}
                                 />
+                                <NumericFormat
+                                    customInput={TextField}
+                                    fullWidth
+                                    variant="outlined"
+                                    size="small"
+                                    label="Preço"
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
+                                    value={preco}
+                                    onValueChange={(values) => setPreco(values.value)}
+                                    thousandSeparator="."
+                                    decimalSeparator=","
+                                    prefix="R$ "
+                                    decimalScale={2}
+                                    fixedDecimalScale={true}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <MoneyOutlined />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
                             </div>
                             <div className='w-[95%] mt-2 flex items-end justify-end'>
                                 <ButtonComponent
@@ -311,7 +348,7 @@ const Produtos = () => {
                                     name="nome"
                                     value={produtoEditado?.nome || ''}
                                     onChange={(e) => setProdutoEditado({ ...produtoEditado, nome: e.target.value })}
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' }}}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -328,7 +365,7 @@ const Produtos = () => {
                                     name="quantidadeMinima"
                                     value={produtoEditado?.quantidadeMinima || ''}
                                     onChange={(e) => setProdutoEditado({ ...produtoEditado, quantidadeMinima: e.target.value })}
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '47%' }}}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '47%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -381,6 +418,28 @@ const Produtos = () => {
                                     value={produtoEditado?.unidade || ''}
                                     onChange={(e) => setProdutoEditado({ ...produtoEditado, unidade: e.target.value })}
                                 />
+                                <NumericFormat
+                                    customInput={TextField}
+                                    fullWidth
+                                    variant="outlined"
+                                    size="small"
+                                    label="Preço"
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
+                                    value={produtoEditado?.preco || ''} // Use o preço do produto editado
+                                    onValueChange={(values) => setProdutoEditado({ ...produtoEditado, preco: values.value })} // Atualize o preço no produto editado
+                                    thousandSeparator="."
+                                    decimalSeparator=","
+                                    prefix="R$ "
+                                    decimalScale={2}
+                                    fixedDecimalScale={true}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <MoneyOutlined />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
                                 <div className="w-[95%] mt-2 flex items-end justify-end">
                                     <ButtonComponent
                                         title="Salvar"
@@ -412,7 +471,7 @@ const Produtos = () => {
                                     size="small"
                                     label="Nome do Produto"
                                     name="nome"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' }}}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
                                     autoComplete="off"
                                     InputProps={{
                                         startAdornment: (
@@ -458,7 +517,7 @@ const Produtos = () => {
                                     value={dataFinal}
                                     //onChange={handleInputChange}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '43%' }}}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '43%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">

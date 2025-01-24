@@ -11,28 +11,55 @@ import AddToQueueIcon from '@mui/icons-material/AddToQueue';
 
 const CMV = () => {
   const [produtos, setProdutos] = useState([]);
-  const [totals, setTotals] = useState({ entradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
+  const [totals, setTotals] = useState({ totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
 
   useEffect(() => {
-    const entradasSaidasSalvas = JSON.parse(localStorage.getItem('entradasSaidas')) || [];
-    const produtosEntrada = entradasSaidasSalvas.filter(registro => registro.tipo === 'entrada');
-    setProdutos(produtosEntrada);
-    calculateTotals(produtosEntrada);
+    const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
+    console.log("Produtos carregados do localStorage:", produtosSalvos);
+    setProdutos(calculateUtilizado(produtosSalvos));
+    calculateTotals(produtosSalvos);
   }, []);
 
-  const calculateTotals = (rows) => {
-    const newTotals = rows.reduce((acc, row) => {
-      acc.entradas += Number(row.entradas || 0);
-      acc.estoqueInicial += Number(row.estoqueInicial || 0);
-      acc.estoqueFinal += Number(row.estoqueFinal || 0);
-      return acc;
-    }, { entradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
-    setTotals(newTotals);
+  // Recalcula a coluna "Valor Utilizado" para todas as linhas
+  const calculateUtilizado = (rows) => {
+    return rows.map((row) => {
+      const estoqueInicial = Number(row.estoqueInicial || 0);
+      const entradas = Number(row.quantidadeMinima || 0); // "Entradas"
+      const estoqueFinal = Number(row.estoqueFinal || 0);
+      const faturamento = Number(row.faturamento || 1); // Faturamento com valor padrão de 1 para evitar divisão por zero
+
+      const valorUtilizado = ((estoqueInicial + entradas - estoqueFinal) / faturamento).toFixed(2); // Fórmula ajustada
+      return {
+        ...row,
+        valorUtilizado, // Atualiza a coluna "Valor Utilizado"
+      };
+    });
   };
 
   const handleRowChange = (updatedRows) => {
-    setProdutos(updatedRows);
-    calculateTotals(updatedRows);
+    const updatedWithUtilizado = calculateUtilizado(updatedRows); // Atualiza o valor de "Valor Utilizado"
+    setProdutos(updatedWithUtilizado);
+    calculateTotals(updatedWithUtilizado); // Recalcula os totais com os novos valores
+  };
+
+  // A função calculateTotals já está correta, pois ela soma os valores de cada linha
+  const calculateTotals = (rows) => {
+    const newTotals = rows.reduce((acc, row) => {
+      const preco = Number(row.preco || 1); // Define um preço padrão como 1 caso o campo não exista
+
+      // Somente soma se a quantidade mínima for maior que zero
+      const entradas = Number(row.quantidadeMinima || 0);
+      if (entradas > 0) {
+        acc.totalEntradas += entradas * preco; // Entradas multiplicadas pelo preço
+      }
+
+      acc.estoqueInicial += (Number(row.estoqueInicial || 0) * preco); // Estoque inicial multiplicado pelo preço
+      acc.estoqueFinal += (Number(row.estoqueFinal || 0) * preco); // Estoque final multiplicado pelo preço
+
+      return acc;
+    }, { totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
+
+    setTotals(newTotals);
   };
 
   return (
@@ -74,9 +101,25 @@ const CMV = () => {
             />
             <div className='w-full flex items-center gap-5'>
               <label className='w-[23%] flex items-center justify-end mr-3 font-bold text-sm'>Total:</label>
-              <span className='w-[15%] flex items-center text-sm font-bold justify-center p-2' style={{backgroundColor:'#2563eb', borderRadius:'10px', color:'white'}}> {totals.entradas}</span><br />
-              <span className='w-[15%] flex items-center text-sm font-bold justify-center p-2' style={{backgroundColor:'#1a894f', borderRadius:'10px', color:'white'}}>{totals.estoqueInicial}</span><br />
-              <span className='w-[15%] flex items-center text-sm font-bold justify-center p-2 -ml-2' style={{backgroundColor:'#69706c', borderRadius:'10px', color:'white'}}> {totals.estoqueFinal}</span>
+              <div className='flex items-center w-[60%]'>
+                <span
+                  className='w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-28'
+                  style={{ backgroundColor: '#1a894f', borderRadius: '10px', color: 'white' }}>
+                  R$ {totals.estoqueInicial.toFixed(2)}
+                </span>
+
+                <span
+                  className='w-[20%] flex items-center text-sm font-bold justify-center  mr-28 p-2'
+                  style={{ backgroundColor: '#2563eb', borderRadius: '10px', color: 'white' }}>
+                  R$ {totals.totalEntradas > 0 ? totals.totalEntradas.toFixed(2) : '0.00'}
+                </span>
+
+                <span
+                  className='w-[20%] flex items-center text-sm font-bold justify-center p-2 -ml-2'
+                  style={{ backgroundColor: '#69706c', borderRadius: '10px', color: 'white' }}>
+                  R$ {totals.estoqueFinal.toFixed(2)}
+                </span>
+              </div>
             </div>
           </div>
         </div>

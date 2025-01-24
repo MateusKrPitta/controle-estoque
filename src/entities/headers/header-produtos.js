@@ -4,6 +4,8 @@ export const headerProdutos = [
   { key: "rendimento", label: "Rendimento" },
   { key: "categoria", label: "Caregoria" },
   { key: "unidade", label: "Unidade Medida" },
+  { key: "categoria", label: "Caregoria" },
+  { key: "precoFormatado", label: "Preço" },
   { key: "quantidadeMinima", label: "Quantidade Minima" },
 ];
 

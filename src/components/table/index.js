@@ -8,7 +8,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import EditIcon from '@mui/icons-material/Edit';
 
-const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowChange }) => {
+const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowChange, rowStyle }) => {
     const [pageList, setPageList] = useState([]);
     const hasActions = Object.keys(actionCalls).length > 0;
     const actionTypes = Object.keys(actionCalls);
@@ -170,7 +170,7 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                 </TableHead>
                 <TableBody>
                     {pageList.map((row, rowIndex) => (
-                        <TableRow key={rowIndex}>
+                        <TableRow key={rowIndex} style={rowStyle ? rowStyle(row) : {}}>
                             {headersList.map(({ key, sort }) => (
                                 sort !== false && (
                                     key === "actions" && hasActions ? (

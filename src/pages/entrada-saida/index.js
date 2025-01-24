@@ -32,7 +32,7 @@ const EntradaSaida = () => {
   const [produto, setProduto] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [tipo, setTipo] = useState('entrada'); // ou 'saida'
-  const [preco, setPreco] = useState('');
+
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [registroEditado, setRegistroEditado] = useState(null); // Novo estado para o registro a ser editado
 
@@ -65,7 +65,6 @@ const EntradaSaida = () => {
     setProduto(registro.produto);
     setQuantidade(registro.quantidade);
     setTipo(registro.tipo);
-    setPreco(registro.preco);
     setProdutoSelecionado(produtos.find(prod => prod.nome === registro.produto)); // Define o produto selecionado
     setEditando(true); // Abre a modal de edição
   };
@@ -75,16 +74,15 @@ const EntradaSaida = () => {
     setRegistroEditado(null); // Limpa o registro editado
   };
   const handleCadastrarRegistro = () => {
-    const valorTotal = (parseFloat(quantidade) * parseFloat(preco.replace(/[^\d.-]/g, ''))).toFixed(2); // Calcula o valor total com 2 casas decimais
+    const valorTotal = produtoSelecionado ? produtoSelecionado.preco * quantidade : 0; // Calcule o valor total
 
     const novoRegistro = {
-      id: Date.now(), // Usando timestamp como ID único
-      produto: produtoSelecionado ? produtoSelecionado.nome : produto,
-      quantidade,
-      tipo,
-      preco: preco, // Armazena como string formatada
-      categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
-      valorTotal: valorTotal // Adiciona o valor total
+        id: Date.now(), // Usando timestamp como ID único
+        produto: produtoSelecionado ? produtoSelecionado.nome : produto,
+        quantidade,
+        tipo, // Armazena como string formatada
+        categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
+        valorTotal // Adiciona o valor total
     };
 
     const updatedEntradasSaidas = [...entradasSaidas, novoRegistro];
@@ -95,33 +93,31 @@ const EntradaSaida = () => {
     setProduto('');
     setQuantidade('');
     setTipo('entrada');
-    setPreco('');
     setProdutoSelecionado(null);
     handleCloseCadastro();
-  };
+};
 
 
-  const handleSaveEdit = () => {
-    const valorTotal = (parseFloat(quantidade) * parseFloat(preco.replace(/[^\d.-]/g, ''))).toFixed(2); // Calcula o valor total com 2 casas decimais
+const handleSaveEdit = () => {
+  const valorTotal = produtoSelecionado ? produtoSelecionado.preco * quantidade : 0; // Calcule o valor total
 
-    const updatedEntradasSaidas = entradasSaidas.map((registro) =>
+  const updatedEntradasSaidas = entradasSaidas.map((registro) =>
       registro === registroEditado
-        ? {
-          ...registro,
-          produto: produtoSelecionado ? produtoSelecionado.nome : produto,
-          quantidade,
-          tipo,
-          preco: preco, // Armazena como string formatada
-          categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
-          valorTotal: valorTotal // Atualiza o valor total
-        }
-        : registro
-    );
+          ? {
+              ...registro,
+              produto: produtoSelecionado ? produtoSelecionado.nome : produto,
+              quantidade,
+              tipo, // Armazena como string formatada
+              categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
+              valorTotal // Atualiza o valor total
+          }
+          : registro
+  );
 
-    setEntradasSaidas(updatedEntradasSaidas);
-    localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
-    handleCloseEditar(); // Fecha a modal de edição
-  };
+  setEntradasSaidas(updatedEntradasSaidas);
+  localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
+  handleCloseEditar(); // Fecha a modal de edição
+};
 
   const handleDelete = (registro) => {
     const updatedEntradasSaidas = entradasSaidas.filter((item) => item.id !== registro.id);
@@ -191,17 +187,17 @@ const EntradaSaida = () => {
               </div>
             ) : (
               <TableComponent
-                headers={headerEntradaSaida}
-                rows={entradasSaidas.map(registro => ({
-                  ...registro,
-                  valorTotal: formatValor(registro.valorTotal) // Formata o valor total
-                }))}
-                actionsLabel={"Ações"}
-                actionCalls={{
-                  edit: handleEditar,
-                  delete: (registro) => handleDelete(registro)
-                }}
-              />
+    headers={headerEntradaSaida}
+    rows={entradasSaidas.map(registro => ({
+        ...registro,
+        valorTotal: formatValor(registro.valorTotal) // Formata o valor total
+    }))}
+    actionsLabel={"Ações"}
+    actionCalls={{
+        edit: handleEditar,
+        delete: (registro) => handleDelete(registro)
+    }}
+/>
             )}
           </div>
         </div>
@@ -218,16 +214,20 @@ const EntradaSaida = () => {
         >
           <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
             <div className='mt-4 flex gap-3 flex-wrap'>
-              <SelectTextFields
-                width={'260px'}
-                icon={<ArticleIcon fontSize="small" />}
-                label={'Produto'}
-                backgroundColor={"#D9D9D9"}
-                name={"produto"}
-                fontWeight={500}
-                options={produtos.map(produto => ({ value: produto.nome, label: produto.nome }))}
-                onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
-              />
+            <SelectTextFields
+    width={'260px'}
+    icon={<ArticleIcon fontSize="small" />}
+    label={'Produto'}
+    backgroundColor={"#D9D9D9"}
+    name={"produto"}
+    fontWeight={500}
+    options={produtos.map(produto => ({
+        value: produto.nome, // O valor que será armazenado
+        label: `${produto.nome} - R$ ${formatValor(produto.preco)}` // Exibe o nome e o preço formatado
+    }))}
+    value={produto} // Preenche o campo com o produto atual
+    onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
+/>
               <TextField
                 fullWidth
                 variant="outlined"
@@ -245,28 +245,7 @@ const EntradaSaida = () => {
                   ),
                 }}
               />
-              <NumericFormat
-                customInput={TextField}
-                fullWidth
-                variant="outlined"
-                size="small"
-                label="Preço"
-                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
-                value={preco}
-                onValueChange={(values) => setPreco(values.value)}
-                thousandSeparator="."
-                decimalSeparator=","
-                prefix="R$ "
-                decimalScale={2}
-                fixedDecimalScale={true}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <MoneyOutlined />
-                    </InputAdornment>
-                  ),
-                }}
-              />
+              
 
 
               <SelectTextFields
@@ -331,28 +310,7 @@ const EntradaSaida = () => {
                   ),
                 }}
               />
-              <NumericFormat
-                customInput={TextField}
-                fullWidth
-                variant="outlined"
-                size="small"
-                label="Preço"
-                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
-                value={preco}
-                onValueChange={(values) => setPreco(values.value)}
-                thousandSeparator="."
-                decimalSeparator=","
-                prefix="R$ "
-                decimalScale={2}
-                fixedDecimalScale={true}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <MoneyOutlined />
-                    </InputAdornment>
-                  ),
-                }}
-              />
+              
               <SelectTextFields
                 width={'150px'}
                 icon={<AddchartIcon fontSize="small" />}
