@@ -4,7 +4,7 @@ import MenuMobile from '../../../components/menu-mobile';
 import HeaderPerfil from '../../../components/navbars/perfil';
 import HeaderCadastro from '../../../components/navbars/cadastro';
 import CategoryIcon from '@mui/icons-material/Category';
-import { IconButton, InputAdornment, TextField } from '@mui/material';
+import {  InputAdornment, TextField } from '@mui/material';
 import ButtonComponent from '../../../components/button';
 import SearchIcon from '@mui/icons-material/Search';
 import { AddCircleOutline, Edit, Save } from '@mui/icons-material';
@@ -45,19 +45,19 @@ const Categoria = () => {
         handleCloseCadastroCategoria();
         CustomToast({ type: "success", message: "Categoria cadastrada com sucesso!" });
     };
-    
+
     const handleEditCategoria = (categoria) => {
         setCategoriaEditada({ ...categoria }); // Clona a categoria para edição
         setEditandoCategoria(true);
 
     };
-    
+
     const handleSaveEdit = () => {
         if (categoriaEditada) {
-            const updatedCategorias = categorias.map(cat => 
+            const updatedCategorias = categorias.map(cat =>
                 cat.id === categoriaEditada.id ? { ...cat, nome: categoriaEditada.nome } : cat
             );
-    
+
             setCategorias(updatedCategorias);
             localStorage.setItem('categorias', JSON.stringify(updatedCategorias));
             setEditandoCategoria(false);
@@ -65,27 +65,29 @@ const Categoria = () => {
             CustomToast({ type: "success", message: "Categoria editada com sucesso!" });
         }
     };
-    
+
     const handleDeleteCategoria = (categoria) => {
         const updatedCategorias = categorias.filter(cat => cat.id !== categoria.id);
         setCategorias(updatedCategorias);
         localStorage.setItem('categorias', JSON.stringify(updatedCategorias));
         CustomToast({ type: "success", message: "Categoria deletada com sucesso!" });
     };
-    
+
     return (
         <div className="flex w-full ">
             <Navbar />
-            <div className='flex flex-col gap-3 w-full items-end'>
+            <div className='flex ml-0 flex-col gap-3 w-full items-end md:ml-2'>
                 <MenuMobile />
                 <HeaderPerfil />
-                <h1 className='sm:items-center md:text-2xl font-bold text-black w-[99%] flex items-center gap-2 '>
+                <h1 className='flex justify-center text-base items-center gap-2 sm:ml-1  md:text-2xl  font-bold  w-full md:justify-start   '>
                     <CategoryIcon /> Categoria
                 </h1>
-                <div className='w-full mt-7 p-3 flex gap-2 items-start'>
-                    <HeaderCadastro />
-                    <div className='w-[90%] flex flex-col'>
-                        <div className='flex gap-2'>
+                <div className=" items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start">
+                    <div className="hidden md:w-[14%] md:flex ">
+                        <HeaderCadastro />
+                    </div>
+                    <div className="w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col md:w-[80%]">
+                        <div className="flex gap-2 flex-wrap w-full justify-center md:justify-start">
                             <TextField
                                 fullWidth
                                 variant="outlined"
@@ -99,7 +101,7 @@ const Categoria = () => {
                                     ),
                                 }}
                                 autoComplete="off"
-                                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '40%' }, }}
+                                sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '40%' }, }}
                             />
                             <ButtonComponent
                                 startIcon={<SearchIcon fontSize='small' />}
@@ -137,7 +139,7 @@ const Categoria = () => {
                 </div>
             </div>
             <CentralModal
-                tamanhoTitulo={'82%'}
+                tamanhoTitulo={'81%'}
                 maxHeight={'90vh'}
                 top={'20%'}
                 left={'28%'}
@@ -157,7 +159,7 @@ const Categoria = () => {
                             name="nome"
                             value={categoria.nome}
                             onChange={handleInputChange}
-                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '93%' }, marginLeft: '10px' }}
+                            sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '93%' }, marginLeft: '10px' }}
                             autoComplete="off"
                             InputProps={{
                                 startAdornment: (

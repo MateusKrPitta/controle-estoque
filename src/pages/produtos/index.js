@@ -21,6 +21,7 @@ import { NumericFormat } from 'react-number-format';
 import { formatValor } from '../../utils/functions.js';
 import CustomToast from '../../components/toast/index.js';
 import { MoneyOutlined } from '@mui/icons-material'; // Importando o ícone de exclusão
+import Caixa from '../../assets/icones/caixa.png'
 
 const Produtos = () => {
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
@@ -36,6 +37,7 @@ const Produtos = () => {
     const [produtos, setProdutos] = useState([]);
     const [unidade, setUnidade] = useState('');
     const [selectedUnidade, setSelectedUnidade] = useState("");
+    const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0); // Novo estado para contar categorias únicas
     const [categorias, setCategorias] = useState([]);
     const [selectedCategoria, setSelectedCategoria] = useState('');
     const [preco, setPreco] = useState('');
@@ -106,10 +108,21 @@ const Produtos = () => {
         CustomToast({ type: "success", message: "Produto deletado com sucesso!" });
     };
 
+    const calcularValorTotalEstoque = () => {
+        return produtos.reduce((total, produto) => {
+            return total + (produto.preco * (produto.quantidadeMinima || 0)); // Supondo que quantidadeMinima seja a quantidade em estoque
+        }, 0);
+    };
+
+    const quantidadeProdutosCadastrados = produtos.length;
 
     useEffect(() => {
         const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
-        setCategorias(categoriasSalvas);
+        const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
+            .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
+    
+        setCategorias(categoriasUnicas);
+        setUniqueCategoriesCount(categoriasUnicas.length); // Atualiza o estado com o número de categorias únicas
     }, []);
 
     useEffect(() => {
@@ -131,6 +144,7 @@ const Produtos = () => {
         setProdutos(produtosFormatados);
     }, []);
 
+
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -140,8 +154,19 @@ const Produtos = () => {
                 <h1 className='justify-center  sm:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
                     <ProductionQuantityLimitsTwoTone /> Produtos
                 </h1>
-                <div className="mt-2 sm:mt-2 md:mt-9 flex flex-col w-full">
-                    <div className='flex gap-2 justify-center flex-wrap md:justify-start items-center md:items-start'>
+                <div className='w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4' >
+
+                    
+                    <div className='w-[80%] md:w-[20%] p-2  bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+                        <label className='text-xs font-bold'>Produtos Cadastrados</label>
+                        <div className='flex items-center justify-center gap-5'>
+                            <img src={Caixa} alt="Caixa" />
+                            <label>{quantidadeProdutosCadastrados}</label>
+                        </div>
+                    </div>
+                </div>
+                <div className=" ml-0 flex flex-col w-[98%] md:ml-2 mr-3">
+                    <div className='flex gap-2 justify-center  flex-wrap md:justify-start items-center md:items-start'>
                         <TextField
                             fullWidth
                             variant="outlined"
@@ -155,7 +180,7 @@ const Produtos = () => {
                                 ),
                             }}
                             autoComplete="off"
-                            sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '30%' }, marginLeft: '10px' }}
+                            sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '30%' } }}
                         />
                         <ButtonComponent
                             startIcon={<SearchIcon fontSize='small' />}
@@ -460,7 +485,7 @@ const Produtos = () => {
                         maxHeight={'90vh'}
                         top={'20%'}
                         left={'28%'}
-                        width={'500px'}
+                        width={'400px'}
                         icon={<FilterAltIcon fontSize="small" />}
                         open={filtro}
                         onClose={handleCloseFiltro}
@@ -484,7 +509,7 @@ const Produtos = () => {
                                         ),
                                     }}
                                 />
-                                 <TextField
+                                <TextField
                                     fullWidth
                                     variant="outlined"
                                     size="small"
@@ -493,7 +518,7 @@ const Produtos = () => {
                                     type='date'
                                     // onChange={handleInputChange}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -520,8 +545,8 @@ const Produtos = () => {
                                         ),
                                     }}
                                 />
-                               <SelectTextFields
-                                    width={'290px'}
+                                <SelectTextFields
+                                    width={'175px'}
                                     icon={<CategoryIcon fontSize="small" />}
                                     label={'Categoria'}
                                     backgroundColor={"#D9D9D9"}
@@ -531,7 +556,7 @@ const Produtos = () => {
                                     onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
                                     value={selectedCategoria} // Reflete o estado atual no componente
                                 />
-                               
+
 
 
                             </div>

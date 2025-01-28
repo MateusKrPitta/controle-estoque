@@ -13,6 +13,7 @@ import EstoqueReal from '../pages/relatorio/estoque-real/index.js'
 import Usuario from '../pages/cadastro/usuario/index.js';
 import Unidades from '../pages/cadastro/unidades/index.js';
 import ListaCompra from '../pages/relatorio/lista-compra/index.js';
+import Desperdicio from '../pages/relatorio/desperdico/index.js';
 
 const AppRoutes = () => {
     return (
@@ -26,6 +27,7 @@ const AppRoutes = () => {
             <Route path="/relatorios" element={<Relatorio /> }/>
             <Route path="/relatorios/estoque-real" element={<EstoqueReal /> }/>
             <Route path="/relatorios/lista-compra" element={<ListaCompra /> }/>
+            <Route path="/relatorios/desperdicio" element={<Desperdicio /> }/>
             <Route path="/ficha-tecnica" element={<FichaTecnica /> }/>
             <Route path="/cadastro" element={<Cadastro /> }/>
            <Route path="/cadastro/categoria" element={<Categoria /> }/>

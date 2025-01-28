@@ -4,14 +4,29 @@ import HeaderPerfil from '../../components/navbars/perfil/index.js';
 import MenuMobile from '../../components/menu-mobile/index.js';
 import ButtonComponent from '../../components/button';
 import { IconButton, InputAdornment, TextField } from '@mui/material';
-import { Print, FilterAlt } from '@mui/icons-material';
+import { Print, FilterAlt, DateRange } from '@mui/icons-material';
 import TableComponent from '../../components/table/index.js';
 import { headerCmv } from '../../entities/headers/header-cmv.js';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
 import NumbersIcon from '@mui/icons-material/Numbers';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import CentralModal from '../../components/modal-central/index.js';
+import SelectTextFields from '../../components/select/index.js';
+import CategoryIcon from '@mui/icons-material/Category';
+import SearchIcon from '@mui/icons-material/Search';
+
+
 const CMV = () => {
   const [produtos, setProdutos] = useState([]);
   const [totals, setTotals] = useState({ totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
+  const [filtro, setFiltro] = useState(false);
+  const [dataInicial, setDataInicial] = useState('');
+  const [dataFinal, setDataFinal] = useState('');
+  const [categorias, setCategorias] = useState([]);
+  const [selectedCategoria, setSelectedCategoria] = useState('');
+  const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
+
+
 
   useEffect(() => {
     const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
@@ -65,6 +80,8 @@ const CMV = () => {
     });
   };
 
+  const handleFiltro = () => setFiltro(true);
+  const handleCloseFiltro = () => setFiltro(false);
 
   const handleRowChange = (updatedRows) => {
     const updatedWithUtilizado = calculateUtilizado(updatedRows);
@@ -72,6 +89,59 @@ const CMV = () => {
     calculateTotals(updatedWithUtilizado);
   };
 
+  useEffect(() => {
+    const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
+    const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
+      .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
+
+    setCategorias(categoriasUnicas);
+    setUniqueCategoriesCount(categoriasUnicas.length); // Atualiza o estado com o número de categorias únicas
+  }, []);
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    const tableHTML = `
+      <html>
+        <head>
+          <title>Imprimir CMV</title>
+          <style>
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            th, td {
+              border: 1px solid black;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Relatório de CMV</h1>
+          <table>
+            <thead>
+              <tr>
+                ${headerCmv.map(header => `<th>${header.label}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${produtos.map(produto => `
+                <tr>
+                  ${headerCmv.map(header => `<td>${produto[header.key] !== undefined ? produto[header.key] : 0}</td>`).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(tableHTML);
+    printWindow.document.close();
+    printWindow.print();
+};
   return (
     <div className="flex w-full ">
       <Navbar />
@@ -89,8 +159,10 @@ const CMV = () => {
                 title={'Imprimir'}
                 subtitle={'Imprimir'}
                 buttonSize="large"
+                onClick={handlePrint}
               />
               <IconButton title="Filtro"
+                onClick={() => setFiltro(true)}
                 className='view-button w-10 h-10 '
                 sx={{
                   color: 'black',
@@ -101,7 +173,9 @@ const CMV = () => {
                     border: '1px solid black'
                   }
                 }} >
+
                 <FilterAlt fontSize={"small"} />
+
               </IconButton>
               <div className='w-[90%] flex items-center justify-end'>
                 <div className='w-[70%] md:w-[15%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
@@ -180,6 +254,81 @@ const CMV = () => {
           </div>
         </div>
       </div>
+      <CentralModal
+        tamanhoTitulo={'81%'}
+        maxHeight={'100vh'}
+        top={'20%'}
+        left={'28%'}
+        width={'400px'}
+        icon={<FilterAltIcon fontSize="small" />}
+        open={filtro}
+        onClose={handleCloseFiltro}
+        title="Filtro"
+      >
+        <div >
+          <div className='mt-4 flex gap-3 flex-wrap'>
+
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              label="Data Inicial"
+              value={dataInicial}
+              type='date'
+              // onChange={handleInputChange}
+              autoComplete="off"
+              sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <DateRange />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              label="Data Final"
+              type='date'
+              value={dataFinal}
+              //onChange={handleInputChange}
+              autoComplete="off"
+              sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <DateRange />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <SelectTextFields
+              width={'175px'}
+              icon={<CategoryIcon fontSize="small" />}
+              label={'Categoria'}
+              backgroundColor={"#D9D9D9"}
+              name={"categoria"}
+              fontWeight={500}
+              options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+              onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
+              value={selectedCategoria} // Reflete o estado atual no componente
+            />
+
+
+
+          </div>
+          <div className='w-[95%] mt-2 flex items-end justify-end'>
+            <ButtonComponent
+              title={'Pesquisar'}
+              subtitle={'Pesquisar'}
+              startIcon={<SearchIcon />}
+            //onClick={handleCadastrarProduto}
+            />
+          </div>
+        </div>
+      </CentralModal>
     </div>
   );
 };

@@ -82,32 +82,38 @@ const ListaCompra = () => {
     return (
         <div className="flex w-full ">
             <Navbar />
-            <div className='flex flex-col gap-3 w-full items-end'>
+            <div className='flex ml-0 flex-col gap-3 w-full items-end md:ml-2'>
                 <MenuMobile />
                 <HeaderPerfil />
-                <h1 className='justify-center  sm:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
+                <h1 className='flex justify-center text-base items-center gap-2 sm:ml-1  md:text-2xl  font-bold  w-full md:justify-start   '>
                     <AssignmentIcon /> Lista de Compra
                 </h1>
 
-                <div className=' md:w-full mt-7 p-3 flex gap-2 items-start'>
-                    <HeaderRelatorio/>
-                    <div className='flex flex-col w-[90%]'>
-                    <div>
-                        <ButtonComponent
-                            title="Imprimir"
-                            subtitle="Imprimir"
-                            startIcon={<Print />}
-                            onClick={handlePrint} // Chama a função de impressão
-                        />
+                <div className=" items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start">
+                    <div className="hidden md:w-[14%] md:flex ">
+                        <HeaderRelatorio />
                     </div>
-                    <div className='w-[90%] flex flex-col' ref={tableRef}>
-                        <TableComponent
-                            headers={headers}
-                            rows={rows}
-                            actionsLabel={"Ações"}
-                            actionCalls={{}}
-                        />
-                    </div>
+                    <div className="w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col md:w-[80%]">
+                        <div className="flex gap-2 flex-wrap w-full justify-center md:justify-start">
+
+                            <div className='flex items-center gap-2'>
+                                
+                                <ButtonComponent
+                                    title="Imprimir"
+                                    subtitle="Imprimir"
+                                    startIcon={<Print />}
+                                    onClick={handlePrint} // Chama a função de impressão
+                                />
+                            </div>
+                            <div className='w-[90%] flex flex-col' ref={tableRef}>
+                                <TableComponent
+                                    headers={headers}
+                                    rows={rows}
+                                    actionsLabel={"Ações"}
+                                    actionCalls={{}}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

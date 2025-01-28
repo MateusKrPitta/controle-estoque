@@ -5,8 +5,7 @@ import Navbar from '../../components/navbars/header';
 import HeaderPerfil from '../../components/navbars/perfil/index.js';
 import MenuMobile from '../../components/menu-mobile/index.js';
 import ButtonComponent from '../../components/button';
-import SearchIcon from '@mui/icons-material/Search';
-import { AddCircleOutline, Edit, Save, Delete, MoneyOutlined } from '@mui/icons-material'; // Importando o ícone de exclusão
+import { AddCircleOutline, Edit, Save, DateRange } from '@mui/icons-material'; // Importando o ícone de exclusão
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import CentralModal from '../../components/modal-central/index.js';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -15,10 +14,14 @@ import SelectTextFields from '../../components/select/index.js';
 import TableComponent from '../../components/table/index.js';
 import { headerEntradaSaida } from '../../entities/headers/header-entrada-saida.js';
 import ModalLateral from '../../components/modal-lateral/index.js';
-import { NumericFormat } from 'react-number-format';
 import { formatValor } from '../../utils/functions.js';
 import CustomToast from '../../components/toast/index.js';
-
+import Entrada from '../../assets/icones/entradas-saidas.png'
+import Saida from '../../assets/icones/saida.png'
+import Entradas from '../../assets/icones/entradas.png'
+import Valor from '../../assets/icones/valor.png'
+import CategoryIcon from '@mui/icons-material/Category';
+import SearchIcon from '@mui/icons-material/Search';
 
 const EntradaSaida = () => {
   const [cadastro, setCadastro] = useState(false);
@@ -27,6 +30,12 @@ const EntradaSaida = () => {
   const [entradasSaidas, setEntradasSaidas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editando, setEditando] = useState(false);
+  const [filtro, setFiltro] = useState(false);
+  const [dataInicial, setDataInicial] = useState('');
+  const [dataFinal, setDataFinal] = useState('');
+  const [selectedCategoria, setSelectedCategoria] = useState('');
+  const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
+
 
   // Estados para o registro atual
   const [produto, setProduto] = useState('');
@@ -50,8 +59,8 @@ const EntradaSaida = () => {
   const handleCadastro = () => setCadastro(true);
   const handleCloseCadastro = () => setCadastro(false);
 
-
-
+  const handleFiltro = () => setFiltro(true);
+  const handleCloseFiltro = () => setFiltro(false);
 
 
   const handleProdutoChange = (value) => {
@@ -73,6 +82,7 @@ const EntradaSaida = () => {
     setEditando(false);
     setRegistroEditado(null); // Limpa o registro editado
   };
+
   const handleCadastrarRegistro = () => {
     const valorTotal = produtoSelecionado ? produtoSelecionado.preco * quantidade : 0; // Calcule o valor total
 
@@ -96,7 +106,6 @@ const EntradaSaida = () => {
     setProdutoSelecionado(null);
     handleCloseCadastro();
   };
-
 
   const handleSaveEdit = () => {
     const valorTotal = produtoSelecionado ? produtoSelecionado.preco * quantidade : 0; // Calcule o valor total
@@ -126,18 +135,71 @@ const EntradaSaida = () => {
     CustomToast({ type: "success", message: "Deletado com sucesso!" });
   };
 
+  const totalMovimentacoes = entradasSaidas.length;
+  const totalEntradas = entradasSaidas
+    .filter(registro => registro.tipo === 'entrada')
+    .reduce((acc, registro) => acc + Number(registro.quantidade), 0);
+  const totalSaidas = entradasSaidas
+    .filter(registro => registro.tipo === 'saida')
+    .reduce((acc, registro) => acc + Number(registro.quantidade), 0);
+
+  // Calcular o valor total em estoque
+  const valorTotalEstoque = entradasSaidas.reduce((acc, registro) => {
+    const valorRegistro = registro.valorTotal; // O valor total já calculado ao cadastrar
+    return acc + (registro.tipo === 'entrada' ? valorRegistro : -valorRegistro);
+  }, 0);
+
+  useEffect(() => {
+    const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
+    const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
+      .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
+
+    setCategorias(categoriasUnicas);
+    setUniqueCategoriesCount(categoriasUnicas.length); // Atualiza o estado com o número de categorias únicas
+  }, []);
 
   return (
     <div className="flex w-full ">
       <Navbar />
-      <div className='flex flex-col gap-3 w-full items-end'>
+      <div className='flex ml-0 flex-col gap-3 w-full items-end md:ml-2'>
         <MenuMobile />
         <HeaderPerfil />
-        <h1 className='sm:items-center md:text-2xl font-bold text-black w-[99%] flex items-center gap-2 '>
+        <h1 className='flex justify-center items-center gap-2 sm: md:text-2xl font-bold w-full md:justify-start'>
           <AddchartIcon /> Entrada e Saída
         </h1>
-        <div className="mt-2 sm:mt-2 md:mt-9 flex flex-col w-full">
-          <div className='flex gap-2'>
+        <div className='w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4' >
+
+          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+            <label className='text-xs font-bold'>Total de Movimentações</label>
+            <div className='flex items-center justify-center gap-5'>
+              <img src={Entrada} alt="Total Movimentações" />
+              <label>{totalMovimentacoes}</label>
+            </div>
+          </div>
+          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+            <label className='text-xs font-bold'>Entradas</label>
+            <div className='flex items-center justify-center gap-5'>
+              <img src={Entradas} alt="Entradas" />
+              <label>{totalEntradas}</label>
+            </div>
+          </div>
+          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+            <label className='text-xs font-bold'>Saídas</label>
+            <div className='flex items-center justify-center gap-5'>
+              <img src={Saida} alt="Saídas" />
+              <label>{totalSaidas}</label>
+            </div>
+          </div>
+          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+            <label className='text-xs font-bold'>Valor total em estoque</label>
+            <div className='flex items-center justify-center gap-5'>
+              <img src={Valor} alt="Valor Total em Estoque" />
+              <label>{formatValor(valorTotalEstoque)}</label> {/* Formata o valor total */}
+            </div>
+          </div>
+        </div>
+        <div className=" ml-0 flex flex-col w-[98%] md:ml-2 mr-3">
+          <div className='flex gap-2 justify-center flex-wrap md:justify-start items-center md:items-start'>
             <TextField
               fullWidth
               variant="outlined"
@@ -151,7 +213,7 @@ const EntradaSaida = () => {
                 ),
               }}
               autoComplete="off"
-              sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '40%' }, marginLeft: '10px' }}
+              sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '40%' } }}
             />
             <ButtonComponent
               startIcon={<SearchIcon fontSize='small' />}
@@ -167,6 +229,7 @@ const EntradaSaida = () => {
               onClick={handleCadastro}
             />
             <IconButton title="Filtro"
+              onClick={() => setFiltro(true)}
               className='view-button w-10 h-10 '
               sx={{
                 color: 'black',
@@ -202,11 +265,11 @@ const EntradaSaida = () => {
           </div>
         </div>
         <CentralModal
-          tamanhoTitulo={'82%'}
+          tamanhoTitulo={'81%'}
           maxHeight={'90vh'}
           top={'20%'}
           left={'28%'}
-          width={'620px'}
+          width={'500px'}
           icon={<AddCircleOutline fontSize="small" />}
           open={cadastro}
           onClose={handleCloseCadastro}
@@ -215,7 +278,7 @@ const EntradaSaida = () => {
           <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
             <div className='mt-4 flex gap-3 flex-wrap'>
               <SelectTextFields
-                width={'260px'}
+                width={'285px'}
                 icon={<ArticleIcon fontSize="small" />}
                 label={'Produto'}
                 backgroundColor={"#D9D9D9"}
@@ -236,7 +299,7 @@ const EntradaSaida = () => {
                 value={quantidade}
                 onChange={(e) => setQuantidade(e.target.value)}
                 autoComplete="off"
-                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
+                sx={{ width: { xs: '30%', sm: '50%', md: '40%', lg: '30%' }, }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -245,11 +308,8 @@ const EntradaSaida = () => {
                   ),
                 }}
               />
-
-
-
               <SelectTextFields
-                width={'260px'}
+                width={'185px'}
                 icon={<AddchartIcon fontSize="small" />}
                 label={'Tipo'}
                 backgroundColor={"#D9D9D9"}
@@ -310,7 +370,6 @@ const EntradaSaida = () => {
                   ),
                 }}
               />
-
               <SelectTextFields
                 width={'150px'}
                 icon={<AddchartIcon fontSize="small" />}
@@ -336,6 +395,82 @@ const EntradaSaida = () => {
             </div>
           }
         />
+
+        <CentralModal
+          tamanhoTitulo={'81%'}
+          maxHeight={'100vh'}
+          top={'20%'}
+          left={'28%'}
+          width={'400px'}
+          icon={<FilterAltIcon fontSize="small" />}
+          open={filtro}
+          onClose={handleCloseFiltro}
+          title="Filtro"
+        >
+          <div >
+            <div className='mt-4 flex gap-3 flex-wrap'>
+
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Data Inicial"
+                value={dataInicial}
+                type='date'
+                // onChange={handleInputChange}
+                autoComplete="off"
+                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DateRange />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Data Final"
+                type='date'
+                value={dataFinal}
+                //onChange={handleInputChange}
+                autoComplete="off"
+                sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DateRange />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <SelectTextFields
+                width={'175px'}
+                icon={<CategoryIcon fontSize="small" />}
+                label={'Categoria'}
+                backgroundColor={"#D9D9D9"}
+                name={"categoria"}
+                fontWeight={500}
+                options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+                onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
+                value={selectedCategoria} // Reflete o estado atual no componente
+              />
+
+
+
+            </div>
+            <div className='w-[95%] mt-2 flex items-end justify-end'>
+              <ButtonComponent
+                title={'Pesquisar'}
+                subtitle={'Pesquisar'}
+                startIcon={<SearchIcon />}
+              //onClick={handleCadastrarProduto}
+              />
+            </div>
+          </div>
+        </CentralModal>
       </div>
     </div>
   );

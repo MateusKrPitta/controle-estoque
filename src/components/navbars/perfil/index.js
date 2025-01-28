@@ -1,15 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ClearIcon from '@mui/icons-material/Clear';
 import { Modal, Box, Menu, MenuItem, Typography } from "@mui/material";
 import Title from "../../title";
 import ButtonComponent from "../../button";
-import CustomToast from "../../toast";
 import SelectTextFields from "../../select";
-import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LogoutIcon from '@mui/icons-material/Logout';
-
+import CategoryIcon from '@mui/icons-material/Category';
 const style = {
   position: "absolute",
   top: "50%",
@@ -22,11 +20,13 @@ const style = {
   p: 4,
 };
 
-const HeaderPerfil = ({ unidades, onSelectUnidade }) => {
+const HeaderPerfil = () => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [openLogoutConfirm, setOpenLogoutConfirm] = useState(false);
-
+  const [categorias, setCategorias] = useState([]);
+  const [selectedCategoria, setSelectedCategoria] = useState('');
+  const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -47,31 +47,43 @@ const HeaderPerfil = ({ unidades, onSelectUnidade }) => {
     //   CustomToast({ type: 'success', message: response.message });
     // }, 10);
   };
+  useEffect(() => {
+    const categoriasSalvas = JSON.parse(localStorage.getItem('unidades')) || [];
+    const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
+      .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
 
+    setCategorias(categoriasUnicas);
+    setUniqueCategoriesCount(categoriasUnicas.length); // Atualiza o estado com o número de categorias únicas
+  }, []);
   return (
     <>
       <div className="hidden md:flex justify-end w-full h-8">
         <div
-          className="flex items-center justify-center  w-[14%] h-24 bg-cover bg-no-repeat rounded-bl-lg"
+          className="flex items-center justify-center  w-[35%] h-20 bg-cover bg-no-repeat rounded-bl-lg"
           style={{ backgroundColor: '#BCDA72' }}
         >
           <div className="w-[80%] items-star flex flex-wrap gap-2">
+
+          <SelectTextFields
+                width={'150px'}
+                icon={<CategoryIcon fontSize="small" />}
+                label={'Unidades'}
+                backgroundColor={"#D9D9D9"}
+                name={"Unidades"}
+                fontWeight={500}
+                options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+                onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
+                value={selectedCategoria} // Reflete o estado atual no componente
+              />
             <div className="flex items-center justify-start text-black  ">
-              <a  className="cursor-pointer p-1">
+              <a className="cursor-pointer p-1" >
                 <AccountCircleIcon />
               </a>
               <span className="text-xs text-black font-bold ">Administrador</span>
 
             </div>
-            <SelectTextFields
-              width={'150px'}
-              label={'Unidade'}
-              
-              icon={<LocationOnIcon fontSize="small" />}
-              value={''} // Aqui você pode definir o valor selecionado
-            />
           </div>
-          <div className="w-[10%]" >
+          <div className="w-[10%] flex justify-center items-center" style={{backgroundColor:'white', borderRadius:'50px', padding:'5px'}} >
             <a onClick={handleMenuOpen} className="cursor-pointer p-1">
               <LogoutIcon />
             </a>

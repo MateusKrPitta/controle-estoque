@@ -5,9 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import MenuIcon from "@mui/icons-material/Menu";
-import PostAddIcon from '@mui/icons-material/PostAdd';
-import GradingIcon from '@mui/icons-material/Grading';
-import ArticleIcon from '@mui/icons-material/Article';
 import { ExitToApp } from '@mui/icons-material';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
 import { ProductionQuantityLimitsTwoTone } from '@mui/icons-material';
@@ -76,7 +73,7 @@ const MenuMobile = ({ user }) => {
                 <MenuItem onClick={() => handleNavigate("/relatorios")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
                     <DataThresholdingIcon style={{ color: '#BCDA72' }} fontSize='small' />Relatório
                 </MenuItem>
-                <MenuItem onClick={() => handleNavigate("/cadastro")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
+                <MenuItem onClick={() => handleNavigate("/entrada-saida")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
                     <AddchartIcon style={{ color: '#BCDA72' }} fontSize='small' />Entrada/Saída
                 </MenuItem>
                 <MenuItem onClick={() => handleNavigate("/cadastro")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>

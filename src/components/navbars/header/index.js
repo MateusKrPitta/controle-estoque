@@ -11,7 +11,6 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import { Button, Drawer, IconButton, List } from '@mui/material';
 import AddchartIcon from '@mui/icons-material/Addchart';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
-import ArticleIcon from '@mui/icons-material/Article';
 import { ProductionQuantityLimitsTwoTone } from '@mui/icons-material';
 import DataThresholdingIcon from '@mui/icons-material/DataThresholding';
 import ContentPasteSearchIcon from '@mui/icons-material/ContentPasteSearch';
@@ -21,6 +20,7 @@ const Navbar = ({ user }) => {
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
     const [showCadastroSubMenu, setShowCadastroSubMenu] = useState(false);
+
 
     const toggleMenu = () => {
         setMenuOpen(!menuOpen);
@@ -42,12 +42,15 @@ const Navbar = ({ user }) => {
         }
     }, []);
 
+
+
     return (
         <div className='hidden sm:hidden md:block lg:block'>
             <div className="lg:block hidden h-[100%]">
                 <div className={` transition-all w-64 h-screen bg-cover bg-no-repeat bg-center flex flex-col p-5`} style={{ backgroundColor: 'black' }}>
-                    <div className="flex justify-center mb-5 cursor-pointer" onClick={() => handleNavigate("/dashboard")}>
+                    <div className="flex flex-col justify-center items-center mb-5 cursor-pointer" onClick={() => handleNavigate("/dashboard")}>
                         <img src={logo} alt="Logo" style={{backgroundColor:'black', padding:'15px', borderRadius:"10px", width:'65%'}} title={user ? "Clique para acessar a Dashboard" : ''} className="w-24" />
+                        <label className='text-white text-xs'>Controle de Estoque</label>
                     </div>
                     {/* {user ? ( */}
                     <div className="flex flex-col gap-2 text-white overflow-hidden transition-all">

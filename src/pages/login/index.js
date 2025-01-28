@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HelpOutline, VisibilityOffOutlined, VisibilityOutlined } from '@mui/icons-material';
+import {  VisibilityOffOutlined, VisibilityOutlined } from '@mui/icons-material';
 import logoPaxVerde from '../../assets/png/logo.png';
 import LoadingLogin from '../../components/loading/loading-login';
 import { useNavigate } from 'react-router-dom';

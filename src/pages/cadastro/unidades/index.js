@@ -71,6 +71,7 @@ const Unidades = () => {
     // Limpar os estados
     setNomeUnidade("");
     setUnidadeEditando(null);
+    CustomToast({ type: "success", message: "Unidade cadastrada com sucesso!" });
   };
 
 
@@ -91,13 +92,13 @@ const Unidades = () => {
         CustomToast({ type: "error", message: "O nome da unidade é obrigatório!" });
         return;
       }
-  
+
       const updatedUnidades = unidades.map((unidade) =>
         unidade.cnpj === unidadeEditada.cnpj
           ? { ...unidade, nome: unidadeEditada.nome } // Atualiza apenas a unidade correspondente
           : unidade
       );
-  
+
       setUnidades(updatedUnidades);
       localStorage.setItem("unidades", JSON.stringify(updatedUnidades));
       setEditandoUnidade(false);
@@ -105,7 +106,7 @@ const Unidades = () => {
       CustomToast({ type: "success", message: "Unidade editada com sucesso!" });
     }
   };
-  
+
 
   const handleEditUnidade = (unidade) => {
     setUnidadeEditada({ ...unidade }); // Clona a categoria para edição
@@ -130,22 +131,23 @@ const Unidades = () => {
   return (
     <div className="flex w-full ">
       <Navbar />
-      <div className='flex flex-col gap-3 w-full items-end'>
+      <div className='flex ml-0 flex-col gap-3 w-full items-end md:ml-2'>
         <MenuMobile />
-        <HeaderPerfil unidades={unidades} onSelectUnidade={handleSelectUnidade} />
-        <h1 className='sm:items-center md:text-2xl font-bold text-black w-[99%] flex items-center gap-2 '><LocationOnOutlined />Cadastro Unidades</h1>
-        <div className='w-full mt-7 p-3 flex gap-2 items-start'>
-          <HeaderCadastro />
-
-          <div className='w-[90%] flex flex-col'>
-            <div className='flex gap-2'>
+        <HeaderPerfil />
+        <h1 className='flex justify-center text-base items-center gap-2 sm:ml-1  md:text-2xl  font-bold  w-full md:justify-start   '><LocationOnOutlined />Cadastro Unidades</h1>
+        <div className=" items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start">
+          <div className="hidden md:w-[14%] md:flex ">
+            <HeaderCadastro />
+          </div>
+          <div className="w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col md:w-[80%]">
+            <div className="flex gap-2 flex-wrap w-full justify-center md:justify-start">
               <TextField
                 fullWidth
                 variant="outlined"
                 size="small"
                 label="Buscar unidade"
                 autoComplete="off"
-                sx={{ width: '40%' }}
+                sx={{ width: { xs: '90%', sm: '50%', md: '40%', lg: '40%' }, }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -179,7 +181,7 @@ const Unidades = () => {
               }}
             />
 
-            <CentralModal tamanhoTitulo={'82%'} maxHeight={'90vh'} top={'20%'} left={'28%'} width={'400px'} icon={<AddCircleOutlineIcon fontSize="small" />} open={cadastrarUnidade} onClose={handleCloseCadastroUnidade} title="Cadastrar Unidade">
+            <CentralModal tamanhoTitulo={'81%'} maxHeight={'90vh'} top={'20%'} left={'28%'} width={'400px'} icon={<AddCircleOutlineIcon fontSize="small" />} open={cadastrarUnidade} onClose={handleCloseCadastroUnidade} title="Cadastrar Unidade">
               <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
                 <div className='mt-4 flex gap-3 flex-wrap'>
                   <TextField
@@ -191,7 +193,7 @@ const Unidades = () => {
                     autoComplete="off"
                     value={nomeUnidade} // Use o estado para o valor
                     onChange={(e) => setNomeUnidade(e.target.value)} // Atualiza o estado ao digitar
-                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '95%' } }}
+                    sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '95%' } }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">

@@ -27,7 +27,7 @@ const HeaderCadastro = () => {
     
 
     return (
-        <div className="w-[100%] items-center justify-center flex flex-wrap  sm:justify-start md:w-[15%] gap-1 ">
+        <div className="w-[100%] items-center justify-center flex flex-wrap  sm:justify-start md: gap-1 ">
             <ButtonComponent
                 startIcon={<AccountCircleIcon fontSize="small" />}
                 title="Usuário"
