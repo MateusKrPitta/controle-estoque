@@ -1,40 +1,143 @@
-import React, { useState } from "react";
-import Navbar from '../../../components/navbars/header'
-import HeaderPerfil from '../../../components/navbars/perfil'
-import { InputAdornment, TextField } from '@mui/material'
+import React, { useState, useEffect } from "react";
+import Navbar from '../../../components/navbars/header';
+import HeaderPerfil from '../../../components/navbars/perfil';
+import { InputAdornment, TextField } from '@mui/material';
 import ButtonComponent from '../../../components/button';
 import SearchIcon from '@mui/icons-material/Search';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import HeaderCadastro from '../../../components/navbars/cadastro';
 import TableComponent from '../../../components/table';
-import { headerUnidade } from '../../../entities/headers/header-cadastro/header-unidade';
-import { unidades } from '../../../entities/class/cadastro/unidades';
 import CentralModal from '../../../components/modal-central';
 import EditIcon from '@mui/icons-material/Edit';
-import { Article, Assignment, GpsFixed, LocalActivityOutlined, LocationCity, LocationOn, LocationOnOutlined, Phone, Save } from "@mui/icons-material";
+import { LocationOnOutlined, Phone, Save } from "@mui/icons-material";
 import ModalLateral from "../../../components/modal-lateral";
 import MenuMobile from "../../../components/menu-mobile";
+import estadosJSON from "../../../utils/json/estados.json";
+import { headerUnidade } from "../../../entities/headers/header-unidades";
+import CustomToast from "../../../components/toast";
 
 const Unidades = () => {
   const [cadastrarUnidade, setCadastrarUnidade] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
+  const [estadosList, setEstadosList] = useState([]);
+  const [unidades, setUnidades] = useState([]);
+  const [unidadeEditando, setUnidadeEditando] = useState(null);
+  const [nomeUnidade, setNomeUnidade] = useState(""); // Estado para o nome da unidade
+  const [editandoUnidade, setEditandoUnidade] = useState(false);
+  const [unidadeEditada, setUnidadeEditada] = useState(null);
 
-  const handleCadastroUnidade = () => setCadastrarUnidade(true);
-  const handleCloseCadastroUnidade = () => setCadastrarUnidade(false);
+  const handleCadastroUnidade = () => {
+    setCadastrarUnidade(true);
+    setUnidadeEditando(null);
+    setNomeUnidade(""); // Limpa o nome da unidade ao abrir o modal
+  };
+
+  const handleCloseCadastroUnidade = () => {
+    setCadastrarUnidade(false);
+  };
+
+  const carregarUnidades = () => {
+    const unidadesSalvas = JSON.parse(localStorage.getItem("unidades")) || [];
+    setUnidades(unidadesSalvas);
+  };
+  const handleSalvarUnidade = () => {
+    if (!nomeUnidade.trim()) {
+      alert("O nome da unidade é obrigatório.");
+      return;
+    }
+
+    const novaUnidade = {
+      cnpj: unidadeEditando ? unidadeEditando.cnpj : Date.now(), // Identificador único
+      nome: nomeUnidade,
+    };
+
+    let unidadesSalvas = JSON.parse(localStorage.getItem("unidades")) || [];
+
+    if (unidadeEditando) {
+      // Atualizar unidade existente
+      unidadesSalvas = unidadesSalvas.map((unidade) =>
+        unidade.cnpj === unidadeEditando.cnpj ? novaUnidade : unidade
+      );
+      setModalEditar(false); // Fecha o modal de edição
+    } else {
+      // Adicionar nova unidade
+      unidadesSalvas.push(novaUnidade);
+      setCadastrarUnidade(false); // Fecha o modal de cadastro
+    }
+
+    localStorage.setItem("unidades", JSON.stringify(unidadesSalvas));
+    setUnidades(unidadesSalvas);
+
+    // Limpar os estados
+    setNomeUnidade("");
+    setUnidadeEditando(null);
+  };
+
+
+  useEffect(() => {
+    setEstadosList(estadosJSON.estados);
+    carregarUnidades();
+  }, []);
+
+  const handleEditarUnidade = (unidade) => {
+    setUnidadeEditando(unidade);
+    setNomeUnidade(unidade.nome); // Carrega o nome da unidade no estado
+    setModalEditar(true); // Abre o modal de edição
+  };
+
+  const handleSaveEdit = () => {
+    if (unidadeEditada) {
+      if (!unidadeEditada.nome.trim()) {
+        CustomToast({ type: "error", message: "O nome da unidade é obrigatório!" });
+        return;
+      }
+  
+      const updatedUnidades = unidades.map((unidade) =>
+        unidade.cnpj === unidadeEditada.cnpj
+          ? { ...unidade, nome: unidadeEditada.nome } // Atualiza apenas a unidade correspondente
+          : unidade
+      );
+  
+      setUnidades(updatedUnidades);
+      localStorage.setItem("unidades", JSON.stringify(updatedUnidades));
+      setEditandoUnidade(false);
+      setUnidadeEditada(null);
+      CustomToast({ type: "success", message: "Unidade editada com sucesso!" });
+    }
+  };
+  
+
+  const handleEditUnidade = (unidade) => {
+    setUnidadeEditada({ ...unidade }); // Clona a categoria para edição
+    setEditandoUnidade(true);
+
+  };
+
+
+  const handleDeleteUnidade = (unidade) => {
+    const updatedUnidades = unidades.filter(cat => cat.cnpj !== unidade.cnpj); // Corrigido para usar cnpj
+    setUnidades(updatedUnidades);
+    localStorage.setItem('unidades', JSON.stringify(updatedUnidades));
+    CustomToast({ type: "success", message: "Unidade deletada com sucesso!" });
+  };
+
+  const handleSelectUnidade = (event) => {
+    const selectedCnpj = event.target.value;
+    // Aqui você pode fazer algo com a unidade selecionada, como armazenar em um estado
+    console.log("Unidade selecionada:", selectedCnpj);
+  };
 
   return (
-    <div className="container-contratos-pendentes ">
+    <div className="flex w-full ">
       <Navbar />
-      <div className='flex flex-col gap-2 w-full items-end'>
+      <div className='flex flex-col gap-3 w-full items-end'>
         <MenuMobile />
-        <HeaderPerfil />
-        <h1 className='flex gap-2 items-center justify-center text-base sm:ml-1  md:text-2xl  font-bold text-primary w-full md:justify-start   '><LocationOnOutlined />Cadastro Unidades</h1>
-        <div className='flex w-full gap-1 mt-9 '>
-          <div className="hidden sm:hidden md:block w-[13%]">
-            <HeaderCadastro />
-          </div>
+        <HeaderPerfil unidades={unidades} onSelectUnidade={handleSelectUnidade} />
+        <h1 className='sm:items-center md:text-2xl font-bold text-black w-[99%] flex items-center gap-2 '><LocationOnOutlined />Cadastro Unidades</h1>
+        <div className='w-full mt-7 p-3 flex gap-2 items-start'>
+          <HeaderCadastro />
 
-          <div class="mt-2 ml-2 sm:mt-0 md: flex flex-col w-[97%]">
+          <div className='w-[90%] flex flex-col'>
             <div className='flex gap-2'>
               <TextField
                 fullWidth
@@ -56,7 +159,6 @@ const Unidades = () => {
                 title={'Pesquisar'}
                 subtitle={'Pesquisar'}
                 buttonSize="large"
-
               />
               <ButtonComponent
                 startIcon={<AddCircleOutlineIcon fontSize='small' />}
@@ -65,132 +167,31 @@ const Unidades = () => {
                 buttonSize="large"
                 onClick={handleCadastroUnidade}
               />
-
             </div>
+
             <TableComponent
-              headers={headerUnidade} // Mantenha os headers como contratosMapeados
-              rows={unidades} // Corrigido para usar contratosMapeados
+              headers={headerUnidade}
               actionsLabel={"Ações"}
+              rows={unidades}
               actionCalls={{
-                edit: () => setModalEditar(true), // Adiciona a função de visualização aqui
+                edit: handleEditUnidade,
+                delete: handleDeleteUnidade,
               }}
             />
 
-            <CentralModal tamanhoTitulo={'82%'} maxHeight={'90vh'} top={'20%'} left={'28%'} width={'620px'} icon={<AddCircleOutlineIcon fontSize="small" />} open={cadastrarUnidade} onClose={handleCloseCadastroUnidade} title="Cadastrar Unidade">
+            <CentralModal tamanhoTitulo={'82%'} maxHeight={'90vh'} top={'20%'} left={'28%'} width={'400px'} icon={<AddCircleOutlineIcon fontSize="small" />} open={cadastrarUnidade} onClose={handleCloseCadastroUnidade} title="Cadastrar Unidade">
               <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
                 <div className='mt-4 flex gap-3 flex-wrap'>
                   <TextField
+                    id="nomeUnidade"
                     fullWidth
                     variant="outlined"
                     size="small"
                     label="Nome da Unidade"
                     autoComplete="off"
-                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '47%' } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <LocationOnOutlined />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    label="Razão Social"
-                    autoComplete="off"
-                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '47%' } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Article />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    label="CNPJ"
-                    autoComplete="off"
-                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '30%' } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Assignment />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    label="Telefone"
-                    autoComplete="off"
-                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '30%' } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Phone />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    label="CEP"
-                    autoComplete="off"
-                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '32%' } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <GpsFixed />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    label="UF"
-                    autoComplete="off"
-                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '20%' } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <LocationOnOutlined />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    label="Município"
-                    autoComplete="off"
-                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '35%' } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <LocationOnOutlined />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    label="Bairro"
-                    autoComplete="off"
-                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '37%' } }}
+                    value={nomeUnidade} // Use o estado para o valor
+                    onChange={(e) => setNomeUnidade(e.target.value)} // Atualiza o estado ao digitar
+                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '95%' } }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -200,236 +201,66 @@ const Unidades = () => {
                     }}
                   />
 
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    label="Rua"
-                    autoComplete="off"
-                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '47%' } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <LocationOnOutlined />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    label="Número"
-                    autoComplete="off"
-                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '47%' } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <LocationOnOutlined />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
                   <div className="flex w-[96%] items-end justify-end ">
                     <ButtonComponent
                       startIcon={<AddCircleOutlineIcon fontSize='small' />}
                       title={'Cadastrar'}
                       subtitle={'Cadastrar'}
                       buttonSize="large"
-
+                      onClick={handleSalvarUnidade}
                     />
                   </div>
-
-
                 </div>
-
               </div>
-
             </CentralModal>
 
             <ModalLateral
-              open={modalEditar}
-              handleClose={() => setModalEditar(false)}
+              open={editandoUnidade}
+              handleClose={() => setEditandoUnidade(false)}
               icon={<EditIcon fontSize={"small"} />}
               tituloModal={'Editar Unidade'}
               tamanhoTitulo={'73%'}
               conteudo={
                 <>
-                  <div className="">
-                    <div className='mt-4 flex gap-3 flex-wrap'>
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        label="Nome da Unidade"
-                        autoComplete="off"
-                        sx={{ width: '100%', }} // Added margin for spacing
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LocationOnOutlined />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        label="Razão Social"
-                        autoComplete="off"
-                        sx={{ width: '48%', }} // Added margin for spacing
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Article />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        label="CNPJ"
-                        autoComplete="off"
-                        sx={{ width: '48%', }} // Added margin for spacing
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Assignment />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        label="Telefone"
-                        autoComplete="off"
-                        sx={{ width: '48%', }} // Added margin for spacing
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Phone />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        label="CEP"
-                        autoComplete="off"
-                        sx={{ width: '48%', }} // Added margin for spacing
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <GpsFixed />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        label="UF"
-                        autoComplete="off"
-                        sx={{ width: '48%', }} // Added margin for spacing
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LocationOnOutlined />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        label="Município"
-                        autoComplete="off"
-                        sx={{ width: '48%', }} // Added margin for spacing
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LocationOnOutlined />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        label="Bairro"
-                        autoComplete="off"
-                        sx={{ width: '48%', }} // Added margin for spacing
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LocationOnOutlined />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
+                  <div className="mt-4 flex gap-3 flex-wrap">
 
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        label="Rua"
-                        autoComplete="off"
-                        sx={{ width: '48%', }} // Added margin for spacing
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LocationOnOutlined />
-                            </InputAdornment>
-                          ),
-                        }}
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      size="small"
+                      label="Nome da Unidade"
+                      autoComplete="off"
+                      value={unidadeEditada ? unidadeEditada.nome : ''}
+                      onChange={(e) => setUnidadeEditada({ ...unidadeEditada, nome: e.target.value })} // Atualiza o estado corretamente
+                      sx={{ width: '100%' }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LocationOnOutlined />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+
+                    <div className="flex w-[100%] items-end justify-end ">
+                      <ButtonComponent
+                        startIcon={<Save fontSize="small" />}
+                        title={"Salvar"}
+                        subtitle={"Salvar"}
+                        buttonSize="large"
+                        onClick={handleSaveEdit}
+
                       />
-
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        label="Número"
-                        autoComplete="off"
-                        sx={{ width: '48%', }} // Added margin for spacing
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LocationOnOutlined />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                      <div className="flex w-[100%] items-end justify-end ">
-                        <ButtonComponent
-                          startIcon={<Save fontSize='small' />}
-                          title={'Salvar'}
-                          subtitle={'Salvar'}
-                          buttonSize="large"
-
-                        />
-                      </div>
-
-
                     </div>
-
                   </div>
-                </>} />
+                </>
+              }
+            />
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Unidades
+export default Unidades;

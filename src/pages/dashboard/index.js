@@ -41,31 +41,34 @@ const Dashboard = () => {
             <Navbar />
             <div className='flex flex-col gap-2 w-full items-end'>
                 <HeaderPerfil />
-                <h1 className='ml-3 text-2xl font-bold text-primary w-[95%]'>Dashboard</h1>
+                <h1 className='flex items-center justify-center mt-6 md:mt-0 md:justify-start ml-3 text-2xl font-bold text-primary w-[95%]'>
+                    Dashboard
+                </h1>
+
                 <div className='w-full mt-8 flex-col p-3'>
-                    <div className='flex gap-8'>
-                        <div className='p-5 border-[2px] rounded-lg w-[20%] flex-col gap-2 flex items-center justify-center'>
+                    <div className='flex  gap-8 md: flex-wrap items-center justify-center'>
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[20%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Total de Produtos</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Estoque} alt="Total de Produtos" />
                                 <label className='text-black font-semibold w-full'>{totalProdutos}</label>
                             </div>
                         </div>
-                        <div className='p-5 border-[2px] rounded-lg w-[20%] flex-col gap-2 flex items-center justify-center'>
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[20%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Itens em Estoque</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Produtos} alt="Itens em Estoque" />
                                 <label className='text-black font-semibold w-full'>{itensEmEstoque}</label>
                             </div>
                         </div>
-                        <div className='p-5 border-[2px] rounded-lg w-[20%] flex-col gap-2 flex items-center justify-center'>
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[20%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Valor Total</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Dinheiro} alt="Valor Total" />
                                 <label className='text-black font-semibold w-full'>R$ {valorTotal.toFixed(2).replace('.', ',')}</label>
                             </div>
                         </div>
-                        <div className='p-5 border-[2px] rounded-lg w-[20%] flex-col gap-2 flex items-center justify-center'>
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[20%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>CMV</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Dados} alt="CMV" />

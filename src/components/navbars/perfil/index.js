@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ClearIcon from '@mui/icons-material/Clear';
 import { Modal, Box, Menu, MenuItem, Typography } from "@mui/material";
 import Title from "../../title";
 import ButtonComponent from "../../button";
 import CustomToast from "../../toast";
+import SelectTextFields from "../../select";
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const style = {
   position: "absolute",
@@ -20,7 +22,7 @@ const style = {
   p: 4,
 };
 
-const HeaderPerfil = () => {
+const HeaderPerfil = ({ unidades, onSelectUnidade }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [openLogoutConfirm, setOpenLogoutConfirm] = useState(false);
@@ -50,16 +52,32 @@ const HeaderPerfil = () => {
     <>
       <div className="hidden md:flex justify-end w-full h-8">
         <div
-          className="flex items-center justify-center w-1/4 h-20 bg-cover bg-no-repeat rounded-bl-lg"
-          style={{ backgroundColor:'#BCDA72' }}
+          className="flex items-center justify-center  w-[14%] h-24 bg-cover bg-no-repeat rounded-bl-lg"
+          style={{ backgroundColor: '#BCDA72' }}
         >
-          <div className="flex items-center justify-center text-black">
+          <div className="w-[80%] items-star flex flex-wrap gap-2">
+            <div className="flex items-center justify-start text-black  ">
+              <a  className="cursor-pointer p-1">
+                <AccountCircleIcon />
+              </a>
+              <span className="text-xs text-black font-bold ">Administrador</span>
+
+            </div>
+            <SelectTextFields
+              width={'150px'}
+              label={'Unidade'}
+              
+              icon={<LocationOnIcon fontSize="small" />}
+              value={''} // Aqui você pode definir o valor selecionado
+            />
+          </div>
+          <div className="w-[10%]" >
             <a onClick={handleMenuOpen} className="cursor-pointer p-1">
-              <AccountCircleIcon />
+              <LogoutIcon />
             </a>
-            <span className="text-xs text-black font-bold">Administrador</span>
           </div>
         </div>
+
       </div>
       <Menu
         anchorEl={anchorEl}

@@ -20,12 +20,12 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
             label: actionsLabel,
         }])
         : [...headers];
-        const handleInputChange = (rowIndex, key, value) => {
-            const updatedRows = [...pageList];
-            updatedRows[rowIndex][key] = value;
-            setPageList(updatedRows);
-            onRowChange(updatedRows); // Chama a função para atualizar os dados no componente pai
-        };
+    const handleInputChange = (rowIndex, key, value) => {
+        const updatedRows = [...pageList];
+        updatedRows[rowIndex][key] = value;
+        setPageList(updatedRows);
+        onRowChange(updatedRows); // Chama a função para atualizar os dados no componente pai
+    };
     const calculateTotals = (rows) => {
         const newTotals = rows.reduce((acc, row) => {
             acc.entradas += Number(row.entradas || 0);
@@ -154,7 +154,7 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
     }, [rows]);
 
     return (
-<TableContainer component={Paper} style={{ maxHeight: '430px', overflowY: 'auto' }} className='scrollbar'>
+        <TableContainer component={Paper} style={{ maxHeight: '430px', overflowY: 'auto' }} className='scrollbar'>
             <Table stickyHeader>
                 <TableHead>
                     <TableRow>

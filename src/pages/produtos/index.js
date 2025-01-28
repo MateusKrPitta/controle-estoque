@@ -137,11 +137,11 @@ const Produtos = () => {
             <div className='flex flex-col gap-3 w-full items-end'>
                 <MenuMobile />
                 <HeaderPerfil />
-                <h1 className='sm:items-center md:text-2xl font-bold text-black w-[99%] flex items-center gap-2 '>
+                <h1 className='justify-center  sm:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
                     <ProductionQuantityLimitsTwoTone /> Produtos
                 </h1>
                 <div className="mt-2 sm:mt-2 md:mt-9 flex flex-col w-full">
-                    <div className='flex gap-2'>
+                    <div className='flex gap-2 justify-center flex-wrap md:justify-start items-center md:items-start'>
                         <TextField
                             fullWidth
                             variant="outlined"
@@ -155,7 +155,7 @@ const Produtos = () => {
                                 ),
                             }}
                             autoComplete="off"
-                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '40%' }, marginLeft: '10px' }}
+                            sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '30%' }, marginLeft: '10px' }}
                         />
                         <ButtonComponent
                             startIcon={<SearchIcon fontSize='small' />}
@@ -209,7 +209,7 @@ const Produtos = () => {
                     </div>
 
                     <CentralModal
-                        tamanhoTitulo={'82%'}
+                        tamanhoTitulo={'81%'}
                         maxHeight={'90vh'}
                         top={'20%'}
                         left={'28%'}
@@ -243,12 +243,13 @@ const Produtos = () => {
                                     fullWidth
                                     variant="outlined"
                                     size="small"
+                                    type='number'
                                     label="Quantidade Mínima"
                                     name="quantidadeMinima"
                                     value={quantidadeMinima}
                                     onChange={(e) => setQuantidadeMinima(e.target.value)}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '43%' } }}
+                                    sx={{ width: { xs: '43%', sm: '50%', md: '40%', lg: '43%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -275,36 +276,14 @@ const Produtos = () => {
                                         ),
                                     }}
                                 />
-                                <SelectTextFields
-                                    width={'245px'}
-                                    icon={<CategoryIcon fontSize="small" />}
-                                    label={'Categoria'}
-                                    backgroundColor={"#D9D9D9"}
-                                    name={"categoria"}
-                                    fontWeight={500}
-                                    options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
-                                    onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
-                                    value={selectedCategoria} // Reflete o estado atual no componente
-                                />
 
-                                <SelectTextFields
-                                    width={'260px'}
-                                    icon={<ScaleIcon fontSize="small" />}
-                                    label={'Unidade'}
-                                    backgroundColor={"#D9D9D9"}
-                                    name={"unidadeMedida"}
-                                    fontWeight={500}
-                                    options={userOptionsUnidade}
-                                    onChange={handleUnidadeChange}
-                                    value={selectedUnidade}
-                                />
                                 <NumericFormat
                                     customInput={TextField}
                                     fullWidth
                                     variant="outlined"
                                     size="small"
                                     label="Preço"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
+                                    sx={{ width: { xs: '43%', sm: '50%', md: '40%', lg: '43%' }, }}
                                     value={preco}
                                     onValueChange={(values) => setPreco(values.value)}
                                     thousandSeparator="."
@@ -320,6 +299,30 @@ const Produtos = () => {
                                         ),
                                     }}
                                 />
+                                <SelectTextFields
+                                    width={'265px'}
+                                    icon={<CategoryIcon fontSize="small" />}
+                                    label={'Categoria'}
+                                    backgroundColor={"#D9D9D9"}
+                                    name={"categoria"}
+                                    fontWeight={500}
+                                    options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+                                    onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
+                                    value={selectedCategoria} // Reflete o estado atual no componente
+                                />
+
+                                <SelectTextFields
+                                    width={'265px'}
+                                    icon={<ScaleIcon fontSize="small" />}
+                                    label={'Unidade'}
+                                    backgroundColor={"#D9D9D9"}
+                                    name={"unidadeMedida"}
+                                    fontWeight={500}
+                                    options={userOptionsUnidade}
+                                    onChange={handleUnidadeChange}
+                                    value={selectedUnidade}
+                                />
+
                             </div>
                             <div className='w-[95%] mt-2 flex items-end justify-end'>
                                 <ButtonComponent
@@ -453,11 +456,11 @@ const Produtos = () => {
                     />
 
                     <CentralModal
-                        tamanhoTitulo={'82%'}
+                        tamanhoTitulo={'81%'}
                         maxHeight={'90vh'}
                         top={'20%'}
                         left={'28%'}
-                        width={'620px'}
+                        width={'500px'}
                         icon={<FilterAltIcon fontSize="small" />}
                         open={filtro}
                         onClose={handleCloseFiltro}
@@ -471,7 +474,7 @@ const Produtos = () => {
                                     size="small"
                                     label="Nome do Produto"
                                     name="nome"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
+                                    sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '95%' } }}
                                     autoComplete="off"
                                     InputProps={{
                                         startAdornment: (
@@ -481,16 +484,7 @@ const Produtos = () => {
                                         ),
                                     }}
                                 />
-                                <SelectTextFields
-                                    width={'250px'}
-                                    icon={<CategoryIcon fontSize="small" />}
-                                    label={'Categoria'}
-                                    backgroundColor={"#D9D9D9"}
-                                    name={"categoria"}
-                                    fontWeight={500}
-
-                                />
-                                <TextField
+                                 <TextField
                                     fullWidth
                                     variant="outlined"
                                     size="small"
@@ -517,7 +511,7 @@ const Produtos = () => {
                                     value={dataFinal}
                                     //onChange={handleInputChange}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '43%' } }}
+                                    sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -526,6 +520,18 @@ const Produtos = () => {
                                         ),
                                     }}
                                 />
+                               <SelectTextFields
+                                    width={'290px'}
+                                    icon={<CategoryIcon fontSize="small" />}
+                                    label={'Categoria'}
+                                    backgroundColor={"#D9D9D9"}
+                                    name={"categoria"}
+                                    fontWeight={500}
+                                    options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+                                    onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
+                                    value={selectedCategoria} // Reflete o estado atual no componente
+                                />
+                               
 
 
                             </div>

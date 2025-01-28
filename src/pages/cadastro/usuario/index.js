@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from '../../../components/navbars/header';
 import HeaderPerfil from '../../../components/navbars/perfil';
 import { InputAdornment, TextField } from '@mui/material';
@@ -8,38 +8,47 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import HeaderCadastro from '../../../components/navbars/cadastro';
 import TableComponent from '../../../components/table/index';
-import { headerUsuario } from '../../../entities/headers/header-cadastro/header-usuario';
-import { usuario } from '../../../entities/class/cadastro/usuarios';
 import CentralModal from '../../../components/modal-central';
 import SelectTextFields from "../../../components/select";
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import Checkbox from '@mui/material/Checkbox';
-import EditIcon from '@mui/icons-material/Edit';
-import ModalLateral from "../../../components/modal-lateral";
 import NotesIcon from '@mui/icons-material/Notes';
-import { LocationOnOutlined, Password, Save } from "@mui/icons-material";
+import { LocationOnOutlined, Password } from "@mui/icons-material";
 import MenuMobile from "../../../components/menu-mobile";
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import TableLoading from "../../../components/loading/loading-table/loading";
+import { headerUsuario } from "../../../entities/headers/header-usuarios";
+import ModalLateral from "../../../components/modal-lateral";
+import { Edit } from '@mui/icons-material';
 
 const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 
 const Usuario = () => {
   const [cadastroUsuario, setCadastroUsuario] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredUsers, setFilteredUsers] = useState(usuario); // Inicializa com todos os usuários
-  const [loading, setLoading] = useState(false); // Estado de carregamento
+  const [loading, setLoading] = useState(false);
   const [selectedUnidades, setSelectedUnidades] = useState([]);
-  const [selectedUser  , setSelectedUser  ] = useState("");
-  const [modalEditar, setModalEditar] = useState(false);
-  const [isActive, setIsActive] = useState(false);
-
-  const userOptionsUnidade = [
-    { value: "Dourados", label: "Dourados" },
-    { value: "Itaporã", label: "Itaporã" },
-    { value: "Ponta Porã", label: "Ponta Porã" },
-  ];
+  const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [editandoUsuario, setEditandoUsuario] = useState(false);
+  const [userToEdit, setUserToEdit] = useState(null); // Estado para o usuário a ser editado
+  const [editUser , setEditUser ] = useState(null);
+  const [newUser , setNewUser ] = useState({
+    nome: '',
+    cpf: '',
+    senha: '',
+    funcao: '',
+    unidade: '',
+    permissoes: {
+      dashboard: { ler: false, gravar: false },
+      cmv: { ler: false, gravar: false },
+      produtos: { ler: false, gravar: false },
+      fichaTecnica: { ler: false, gravar: false },
+      relatorios: { ler: false, gravar: false },
+      cadastro: { ler: false, gravar: false },
+    },
+  });
 
   const userOptionsFuncao = [
     { value: "Recepcionista", label: "Recepcionista" },
@@ -47,13 +56,48 @@ const Usuario = () => {
     { value: "TI", label: "TI" },
   ];
 
-  const handleFuncaoChange = (event) => { setSelectedUser (event.target.value); };
+  useEffect(() => {
+    // Carregar unidades do localStorage
+    const unidadesSalvas = JSON.parse(localStorage.getItem("unidades")) || [];
+    const unidadesOptions = unidadesSalvas.map(unidade => ({
+      value: unidade.nome,
+      label: unidade.nome,
+    }));
+    setUserOptionsUnidade(unidadesOptions);
+
+    // Carregar usuários do localStorage
+    const usuariosSalvos = JSON.parse(localStorage.getItem("usuarios")) || [];
+    setUsers(usuariosSalvos);
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewUser ({ ...newUser , [name]: value });
+  };
+
+  const handleCheckboxChange = (permissao, tipo) => {
+    setNewUser ({
+      ...newUser ,
+      permissoes: {
+        ...newUser .permissoes,
+        [permissao]: {
+          ...newUser .permissoes[permissao],
+          [tipo]: !newUser .permissoes[permissao][tipo],
+        },
+      },
+    });
+  };
 
   const handleUnidadeChange = (event) => {
     const selectedValue = event.target.value;
     if (!selectedUnidades.includes(selectedValue)) {
       setSelectedUnidades([...selectedUnidades, selectedValue]);
     }
+  };
+
+  const handleFuncaoChange = (event) => {
+    const selectedValue = event.target.value;
+    setNewUser ({ ...newUser , funcao: selectedValue }); // Atualiza a função no estado
   };
 
   const handleCadastroUsuario = () => setCadastroUsuario(true);
@@ -63,32 +107,75 @@ const Usuario = () => {
     setSelectedUnidades(selectedUnidades.filter(item => item !== unidade));
   };
 
-  const handleSearch = () => {
-    setLoading(true); // Inicia o carregamento
-    setTimeout(() => {
-      const filtered = usuario.filter(user =>
-        user.Nome && user.Nome.toLowerCase().includes(searchTerm .toLowerCase()) // Verifica se user.Nome existe
-      );
-      setFilteredUsers(filtered);
-      setLoading(false); // Finaliza o carregamento
-    }, 2000); // 2 segundos de atraso
+  const handleSubmit = () => {
+    const updatedUsers = [...users, { ...newUser , unidades: selectedUnidades }];
+    setUsers(updatedUsers);
+    localStorage.setItem("usuarios", JSON.stringify(updatedUsers));
+    handleCloseCadastroUsuario();
+    setNewUser ({
+      nome: '',
+      cpf: '',
+      senha: '',
+      funcao: '',
+      unidade: '',
+      permissoes: {
+        dashboard: { ler: false, gravar: false },
+        cmv: { ler: false, gravar: false },
+        produtos: { ler: false, gravar: false },
+        fichaTecnica: { ler: false, gravar: false },
+        relatorios: { ler: false, gravar: false },
+        cadastro: { ler: false, gravar: false },
+      },
+    });
+    setSelectedUnidades([]);
   };
 
+  const handleEditUser  = (user) => {
+    setEditUser (user); // Preenche o estado com os dados do usuário a ser editado
+    setNewUser (user); // Preenche o estado de criação com os dados do usuário a ser editado
+    setEditandoUsuario(true); // Abre a modal de edição
+  };
+
+  const handleUpdateUser  = () => {
+    const updatedUsers = users.map(user =>
+      user.cpf === editUser .cpf ? newUser  : user // Atualiza o usuário editado
+    );
+    setUsers(updatedUsers);
+    localStorage.setItem("usuarios", JSON.stringify(updatedUsers));
+    setEditandoUsuario(false);
+    setEditUser (null); // Limpa o estado do usuário a ser editado
+    setNewUser ({ // Reseta o estado de criação
+      nome: '',
+      cpf: '',
+      senha: '',
+      funcao: '',
+      unidade: '',
+      permissoes: {
+        dashboard: { ler: false, gravar: false },
+        cmv: { ler: false, gravar: false },
+        produtos: { ler: false, gravar: false },
+        fichaTecnica: { ler: false, gravar: false },
+        relatorios: { ler: false, gravar: false },
+        cadastro: { ler: false, gravar: false },
+      },
+    });
+  };
+
+
+  const filteredUsers = users.filter(user => user.nome.toLowerCase().includes(searchTerm.toLowerCase()));
+
   return (
-    <div className="container-contratos-pendentes ">
+    <div className="flex w-full ">
       <Navbar />
-      <div className='flex flex-col gap-2 w-full items-end'>
+      <div className='flex flex-col gap-3 w-full items-end'>
         <MenuMobile />
         <HeaderPerfil />
-        <h1 className='flex gap-2 items-center justify-center text-base sm:ml-1  md:text-2xl  font-bold text-primary w-full md:justify-start   '>
+        <h1 className='sm:items-center md:text-2xl font-bold text-black w-[99%] flex items-center gap-2 '>
           <AccountCircleIcon />Cadastro Usuários
         </h1>
-        <div className='flex w-full gap-1 mt-9 '>
-          <div className="hidden sm:hidden md:block w-[13%]">
-            <HeaderCadastro />
-          </div>
-
-          <div className="mt-2 ml-2 sm:mt-0 md:flex flex-col w-[97%]">
+        <div className='w-full mt-7 p-3 flex gap-2 items-start'>
+          <HeaderCadastro />
+          <div className='w-[90%] flex flex-col'>
             <div className='flex gap-2'>
               <TextField
                 fullWidth
@@ -112,7 +199,6 @@ const Usuario = () => {
                 title={'Pesquisar'}
                 subtitle={'Pesquisar'}
                 buttonSize="large"
-                onClick={handleSearch}
               />
               <ButtonComponent
                 startIcon={<AddCircleOutlineIcon fontSize='small' />}
@@ -130,17 +216,29 @@ const Usuario = () => {
               ) : (
                 <TableComponent
                   headers={headerUsuario}
-                  rows={filteredUsers} // Atualiza para usar filteredUsers
+                  rows={filteredUsers.map(user => ({
+                    ...user,
+                    edit: () => handleEditUser (user), // Adiciona a função de edição
+                  }))}
                   actionsLabel={"Ações"}
                   actionCalls={{
-                    edit: () => setModalEditar(true),
+                    edit: (user) => handleEditUser (user), // Chama a função de edição
                   }}
                 />
               )}
             </div>
 
-
-            <CentralModal tamanhoTitulo={'82%'} maxHeight={'90vh'} top={'20%'} left={'28%'} width={'620px'} icon={<AddCircleOutlineIcon fontSize="small" />} open={cadastroUsuario} onClose={handleCloseCadastroUsuario} title="Cadastrar Usuário">
+            <CentralModal
+              tamanhoTitulo={'82%'}
+              maxHeight={'90vh'}
+              top={'20%'}
+              left={'28%'}
+              width={'620px'}
+              icon={<AddCircleOutlineIcon fontSize="small" />}
+              open={cadastroUsuario}
+              onClose={handleCloseCadastroUsuario}
+              title="Cadastrar Usuário"
+            >
               <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
                 <div className='mt-4 flex gap-3 flex-wrap'>
                   <TextField
@@ -148,6 +246,9 @@ const Usuario = () => {
                     variant="outlined"
                     size="small"
                     label="Nome Completo"
+                    name="nome"
+                    value={newUser .nome}
+                    onChange={handleInputChange}
                     autoComplete="off"
                     sx={{ width: { xs: '100%', sm: '50%', md: '40%', lg: '47%' } }}
                     InputProps={{
@@ -163,6 +264,9 @@ const Usuario = () => {
                     variant="outlined"
                     size="small"
                     label="CPF"
+                    name="cpf"
+                    value={newUser .cpf}
+                    onChange={handleInputChange}
                     autoComplete="off"
                     sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '47%' } }}
                     InputProps={{
@@ -178,6 +282,10 @@ const Usuario = () => {
                     variant="outlined"
                     size="small"
                     label="Senha"
+                    name="senha"
+                    type="password"
+                    value={newUser .senha}
+                    onChange={handleInputChange}
                     autoComplete="off"
                     sx={{ width: { xs: '47%', sm: '50%', md: '40%', lg: '47%' } }}
                     InputProps={{
@@ -193,17 +301,17 @@ const Usuario = () => {
                     icon={<AccountTreeIcon fontSize="small" />}
                     label={'Função'}
                     backgroundColor={"#D9D9D9"}
-                    name={"Função"}
+                    name={"funcao"}
                     fontWeight={500}
                     options={userOptionsFuncao}
-                    onChange={handleFuncaoChange}
+                    onChange={handleFuncaoChange} // Atualiza a função no estado
                   />
                   <SelectTextFields
                     width={'260px'}
                     icon={<LocationOnOutlined fontSize="small" />}
                     label={'Unidade'}
                     backgroundColor={"#D9D9D9"}
-                    name={"Unidade"}
+                    name={"unidade"}
                     fontWeight={500}
                     options={userOptionsUnidade.filter(option => !selectedUnidades.includes(option.value))}
                     onChange={handleUnidadeChange}
@@ -228,33 +336,23 @@ const Usuario = () => {
                 </div>
 
                 <div className="w-[96%] border-[1px] p-2 rounded-lg">
-                  <div className="w-full flex items-center">
-                    <label className="text-xs w-[73%]">Telemarketing</label>
-                    <div className="w-[12%]">
-                      <Checkbox {...label} />
+                  {Object.keys(newUser .permissoes).map((permissao) => (
+                    <div className="w-full flex items-center" key={permissao}>
+                      <label className="text-xs w-[73%]">{permissao.charAt(0).toUpperCase() + permissao.slice(1)}</label>
+                      <div className="w-[12%]">
+                        <Checkbox
+                          checked={newUser .permissoes[permissao].ler}
+                          onChange={() => handleCheckboxChange(permissao, 'ler')}
+                        />
+                      </div>
+                      <div>
+                        <Checkbox
+                          checked={newUser .permissoes[permissao].gravar}
+                          onChange={() => handleCheckboxChange(permissao, 'gravar')}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Checkbox {...label} />
-                    </div>
-                  </div>
-                  <div className="w-full flex items-center">
-                    <label className="text-xs w-[73%]">Cadastro</label>
-                    <div className="w-[12%]">
-                      <Checkbox {...label} />
-                    </div>
-                    <div>
-                      <Checkbox {...label} />
-                    </div>
-                  </div>
-                  <div className="w-full flex items-center">
-                    <label className="text-xs w-[73%]">Web Vendedor</label>
-                    <div className="w-[12%]">
-                      <Checkbox {...label} />
-                    </div>
-                    <div>
-                      <Checkbox {...label} />
-                    </div>
-                  </div>
+                  ))}
                 </div>
                 <div className="flex w-[96%] items-end justify-end mt-2 ">
                   <ButtonComponent
@@ -262,104 +360,100 @@ const Usuario = () => {
                     title={'Cadastrar'}
                     subtitle={'Cadastrar'}
                     buttonSize="large"
-
+                    onClick={handleSubmit} // Chama a função de cadastro
                   />
                 </div>
               </div>
-
             </CentralModal>
 
             <ModalLateral
-              open={modalEditar}
-              handleClose={() => setModalEditar(false)}
-              icon={<EditIcon fontSize={"small"} />}
-              tituloModal={'Editar Usuário'}
-              tamanhoTitulo={'73%'}
-              conteudo={
-                <>
-
-                  <div className=' flex gap-3 flex-wrap'>
-                    <div className="flex items-center">
-                      <div className="flex flex-col w-[35%] text-xs mr-4">
-                        <label >Status</label>
-                        <div className="flex items-center">
-                          <Checkbox checked={isActive} onChange={() => setIsActive(!isActive)} />
-                          <label className="text-xs">{isActive ? "Ativo" : "Inativo"}</label>
-
-                        </div>
-
-
-                      </div>
-
-                    </div>
-                    <TextField
-                      fullWidth
-                      variant="outlined"
-                      size="small"
-                      label="Nome Completo"
-                      autoComplete="off"
-                      sx={{ width: '100%', }} // Added margin for spacing
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <PersonIcon />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="outlined"
-                      size="small"
-                      label="CPF"
-                      autoComplete="off"
-                      sx={{ width: '49%', }} // Added margin for spacing
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <NotesIcon />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="outlined"
-                      size="small"
-                      label="Senha"
-                      type="password"
-                      autoComplete="off"
-                      sx={{ width: '47%', }} // Added margin for spacing
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <Password />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                    <SelectTextFields
-                      width={'150px'}
-                      icon={<AccountTreeIcon fontSize="small" />}
-                      label={'Função'}
-                      backgroundColor={"#D9D9D9"}
-                      name={"Função"}
-                      fontWeight={500}
-                      options={userOptionsFuncao}
-                      onChange={handleFuncaoChange}
-                    />
-                    <SelectTextFields
-                      width={'143px'}
-                      icon={<LocationOnOutlined fontSize="small" />}
-                      label={'Unidade'}
-                      backgroundColor={"#D9D9D9"}
-                      name={"Unidade"}
-                      fontWeight={500}
-                      options={userOptionsUnidade.filter(option => !selectedUnidades.includes(option.value))}
-                      onChange={handleUnidadeChange}
-                    />
-                  </div>
-                  <div className='mt-4 w-[100%]'>
+      open={editandoUsuario}
+      handleClose={() => setEditandoUsuario(false)}
+      tituloModal="Editar Usuário"
+      icon={<Edit />}
+      tamanhoTitulo="75%"
+      conteudo={
+        <div className="">
+          <div className='mt-4 flex gap-3 flex-wrap'>
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              label="Nome Completo"
+              name="nome"
+              value={newUser .nome} // Use newUser  para edição
+              onChange={handleInputChange}
+              autoComplete="off"
+              sx={{ width: { xs: '100%', sm: '50%', md: '40%', lg: '47%' } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PersonIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              label="CPF"
+              name="cpf"
+              value={newUser .cpf} // Use newUser  para edição
+              onChange={handleInputChange}
+              autoComplete="off"
+              sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '47%' } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <NotesIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              label="Senha"
+              name="senha"
+              type="password"
+              value={newUser .senha} // Use newUser  para edição
+              onChange={handleInputChange}
+              autoComplete="off"
+              sx={{ width: { xs: '47%', sm: '50%', md: '40%', lg: '47%' } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Password />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <SelectTextFields
+              width={'260px'}
+              icon={<AccountTreeIcon fontSize="small" />}
+              label={'Função'}
+              backgroundColor={"#D9D9D9"}
+              name={"funcao"}
+              fontWeight={500}
+              options={userOptionsFuncao}
+              value={newUser .funcao} // Use newUser  para edição
+              onChange={handleFuncaoChange}
+            />
+            <SelectTextFields
+              width={'260px'}
+              icon={<LocationOnOutlined fontSize="small" />}
+              label={'Unidade'}
+              backgroundColor={"#D9D9D9"}
+              name={"unidade"}
+              fontWeight={500}
+              options={userOptionsUnidade.filter(option => !selectedUnidades.includes(option.value))}
+              value={newUser .unidade} // Use newUser  para edição
+              onChange={handleUnidadeChange}
+            />
+          </div>
+                  <div className='mt-4 w-[96%]'>
                     <h3 className="text-xs">Unidades Selecionadas:</h3>
                     <ul className="flex flex-col gap-1">
                       {selectedUnidades.map((unidade, index) => (
@@ -372,56 +466,47 @@ const Usuario = () => {
                   </div>
 
                   <div className="w-full flex items-center mt-4 ml-2 font-bold mb-1">
-                    <label className="w-[73%] text-xs">Permissão</label>
+                    <label className="w-[70%] text-xs">Permissão</label>
                     <label className="w-[10%] text-xs">Ler</label>
                     <label className="w-[10%] text-xs">Gravar</label>
                   </div>
 
-                  <div className="w-[100%] border-[1px] p-2 rounded-lg">
-                    <div className="w-full flex items-center">
-                      <label className="text-xs w-[73%]">Telemarketing</label>
-                      <div className="w-[12%]">
-                        <Checkbox {...label} />
+                  <div className="w-[96%] border-[1px] p-2 rounded-lg">
+                    {Object.keys(newUser .permissoes).map((permissao) => (
+                      <div className="w-full flex items-center" key={permissao}>
+                        <label className="text-xs w-[73%]">{permissao.charAt(0).toUpperCase() + permissao.slice(1)}</label>
+                        <div className="w-[12%]">
+                          <Checkbox
+                            checked={userToEdit ? userToEdit.permissoes[permissao].ler : false}
+                            onChange={() => handleCheckboxChange(permissao, 'ler')}
+                          />
+                        </div>
+                        <div>
+                          <Checkbox
+                            checked={userToEdit ? userToEdit.permissoes[permissao].gravar : false}
+                            onChange={() => handleCheckboxChange(permissao, 'gravar')}
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <Checkbox {...label} />
-                      </div>
-                    </div>
-                    <div className="w-full flex items-center">
-                      <label className="text-xs w-[73%]">Cadastro</label>
-                      <div className="w-[12%]">
-                        <Checkbox {...label} />
-                      </div>
-                      <div>
-                        <Checkbox {...label} />
-                      </div>
-                    </div>
-                    <div className="w-full flex items-center">
-                      <label className="text-xs w-[73%]">Web Vendedor</label>
-                      <div className="w-[12%]">
-                        <Checkbox {...label} />
-                      </div>
-                      <div>
-                        <Checkbox {...label} />
-                      </div>
-                    </div>
-                    <div className="flex w-[100%] items-end justify-end ">
-                      <ButtonComponent
-                        startIcon={<Save fontSize='small' />}
-                        title={'Salvar'}
-                        subtitle={'Salvar'}
-                        buttonSize="large"
-                      />
-                    </div>
+                    ))}
                   </div>
-                </>}
+                  <div className="flex w-[96%] items-end justify-end mt-2 ">
+                    <ButtonComponent
+                      startIcon={<AddCircleOutlineIcon fontSize='small' />}
+                      title={'Salvar'}
+                      subtitle={'Salvar'}
+                      buttonSize="large"
+                      onClick={handleUpdateUser } // Chama a função de atualização
+                    />
+                  </div>
+                </div>
+              }
             />
-
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Usuario
+export default Usuario;

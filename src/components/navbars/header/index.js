@@ -14,6 +14,8 @@ import AddToQueueIcon from '@mui/icons-material/AddToQueue';
 import ArticleIcon from '@mui/icons-material/Article';
 import { ProductionQuantityLimitsTwoTone } from '@mui/icons-material';
 import DataThresholdingIcon from '@mui/icons-material/DataThresholding';
+import ContentPasteSearchIcon from '@mui/icons-material/ContentPasteSearch';
+
 const Navbar = ({ user }) => {
     const [activeRoute, setActiveRoute] = useState("");
     const navigate = useNavigate();
@@ -63,7 +65,7 @@ const Navbar = ({ user }) => {
                         <button
                             onClick={() => handleNavigate("/cmv")}
                             className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/cmv" ? "border-b-2 border-primary" : ""}`}
-                            title={'Contratos Finalizados'}
+                            title={'CMV'}
                         >
                             <AddToQueueIcon fontSize={"small"} />
                             <span>CMV</span>
@@ -71,15 +73,23 @@ const Navbar = ({ user }) => {
                         <button
                             onClick={() => handleNavigate("/produtos")}
                             className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm  ${activeRoute === "/produtos" ? "border-b-2 border-primary" : ""}`}
-                            title={'Contratos Pendentes'}
+                            title={'Produtos'}
                         >
                             <ProductionQuantityLimitsTwoTone style={{color:'black'}} fontSize={"small"} />
                             <span>Produtos</span>
                         </button>
                         <button
+                            onClick={() => handleNavigate("/ficha-tecnica")}
+                            className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/ficha-tecnica" ? "border-b-2 border-primary" : ""}`}
+                            title={'Ficha Técnica'}
+                        >
+                            <ContentPasteSearchIcon fontSize={"small"} />
+                            <span>Ficha Técnica</span>
+                        </button>
+                        <button
                             onClick={() => handleNavigate("/relatorios")}
                             className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/relatorios" ? "border-b-2 border-primary" : ""}`}
-                            title={'Contratos Finalizados'}
+                            title={'Relatórios'}
                         >
                             <DataThresholdingIcon fontSize={"small"} />
                             <span>Relatórios</span>
@@ -87,7 +97,7 @@ const Navbar = ({ user }) => {
                         <button
                             onClick={() => handleNavigate("/entrada-saida")}
                             className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/entrada-saida" ? "border-b-2 border-primary" : ""}`}
-                            title={'Contratos Finalizados'}
+                            title={'Entradas/Saída'}
                         >
                             <AddchartIcon fontSize={"small"} />
                             <span>Entradas/Saída</span>

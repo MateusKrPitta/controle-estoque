@@ -8,7 +8,11 @@ import Categoria from '../pages/cadastro/categoria/index.js';
 import EntradaSaida from '../pages/entrada-saida/index.js';
 import CMV from '../pages/cmv/index.js';
 import Relatorio from '../pages/relatorio/index.js';
-import EstoqueReal from '../pages/produtos/estoque-real/index.js';
+import FichaTecnica from '../pages/ficha-tecnica/index.js';
+import EstoqueReal from '../pages/relatorio/estoque-real/index.js'
+import Usuario from '../pages/cadastro/usuario/index.js';
+import Unidades from '../pages/cadastro/unidades/index.js';
+import ListaCompra from '../pages/relatorio/lista-compra/index.js';
 
 const AppRoutes = () => {
     return (
@@ -21,9 +25,12 @@ const AppRoutes = () => {
             <Route path="/cmv" element={<CMV /> }/>
             <Route path="/relatorios" element={<Relatorio /> }/>
             <Route path="/relatorios/estoque-real" element={<EstoqueReal /> }/>
-
+            <Route path="/relatorios/lista-compra" element={<ListaCompra /> }/>
+            <Route path="/ficha-tecnica" element={<FichaTecnica /> }/>
             <Route path="/cadastro" element={<Cadastro /> }/>
            <Route path="/cadastro/categoria" element={<Categoria /> }/>
+           <Route path="/cadastro/usuarios" element={<Usuario /> }/>
+           <Route path="/cadastro/unidades" element={<Unidades /> }/>
         </Routes>
     );
 };

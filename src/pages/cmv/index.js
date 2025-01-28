@@ -3,12 +3,12 @@ import Navbar from '../../components/navbars/header';
 import HeaderPerfil from '../../components/navbars/perfil/index.js';
 import MenuMobile from '../../components/menu-mobile/index.js';
 import ButtonComponent from '../../components/button';
-import { IconButton } from '@mui/material';
+import { IconButton, InputAdornment, TextField } from '@mui/material';
 import { Print, FilterAlt } from '@mui/icons-material';
 import TableComponent from '../../components/table/index.js';
 import { headerCmv } from '../../entities/headers/header-cmv.js';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
-
+import NumbersIcon from '@mui/icons-material/Numbers';
 const CMV = () => {
   const [produtos, setProdutos] = useState([]);
   const [totals, setTotals] = useState({ totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
@@ -20,46 +20,56 @@ const CMV = () => {
     calculateTotals(produtosSalvos);
   }, []);
 
-  // Recalcula a coluna "Valor Utilizado" para todas as linhas
   const calculateUtilizado = (rows) => {
     return rows.map((row) => {
       const estoqueInicial = Number(row.estoqueInicial || 0);
-      const entradas = Number(row.quantidadeMinima || 0); // "Entradas"
       const estoqueFinal = Number(row.estoqueFinal || 0);
-      const faturamento = Number(row.faturamento || 1); // Faturamento com valor padrão de 1 para evitar divisão por zero
+      const entradas = Number(row.entradas || 0);
+      const preco = Number(row.preco || 0);
 
-      const valorUtilizado = ((estoqueInicial + entradas - estoqueFinal) / faturamento).toFixed(2); // Fórmula ajustada
+      // Calcular utilizado
+      const utilizado = estoqueInicial + estoqueFinal;
+
+      // Calcular valor total
+      const valorTotal = ((estoqueInicial + entradas + estoqueFinal) * preco).toFixed(2);
+
       return {
         ...row,
-        valorUtilizado, // Atualiza a coluna "Valor Utilizado"
+        utilizado, // Quantidade sem máscara
+        valorUtilizado: formatCurrency(valorTotal), // Valor com máscara de moeda
       };
     });
   };
 
-  const handleRowChange = (updatedRows) => {
-    const updatedWithUtilizado = calculateUtilizado(updatedRows); // Atualiza o valor de "Valor Utilizado"
-    setProdutos(updatedWithUtilizado);
-    calculateTotals(updatedWithUtilizado); // Recalcula os totais com os novos valores
-  };
 
-  // A função calculateTotals já está correta, pois ela soma os valores de cada linha
   const calculateTotals = (rows) => {
     const newTotals = rows.reduce((acc, row) => {
-      const preco = Number(row.preco || 1); // Define um preço padrão como 1 caso o campo não exista
+      const preco = Number(row.preco || 0);
+      const entradas = Number(row.entradas || 0);
 
-      // Somente soma se a quantidade mínima for maior que zero
-      const entradas = Number(row.quantidadeMinima || 0);
-      if (entradas > 0) {
-        acc.totalEntradas += entradas * preco; // Entradas multiplicadas pelo preço
-      }
-
-      acc.estoqueInicial += (Number(row.estoqueInicial || 0) * preco); // Estoque inicial multiplicado pelo preço
-      acc.estoqueFinal += (Number(row.estoqueFinal || 0) * preco); // Estoque final multiplicado pelo preço
+      acc.totalEntradas += entradas * preco;
+      acc.estoqueInicial += (Number(row.estoqueInicial || 0) * preco);
+      acc.estoqueFinal += (Number(row.estoqueFinal || 0) * preco);
 
       return acc;
     }, { totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
 
+    console.log("Total Entradas:", newTotals.totalEntradas);
     setTotals(newTotals);
+  };
+
+  const formatCurrency = (value) => {
+    return value.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+  };
+
+
+  const handleRowChange = (updatedRows) => {
+    const updatedWithUtilizado = calculateUtilizado(updatedRows);
+    setProdutos(updatedWithUtilizado);
+    calculateTotals(updatedWithUtilizado);
   };
 
   return (
@@ -68,7 +78,7 @@ const CMV = () => {
       <div className='flex flex-col gap-3 w-full items-end'>
         <MenuMobile />
         <HeaderPerfil />
-        <h1 className='sm:items-center md:text-2xl font-bold text-black w-[99%] flex items-center gap-2 '>
+        <h1 className='justify-center  sm:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
           <AddToQueueIcon /> CMV
         </h1>
         <div className="mt-2 sm:mt-2 md:mt-9 flex flex-col w-full">
@@ -93,31 +103,77 @@ const CMV = () => {
                 }} >
                 <FilterAlt fontSize={"small"} />
               </IconButton>
+              <div className='w-[90%] flex items-center justify-end'>
+                <div className='w-[70%] md:w-[15%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    size="large"
+                    label="CMV"
+                    name="CMV"
+                    autoComplete="off"
+                    sx={{
+                      width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
+                      fontSize: '20px',
+                      backgroundColor: '#ffffff', // Fundo branco para o campo
+                      borderRadius: '8px', // Arredondar bordas
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: '#1a894f', // Cor da borda padrão
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#2563eb', // Cor da borda ao passar o mouse
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#1a894f', // Cor da borda quando em foco
+                        },
+                        backgroundColor: '#f3f4f6', // Fundo interno do campo
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: '#1a894f', // Cor do texto do label
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#2563eb', // Cor do label quando em foco
+                      },
+                      '& .MuiSvgIcon-root': {
+                        color: '#006b33', // Cor do ícone
+                      },
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <NumbersIcon fontSize="large" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </div>
+              </div>
             </div>
             <TableComponent
               headers={headerCmv}
               rows={produtos}
-              onRowChange={handleRowChange} // Passa a função para lidar com mudanças nas linhas
+              onRowChange={handleRowChange}
             />
             <div className='w-full flex items-center gap-5'>
               <label className='w-[23%] flex items-center justify-end mr-3 font-bold text-sm'>Total:</label>
-              <div className='flex items-center w-[60%]'>
+              <div className=' md:flex flex-wrap items-center w-[60%]'>
                 <span
-                  className='w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-28'
+                  className=' w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-28'
                   style={{ backgroundColor: '#1a894f', borderRadius: '10px', color: 'white' }}>
-                  R$ {totals.estoqueInicial.toFixed(2)}
+                  {formatCurrency(totals.estoqueInicial)}
                 </span>
 
                 <span
-                  className='w-[20%] flex items-center text-sm font-bold justify-center  mr-28 p-2'
+                  className='w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center  mr-28 p-2'
                   style={{ backgroundColor: '#2563eb', borderRadius: '10px', color: 'white' }}>
-                  R$ {totals.totalEntradas > 0 ? totals.totalEntradas.toFixed(2) : '0.00'}
+                  {formatCurrency(totals.totalEntradas)}
                 </span>
 
                 <span
-                  className='w-[20%] flex items-center text-sm font-bold justify-center p-2 -ml-2'
+                  className='w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center p-2 '
                   style={{ backgroundColor: '#69706c', borderRadius: '10px', color: 'white' }}>
-                  R$ {totals.estoqueFinal.toFixed(2)}
+                  {formatCurrency(totals.estoqueFinal)}
                 </span>
               </div>
             </div>
@@ -126,6 +182,6 @@ const CMV = () => {
       </div>
     </div>
   );
-}
+};
 
 export default CMV;

@@ -77,12 +77,12 @@ const EntradaSaida = () => {
     const valorTotal = produtoSelecionado ? produtoSelecionado.preco * quantidade : 0; // Calcule o valor total
 
     const novoRegistro = {
-        id: Date.now(), // Usando timestamp como ID único
-        produto: produtoSelecionado ? produtoSelecionado.nome : produto,
-        quantidade,
-        tipo, // Armazena como string formatada
-        categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
-        valorTotal // Adiciona o valor total
+      id: Date.now(), // Usando timestamp como ID único
+      produto: produtoSelecionado ? produtoSelecionado.nome : produto,
+      quantidade,
+      tipo, // Armazena como string formatada
+      categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
+      valorTotal // Adiciona o valor total
     };
 
     const updatedEntradasSaidas = [...entradasSaidas, novoRegistro];
@@ -95,29 +95,29 @@ const EntradaSaida = () => {
     setTipo('entrada');
     setProdutoSelecionado(null);
     handleCloseCadastro();
-};
+  };
 
 
-const handleSaveEdit = () => {
-  const valorTotal = produtoSelecionado ? produtoSelecionado.preco * quantidade : 0; // Calcule o valor total
+  const handleSaveEdit = () => {
+    const valorTotal = produtoSelecionado ? produtoSelecionado.preco * quantidade : 0; // Calcule o valor total
 
-  const updatedEntradasSaidas = entradasSaidas.map((registro) =>
+    const updatedEntradasSaidas = entradasSaidas.map((registro) =>
       registro === registroEditado
-          ? {
-              ...registro,
-              produto: produtoSelecionado ? produtoSelecionado.nome : produto,
-              quantidade,
-              tipo, // Armazena como string formatada
-              categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
-              valorTotal // Atualiza o valor total
-          }
-          : registro
-  );
+        ? {
+          ...registro,
+          produto: produtoSelecionado ? produtoSelecionado.nome : produto,
+          quantidade,
+          tipo, // Armazena como string formatada
+          categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
+          valorTotal // Atualiza o valor total
+        }
+        : registro
+    );
 
-  setEntradasSaidas(updatedEntradasSaidas);
-  localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
-  handleCloseEditar(); // Fecha a modal de edição
-};
+    setEntradasSaidas(updatedEntradasSaidas);
+    localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
+    handleCloseEditar(); // Fecha a modal de edição
+  };
 
   const handleDelete = (registro) => {
     const updatedEntradasSaidas = entradasSaidas.filter((item) => item.id !== registro.id);
@@ -125,7 +125,7 @@ const handleSaveEdit = () => {
     localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
     CustomToast({ type: "success", message: "Deletado com sucesso!" });
   };
-  
+
 
   return (
     <div className="flex w-full ">
@@ -187,17 +187,17 @@ const handleSaveEdit = () => {
               </div>
             ) : (
               <TableComponent
-    headers={headerEntradaSaida}
-    rows={entradasSaidas.map(registro => ({
-        ...registro,
-        valorTotal: formatValor(registro.valorTotal) // Formata o valor total
-    }))}
-    actionsLabel={"Ações"}
-    actionCalls={{
-        edit: handleEditar,
-        delete: (registro) => handleDelete(registro)
-    }}
-/>
+                headers={headerEntradaSaida}
+                rows={entradasSaidas.map(registro => ({
+                  ...registro,
+                  valorTotal: formatValor(registro.valorTotal) // Formata o valor total
+                }))}
+                actionsLabel={"Ações"}
+                actionCalls={{
+                  edit: handleEditar,
+                  delete: (registro) => handleDelete(registro)
+                }}
+              />
             )}
           </div>
         </div>
@@ -214,20 +214,20 @@ const handleSaveEdit = () => {
         >
           <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
             <div className='mt-4 flex gap-3 flex-wrap'>
-            <SelectTextFields
-    width={'260px'}
-    icon={<ArticleIcon fontSize="small" />}
-    label={'Produto'}
-    backgroundColor={"#D9D9D9"}
-    name={"produto"}
-    fontWeight={500}
-    options={produtos.map(produto => ({
-        value: produto.nome, // O valor que será armazenado
-        label: `${produto.nome} - R$ ${formatValor(produto.preco)}` // Exibe o nome e o preço formatado
-    }))}
-    value={produto} // Preenche o campo com o produto atual
-    onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
-/>
+              <SelectTextFields
+                width={'260px'}
+                icon={<ArticleIcon fontSize="small" />}
+                label={'Produto'}
+                backgroundColor={"#D9D9D9"}
+                name={"produto"}
+                fontWeight={500}
+                options={produtos.map(produto => ({
+                  value: produto.nome, // O valor que será armazenado
+                  label: `${produto.nome} - R$ ${formatValor(produto.preco)}` // Exibe o nome e o preço formatado
+                }))}
+                value={produto} // Preenche o campo com o produto atual
+                onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
+              />
               <TextField
                 fullWidth
                 variant="outlined"
@@ -245,7 +245,7 @@ const handleSaveEdit = () => {
                   ),
                 }}
               />
-              
+
 
 
               <SelectTextFields
@@ -310,7 +310,7 @@ const handleSaveEdit = () => {
                   ),
                 }}
               />
-              
+
               <SelectTextFields
                 width={'150px'}
                 icon={<AddchartIcon fontSize="small" />}
