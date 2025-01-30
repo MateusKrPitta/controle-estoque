@@ -3,17 +3,15 @@ import Navbar from '../../components/navbars/header';
 import MenuMobile from '../../components/menu-mobile';
 import HeaderPerfil from '../../components/navbars/perfil';
 import ContentPasteSearchIcon from '@mui/icons-material/ContentPasteSearch';
-import { InputAdornment, TextField, Button } from '@mui/material';
+import { InputAdornment, TextField } from '@mui/material';
 import { AddCircleOutline, MoneySharp, Save } from '@mui/icons-material';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import SelectTextFields from '../../components/select';
 import ArticleIcon from '@mui/icons-material/Article';
 import ScaleIcon from '@mui/icons-material/Scale';
 import ButtonComponent from '../../components/button';
-import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import TableComponent from '../../components/table';
 import { headerFichaTecnica } from '../../entities/headers/header-ficha-tecnica';
-import '../cadastro/unidades/unidades.css';
 import ButtonClose from '../../components/buttons/button-close';
 import FlatwareIcon from '@mui/icons-material/Flatware';
 import CustomToast from '../../components/toast';
@@ -21,7 +19,7 @@ import CustomToast from '../../components/toast';
 const FichaTecnica = () => {
     const [produtos, setProdutos] = useState([]);
     const [produto, setProduto] = useState('');
-    const [precoBruto, setPrecoBruto] = useState('');
+    const [precoPorcao, setPrecoPorcao] = useState('');
     const [valorVenda, setValorVenda] = useState('');
     const [quantidade, setQuantidade] = useState('');
     const [selectedUnidade, setSelectedUnidade] = useState('');
@@ -40,12 +38,7 @@ const FichaTecnica = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    const handleProdutoChange = (value) => {
-        const produtoSelecionado = produtos.find(prod => prod.nome === value);
-        setProduto(value);
-        setPrecoBruto(produtoSelecionado ? produtoSelecionado.precoPorcaoFormatado : ''); // Atualiza o preço bruto para o preço por porção
-        setSelectedUnidade(produtoSelecionado ? produtoSelecionado.unidade : ''); // Atualiza a unidade
-    };
+
 
     useEffect(() => {
         const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
@@ -65,54 +58,6 @@ const FichaTecnica = () => {
         setQuantidade(''); // Reseta a quantidade ao mudar a unidade
     };
 
-
-const handleAdicionarProduto = () => {
-    if (produto && quantidade && selectedUnidade) {
-        const quantidadeNum = parseFloat(quantidade);
-        if (isNaN(quantidadeNum) || quantidadeNum <= 0) {
-            setQuantidadeError('Por favor, insira uma quantidade válida.');
-            return;
-        } else {
-            setQuantidadeError(''); // Limpa a mensagem de erro
-        }
-
-        // Cálculo do custo total
-        const precoNum = parseFloat(precoBruto); // Aqui você pode mudar para pegar o preço por porção
-        let precoPorUnidade = precoNum;
-
-        // Ajuste de preço por unidade
-        if (selectedUnidade === 'g') {
-            precoPorUnidade = precoNum / 1000;
-        } else if (selectedUnidade === 'ml') {
-            precoPorUnidade = precoNum / 1000;
-        }
-
-        const custoProduto = (quantidadeNum * precoPorUnidade);
-        const valorCalculado = custoProduto.toFixed(2); // Calcule o valor utilizado
-
-        // Verifica se o valor utilizado é maior que o preço por porção
-        if (parseFloat(valorCalculado) > precoNum) {
-            CustomToast({ type: "error", message: "O valor utilizado não pode ser maior que o preço por porção!" });
-            return;
-        }
-
-        const novoProduto = {
-            nome: produto,
-            quantidade: quantidadeNum,
-            unidade: selectedUnidade,
-            precoBruto: precoNum , // Aqui você pode mudar para armazenar o preço por porção
-            valorUtilizado: valorCalculado // Use o valor calculado aqui
-        };
-
-        setCustoTotal(prevTotal => prevTotal + custoProduto); // Atualiza o custo total
-        setProdutosAdicionados([...produtosAdicionados, novoProduto]);
-        setProduto('');
-        setQuantidade('');
-        setSelectedUnidade('');
-        setPrecoBruto('');
-        setValorUtilizado('');
-    }
-};
 
     const handleExcluirProduto = (index) => {
         const novosProdutosAdicionados = produtosAdicionados.filter((_, i) => i !== index);
@@ -139,40 +84,51 @@ const handleAdicionarProduto = () => {
         ...ficha,
         itens: ficha.itens.map(item => `${item.nome} - ${item.quantidade} ${item.unidade}`).join(', '),
     }));
-
-    const handleQuantidadeChange = (value) => {
-        const quantidadeNum = parseFloat(value);
-        if (isNaN(quantidadeNum) || quantidadeNum < 0) {
-            setQuantidade('');
-            setValorUtilizado('');
-            return;
-        }
-
-        setQuantidade(value);
-
-        // Cálculo do valor utilizado
-        if (precoBruto) {
-            const precoNum = parseFloat(precoBruto);
-            let precoPorUnidade = precoNum;
-
-            // Se a unidade selecionada for grama e o preço estiver em kg, ajusta o cálculo
-            if (selectedUnidade === 'g') {
-                precoPorUnidade = precoNum / 1000;
-            }
-
-            // Se a unidade selecionada for mililitro e o preço estiver em litro, ajusta o cálculo
-            if (selectedUnidade === 'ml') {
-                precoPorUnidade = precoNum / 1000;
-            }
-
-            const valorCalculado = (quantidadeNum * precoPorUnidade).toFixed(2);
-            setValorUtilizado(valorCalculado);
-
-            setValorUtilizado(valorCalculado);
+    const handleProdutoChange = (value) => {
+        const produtoSelecionado = produtos.find(prod => prod.nome === value);
+        setProduto(value);
+        
+        if (produtoSelecionado) {
+            setPrecoPorcao(produtoSelecionado.precoPorcaoFormatado); // Atualiza o preço por porção
+            setSelectedUnidade(produtoSelecionado.unidade); // Atualiza a unidade
+            setQuantidade(''); // Reseta a quantidade
+            setValorUtilizado(''); // Reseta o valor utilizado
         }
     };
-
-
+    const handleAdicionarProduto = () => {
+        if (produto && quantidade && valorUtilizado) {
+            const produtoAdicionado = {
+                nome: produto,
+                quantidade: quantidade,
+                unidade: selectedUnidade,
+                precoBruto: precoPorcao,
+                valorUtilizado: valorUtilizado.replace("R$ ", ""), // Remove o "R$" para armazenar apenas o valor
+            };
+            setProdutosAdicionados([...produtosAdicionados, produtoAdicionado]);
+            setProduto('');
+            setPrecoPorcao('');
+            setQuantidade('');
+            setValorUtilizado('');
+            setSelectedUnidade('');
+        }
+    };
+    
+    const handleQuantidadeChange = (value) => {
+        setQuantidade(value); // Atualiza a quantidade
+    
+        const quantidadeNum = parseFloat(value.replace(",", ".")); // Converte a quantidade para número
+        const precoNum = parseFloat(precoPorcao.replace("R$ ", "").replace(",", ".")); // Converte o preço porção para número
+    
+        if (!isNaN(precoNum) && !isNaN(quantidadeNum)) {
+            const valorCalculado = (quantidadeNum * precoNum).toFixed(2); // Calcula o valor utilizado
+            setValorUtilizado(`R$ ${valorCalculado}`); // Atualiza o valor utilizado
+        } else {
+            setValorUtilizado(''); // Reseta se os valores não forem válidos
+        }
+    };
+    
+    
+    
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -200,7 +156,7 @@ const handleAdicionarProduto = () => {
                             onChange={(e) => handleProdutoChange(e.target.value)}
                         />
 
-<SelectTextFields
+                        <SelectTextFields
                             width={'150px'}
                             icon={<ScaleIcon fontSize="small" />}
                             label={'Unidade'}
@@ -216,14 +172,13 @@ const handleAdicionarProduto = () => {
                             fullWidth
                             variant="outlined"
                             size="small"
-                            label="Preço Bruto"
-                            name="precoBruto"
-                            value={precoBruto}
-                            onChange={(e) => setPrecoBruto(e.target.value)}
+                            label="Preço Porção"
+                            name="precoPorcao"
+                            value={precoPorcao}
+                            onChange={(e) => setPrecoPorcao(e.target.value)}
                             autoComplete="off"
                             sx={{
                                 width: { xs: '60%', sm: '50%', md: '40%', lg: '10%' },
-
                                 '& .MuiInputLabel-root': {
                                     color: 'black', // Cor do texto do label
                                     fontWeight: 700
@@ -242,28 +197,28 @@ const handleAdicionarProduto = () => {
                                     </InputAdornment>
                                 ),
                             }}
-
                             disabled // Desabilita o campo
                         />
 
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            size="small"
-                            label={`Quantidade Utilizada (${selectedUnidade || 'Unidade'})`} // Exibe a unidade selecionada
-                            name="quantidade"
-                            value={quantidade}
-                            onChange={(e) => handleQuantidadeChange(e.target.value)} // 🔥 Chamada correta da função
-                            autoComplete="off"
-                            sx={{ width: { xs: '60%', sm: '50%', md: '40%', lg: '15%' } }}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <ScaleIcon />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
+<TextField
+    fullWidth
+    variant="outlined"
+    size="small"
+    label={`Quantidade Utilizada`}
+    name="quantidade"
+    value={quantidade}
+    onChange={(e) => handleQuantidadeChange(e.target.value)} // Corrigido
+
+    autoComplete="off"
+    sx={{ width: { xs: '60%', sm: '50%', md: '40%', lg: '15%' } }}
+    InputProps={{
+        startAdornment: (
+            <InputAdornment position="start">
+                <ScaleIcon />
+            </InputAdornment>
+        ),
+    }}
+/>
 
 
                         <TextField
@@ -272,7 +227,7 @@ const handleAdicionarProduto = () => {
                             size="small"
                             label="Valor Utilizado"
                             name="valorUtilizado"
-                            value={valorUtilizado}
+                            value={valorUtilizado} // Este deve refletir o estado
                             autoComplete="off"
                             sx={{ width: { xs: '60%', sm: '50%', md: '40%', lg: '14%' } }}
                             InputProps={{
@@ -294,7 +249,6 @@ const handleAdicionarProduto = () => {
                             onClick={handleAdicionarProduto}
                         />
                     </div>
-
                 </div>
 
                 <div className={`mr-3 md:mr-11 w-[95%]  p-4 border border-gray-300 rounded-lg transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
@@ -337,9 +291,7 @@ const handleAdicionarProduto = () => {
                                                 </label>
                                                 <ButtonClose
                                                     onClick={() => handleExcluirProduto(index)}
-                                                >
-
-                                                </ButtonClose>
+                                                />
                                             </div>
                                         </div>
                                     ))
@@ -349,7 +301,6 @@ const handleAdicionarProduto = () => {
                                 <div className='flex items-center w-full '>
                                     <label className='text-xs font-bold w-[60%]'>Custo Total: </label>
                                     <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#b0d847', borderRadius: '10px', marginLeft: '10px', paddingLeft: '10px' }}>R$ {custoTotal.toFixed(2)}</label>
-
                                 </div>
                                 <div className='flex items-center w-full '>
                                     <label className='text-xs font-bold w-[60%]'>Valor Venda: </label>
@@ -358,22 +309,18 @@ const handleAdicionarProduto = () => {
                                         value={`${valorVenda}`} // Supondo que você tenha um estado para valorVenda
                                         onChange={(e) => setValorVenda(e.target.value)} // Manipulador de mudança se necessário
                                         style={{ backgroundColor: "#FC6D26", color: 'black', borderRadius: '10px', fontSize: '12px', fontWeight: '700', marginLeft: '10px', paddingLeft: '10px', width: '40%', padding: '2px', border: '1px solid #ccc', outline: 'none' }} // Estilos básicos
-
                                     />
                                 </div>
                                 <div className='flex items-center w-full '>
                                     <label className='text-xs font-bold w-[60%]'>CMV Real: </label>
                                     <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#d9d9d9', borderRadius: '10px', marginLeft: '10px', paddingLeft: '10px' }}>R$ {custoTotal.toFixed(2)}</label>
-
                                 </div>
                                 <div className='flex items-center w-full '>
                                     <label className='text-xs font-bold w-[60%]'>Lucro Real: </label>
                                     <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#0173E5', borderRadius: '10px', marginLeft: '10px', paddingLeft: '10px' }}>R$ {custoTotal.toFixed(2)}</label>
-
                                 </div>
                             </div>
                         </div>
-
 
                         <div className='w-full flex items-end justify-end mt-2'>
                             <ButtonComponent
@@ -393,8 +340,7 @@ const handleAdicionarProduto = () => {
                         actionsLabel={"Ações"}
                         actionCalls={{}}
                     />
-                </div >
-
+                </div>
             </div>
         </div>
     );
