@@ -13,6 +13,15 @@ const ListaCompra = () => {
     const [produtos, setProdutos] = useState([]);
     const [entradasSaidas, setEntradasSaidas] = useState([]);
     const tableRef = useRef(null); // Ref para a tabela
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300); // Delay para a transição
+
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
@@ -93,7 +102,7 @@ const ListaCompra = () => {
                     <div className="hidden md:w-[14%] md:flex ">
                         <HeaderRelatorio />
                     </div>
-                    <div className="w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col md:w-[80%]">
+                    <div className={`w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col md:w-[80%] transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                         <div className="flex gap-2 flex-wrap w-full justify-center md:justify-start">
 
                             <div className='flex items-center gap-2'>

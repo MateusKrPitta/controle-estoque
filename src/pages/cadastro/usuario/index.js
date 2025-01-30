@@ -52,6 +52,15 @@ const Usuario = () => {
       cadastro: { ler: false, gravar: false },
     },
   });
+      const [isVisible, setIsVisible] = useState(false);
+  
+      useEffect(() => {
+          const timer = setTimeout(() => {
+              setIsVisible(true);
+          }, 300); // Delay para a transição
+  
+          return () => clearTimeout(timer);
+      }, []);
 
   const userOptionsFuncao = [
     { value: "Recepcionista", label: "Recepcionista" },
@@ -185,7 +194,7 @@ const Usuario = () => {
         <h1 className='flex justify-center text-base items-center gap-2 sm:ml-1  md:text-2xl  font-bold  w-full md:justify-start   '>
           <AccountCircleIcon />Cadastro Usuários
         </h1>
-        <div className=" items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start">
+        <div className={`items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
           <div className="hidden md:w-[14%] md:flex ">
             <HeaderCadastro />
           </div>

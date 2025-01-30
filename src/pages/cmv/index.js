@@ -14,7 +14,7 @@ import CentralModal from '../../components/modal-central/index.js';
 import SelectTextFields from '../../components/select/index.js';
 import CategoryIcon from '@mui/icons-material/Category';
 import SearchIcon from '@mui/icons-material/Search';
-
+import PercentIcon from '@mui/icons-material/Percent';
 
 const CMV = () => {
   const [produtos, setProdutos] = useState([]);
@@ -25,8 +25,17 @@ const CMV = () => {
   const [categorias, setCategorias] = useState([]);
   const [selectedCategoria, setSelectedCategoria] = useState('');
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const [faturamento, setFaturamento] = useState(''); // Mantenha como string para a máscara
+  const [cmv, setCmv] = useState(0); // Novo estado para o CMV
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 300); // Delay para a transição
 
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
@@ -56,7 +65,6 @@ const CMV = () => {
     });
   };
 
-
   const calculateTotals = (rows) => {
     const newTotals = rows.reduce((acc, row) => {
       const preco = Number(row.preco || 0);
@@ -78,6 +86,14 @@ const CMV = () => {
       style: 'currency',
       currency: 'BRL',
     });
+  };
+
+  const formatValor = (valor) => {
+    const parsedValor = parseFloat(valor); // Converte o valor para número
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(parsedValor);
   };
 
   const handleFiltro = () => setFiltro(true);
@@ -141,7 +157,22 @@ const CMV = () => {
     printWindow.document.write(tableHTML);
     printWindow.document.close();
     printWindow.print();
-};
+  };
+
+  // Função para calcular o CMV
+  const calculateCmv = () => {
+    const totalUtilizado = produtos.reduce((acc, produto) => acc + (Number(produto.valorUtilizado.replace('R$', '').replace('.', '').replace(',', '.')) || 0), 0);
+    const faturamentoValue = Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')) || 1; // Evitar divisão por zero
+    const cmvValue = (totalUtilizado / faturamentoValue) * 100; // Cálculo do CMV em porcentagem
+    setCmv(cmvValue.toFixed(2)); // Armazena o CMV com duas casas decimais
+  };
+
+  useEffect(() => {
+    if (faturamento) {
+      calculateCmv(); // Recalcula o CMV somente quando o faturamento é alterado
+    }
+  }, [faturamento, produtos]);
+
   return (
     <div className="flex w-full ">
       <Navbar />
@@ -151,7 +182,7 @@ const CMV = () => {
         <h1 className='justify-center  sm:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
           <AddToQueueIcon /> CMV
         </h1>
-        <div className="mt-2 sm:mt-2 md:mt-9 flex flex-col w-full">
+        <div className={`mt-2 sm:mt-2 md:mt-9 flex flex-col w-full  transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
           <div className='flex gap-2 flex-col ml-4 w-[95%]'>
             <div className='flex items-center gap-3'>
               <ButtonComponent
@@ -177,14 +208,62 @@ const CMV = () => {
                 <FilterAlt fontSize={"small"} />
 
               </IconButton>
-              <div className='w-[90%] flex items-center justify-end'>
-                <div className='w-[70%] md:w-[15%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
+              <div className='w-[90%] flex items-center gap-3 justify-end'>
+                <div className='w-[70%] md:w-[20%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
                   <TextField
                     fullWidth
                     variant="outlined"
                     size="large"
                     label="CMV"
                     name="CMV"
+                    value={`${cmv}%`} // Exibe o CMV em porcentagem
+                    autoComplete="off"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PercentIcon fontSize="large" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
+                      fontSize: '20px',
+                      backgroundColor: '#ffffff', // Fundo branco para o campo
+                      borderRadius: '8px', // Arredondar bordas
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: '#1a894f', // Cor da borda padrão
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#2563eb', // Cor da borda ao passar o mouse
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#1a894f', // Cor da borda quando em foco
+                        },
+                        backgroundColor: '#f3f4f6', // Fundo interno do campo
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: '#1a894f', // Cor do texto do label
+                        fontWeight: 700
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#2563eb', // Cor do label quando em foco
+                      },
+                      '& .MuiSvgIcon-root': {
+                        color: '#006b33', // Cor do ícone
+                      },
+                    }}
+                  />
+                </div>
+                <div className='w-[70%] md:w-[20%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    size="large"
+                    label="Faturamento"
+                    name="Faturamento"
+                    value={formatValor(faturamento)} // Aplica a máscara de valor
+                    onChange={(e) => setFaturamento(e.target.value.replace('R$', '').replace('.', '').replace(',', '.'))} // Atualiza o estado do faturamento
                     autoComplete="off"
                     sx={{
                       width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
@@ -205,6 +284,7 @@ const CMV = () => {
                       },
                       '& .MuiInputLabel-root': {
                         color: '#1a894f', // Cor do texto do label
+                        fontWeight: 700
                       },
                       '& .MuiInputLabel-root.Mui-focused': {
                         color: '#2563eb', // Cor do label quando em foco
@@ -231,21 +311,21 @@ const CMV = () => {
             />
             <div className='w-full flex items-center gap-5'>
               <label className='w-[23%] flex items-center justify-end mr-3 font-bold text-sm'>Total:</label>
-              <div className=' md:flex flex-wrap items-center w-[60%]'>
+              <div className=' md:flex flex-wrap items-center w-[60%] ml-8'>
                 <span
-                  className=' w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-28'
+                  className=' w-[80%] md:w-[25%] flex items-center text-sm font-bold justify-center p-2 mr-6'
                   style={{ backgroundColor: '#1a894f', borderRadius: '10px', color: 'white' }}>
                   {formatCurrency(totals.estoqueInicial)}
                 </span>
 
                 <span
-                  className='w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center  mr-28 p-2'
+                  className='w-[80%] md:w-[25%] flex items-center text-sm font-bold justify-center  mr-6 p-2'
                   style={{ backgroundColor: '#2563eb', borderRadius: '10px', color: 'white' }}>
                   {formatCurrency(totals.totalEntradas)}
                 </span>
 
                 <span
-                  className='w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center p-2 '
+                  className='w-[80%] md:w-[25%] flex items-center text-sm font-bold justify-center p-2 '
                   style={{ backgroundColor: '#69706c', borderRadius: '10px', color: 'white' }}>
                   {formatCurrency(totals.estoqueFinal)}
                 </span>
@@ -275,7 +355,6 @@ const CMV = () => {
               label="Data Inicial"
               value={dataInicial}
               type='date'
-              // onChange={handleInputChange}
               autoComplete="off"
               sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
               InputProps={{
@@ -293,7 +372,6 @@ const CMV = () => {
               label="Data Final"
               type='date'
               value={dataFinal}
-              //onChange={handleInputChange}
               autoComplete="off"
               sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
               InputProps={{
@@ -315,16 +393,12 @@ const CMV = () => {
               onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
               value={selectedCategoria} // Reflete o estado atual no componente
             />
-
-
-
           </div>
           <div className='w-[95%] mt-2 flex items-end justify-end'>
             <ButtonComponent
               title={'Pesquisar'}
               subtitle={'Pesquisar'}
               startIcon={<SearchIcon />}
-            //onClick={handleCadastrarProduto}
             />
           </div>
         </div>

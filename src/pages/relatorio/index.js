@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react';
 import Navbar from '../../components/navbars/header'
 import MenuMobile from '../../components/menu-mobile'
 import HeaderPerfil from '../../components/navbars/perfil'
@@ -7,6 +7,16 @@ import DataThresholdingIcon from '@mui/icons-material/DataThresholding';
 import HeaderRelatorio from '../../components/navbars/relatorios'
 
 const Relatorio = () => {
+        const [isVisible, setIsVisible] = useState(false);
+    
+        useEffect(() => {
+            const timer = setTimeout(() => {
+                setIsVisible(true);
+            }, 300); // Delay para a transição
+    
+            return () => clearTimeout(timer);
+        }, []);
+
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -20,7 +30,7 @@ const Relatorio = () => {
                     <div className='w-[100%] md:w-[14%]'>
                         <HeaderRelatorio />
                     </div>
-                    <div className='w-[100%] md:w-[80%] flex-col flex items-center justify-center'>
+                    <div className={`w-[100%] md:w-[80%] flex-col flex items-center justify-center transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                         <img className='w-[20%]' src={Relatorios}></img>
                         <h1 className='text-primary font-bold'>Selecione uma opção do menu!</h1>
                     </div>

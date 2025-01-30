@@ -20,6 +20,15 @@ const Desperdicio = () => {
     const [precoRaw, setPrecoRaw] = useState(''); // Raw price input
     const [produtos, setProdutos] = useState([]);
     const [desperdicioRows, setDesperdicioRows] = useState([]);
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300); // Delay para a transição
+
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         // Fetch products from local storage
@@ -32,34 +41,34 @@ const Desperdicio = () => {
             alert("Por favor, preencha todos os campos.");
             return;
         }
-    
+
         const parsedPreco = parseFloat(precoRaw); // Agora já está correto
-    
+
         if (isNaN(parsedPreco) || parsedPreco <= 0) {
             alert("O valor do preço é inválido.");
             return;
         }
-    
+
         const total = parsedPreco * parseInt(quantidade, 10);
-    
+
         const newDesperdicio = {
             produto,
             quantidade,
             preco: formatValor(parsedPreco), // Mantém a formatação correta
             total: formatValor(total),
         };
-    
+
         const updatedDesperdicioRows = [...desperdicioRows, newDesperdicio];
         setDesperdicioRows(updatedDesperdicioRows);
         localStorage.setItem('desperdicio', JSON.stringify(updatedDesperdicioRows));
-    
+
         // Resetar os campos
         setProduto('');
         setQuantidade('');
         setPrecoRaw('');
     };
-    
-    
+
+
 
     return (
         <div className="flex w-full ">
@@ -105,32 +114,32 @@ const Desperdicio = () => {
                                 }}
                             />
 
-<NumericFormat
-    customInput={TextField}
-    fullWidth
-    variant="outlined"
-    size="small"
-    label="Preço"
-    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '20%' } }}
-    value={precoRaw} 
-    onValueChange={(values) => {
-        // Usa values.floatValue, que já está no formato correto
-        setPrecoRaw(values.floatValue || '');
-    }} 
-    thousandSeparator="."
-    decimalSeparator=","
-    prefix="R$ "
-    decimalScale={2}
-    fixedDecimalScale={true}
-    allowNegative={false}
-    InputProps={{
-        startAdornment: (
-            <InputAdornment position="start">
-                <MoneyRounded />
-            </InputAdornment>
-        ),
-    }}
-/>
+                            <NumericFormat
+                                customInput={TextField}
+                                fullWidth
+                                variant="outlined"
+                                size="small"
+                                label="Preço"
+                                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '20%' } }}
+                                value={precoRaw}
+                                onValueChange={(values) => {
+                                    // Usa values.floatValue, que já está no formato correto
+                                    setPrecoRaw(values.floatValue || '');
+                                }}
+                                thousandSeparator="."
+                                decimalSeparator=","
+                                prefix="R$ "
+                                decimalScale={2}
+                                fixedDecimalScale={true}
+                                allowNegative={false}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <MoneyRounded />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
 
 
                             <ButtonComponent
@@ -140,16 +149,20 @@ const Desperdicio = () => {
                                 onClick={handleAddDesperdicio}
                             />
                         </div>
-                        <TableComponent
-                            headers={headerDesperdicio}
-                            rows={desperdicioRows}
-                            actionsLabel={"Ações"} // Se você quiser adicionar ações
-                            actionCalls={{}} // Se você quiser adicionar ações
-                        />
+                        <div className={`w-[100%] md:w-[80%] flex-col flex items-center justify-center transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
+                            <TableComponent
+                                headers={headerDesperdicio}
+                                rows={desperdicioRows}
+                                actionsLabel={"Ações"} // Se você quiser adicionar ações
+                                actionCalls={{}} // Se você quiser adicionar ações
+                            />
+                        </div>
                     </div>
+
                 </div>
             </div>
         </div>
+        
     );
 }
 

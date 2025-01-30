@@ -31,6 +31,15 @@ const EstoqueReal = () => {
     const [categorias, setCategorias] = useState([]);
     const [selectedCategoria, setSelectedCategoria] = useState('');
     const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300); // Delay para a transição
+
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
@@ -155,14 +164,14 @@ const EstoqueReal = () => {
     const handleCloseFiltro = () => setFiltro(false);
 
 
-      useEffect(() => {
+    useEffect(() => {
         const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
         const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
-          .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
-    
+            .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
+
         setCategorias(categoriasUnicas);
         setUniqueCategoriesCount(categoriasUnicas.length); // Atualiza o estado com o número de categorias únicas
-      }, []);
+    }, []);
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -176,7 +185,7 @@ const EstoqueReal = () => {
                     <div className="hidden md:w-[14%] md:flex ">
                         <HeaderRelatorio />
                     </div>
-                    <div className="w-[90%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col md:w-[80%]">
+                    <div className={`w-[90%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col md:w-[80%] transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                         <div className='w-[99%] justify-center flex-wrap  mb-4 flex items-center gap-4' >
 
                             <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>

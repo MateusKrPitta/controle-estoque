@@ -4,7 +4,7 @@ import MenuMobile from '../../../components/menu-mobile';
 import HeaderPerfil from '../../../components/navbars/perfil';
 import HeaderCadastro from '../../../components/navbars/cadastro';
 import CategoryIcon from '@mui/icons-material/Category';
-import {  InputAdornment, TextField } from '@mui/material';
+import { InputAdornment, TextField } from '@mui/material';
 import ButtonComponent from '../../../components/button';
 import SearchIcon from '@mui/icons-material/Search';
 import { AddCircleOutline, Edit, Save } from '@mui/icons-material';
@@ -22,7 +22,15 @@ const Categoria = () => {
     const [categoria, setCategoria] = useState({ nome: '' });
     const [editandoCategoria, setEditandoCategoria] = useState(false);
     const [categoriaEditada, setCategoriaEditada] = useState(null);
+    const [isVisible, setIsVisible] = useState(false);
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300); // Delay para a transição
+
+        return () => clearTimeout(timer);
+    }, []);
     useEffect(() => {
         const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
         setCategorias(categoriasSalvas);
@@ -82,7 +90,7 @@ const Categoria = () => {
                 <h1 className='flex justify-center text-base items-center gap-2 sm:ml-1  md:text-2xl  font-bold  w-full md:justify-start   '>
                     <CategoryIcon /> Categoria
                 </h1>
-                <div className=" items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start">
+                <div className={`items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                     <div className="hidden md:w-[14%] md:flex ">
                         <HeaderCadastro />
                     </div>

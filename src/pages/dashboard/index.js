@@ -15,7 +15,15 @@ const Dashboard = () => {
     const [cmv, setCmv] = useState(0);
     const [produtosAbaixoMinimo, setProdutosAbaixoMinimo] = useState(0);
     const [chartData, setChartData] = useState([]);
+    const [isVisible, setIsVisible] = useState(false);
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300); // Delay para a transição
+
+        return () => clearTimeout(timer);
+    }, []);
     useEffect(() => {
         const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
         const entradasSaidasSalvas = JSON.parse(localStorage.getItem('entradasSaidas')) || [];
@@ -85,7 +93,7 @@ const Dashboard = () => {
                     Dashboard
                 </h1>
 
-                <div className='w-full mt-8 flex-col p-3'>
+                <div className= {`w-full mt-8 flex-col p-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                     <div className='w-full flex gap-6 md:flex-wrap items-center justify-center'>
                         <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[18%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Total de Produtos</label>

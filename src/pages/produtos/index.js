@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/navbars/header';
-import { AddCircleOutline, DateRange, Edit, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
+import { AddCircleOutline, DateRange, Edit, Numbers, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
 import { IconButton, InputAdornment, TextField } from '@mui/material';
 import ButtonComponent from '../../components/button';
 import SearchIcon from '@mui/icons-material/Search';
@@ -27,6 +27,7 @@ const Produtos = () => {
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
     const [filtro, setFiltro] = useState(false);
     const [editandoCategoria, setEditandoCategoria] = useState(false);
+    const [quantidadeTotal, setQuantidadeTotal] = useState('');
     const [loading, setLoading] = useState(false);
     const [dataInicial, setDataInicial] = useState('');
     const [dataFinal, setDataFinal] = useState('');
@@ -35,7 +36,7 @@ const Produtos = () => {
     const [rendimento, setRendimento] = useState('');
     const [produtoEditado, setProdutoEditado] = useState(null);
     const [produtos, setProdutos] = useState([]);
-    const [unidade, setUnidade] = useState('');
+    const [quantidade, setQuantidade] = useState('');
     const [selectedUnidade, setSelectedUnidade] = useState("");
     const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0); // Novo estado para contar categorias únicas
     const [categorias, setCategorias] = useState([]);
@@ -46,8 +47,18 @@ const Produtos = () => {
         { value: 'g', label: 'Grama' },
         { value: 'l', label: 'Litro' },
         { value: 'ml', label: 'Mililitro' },
+        { value: 'unidade', label: 'Unidade' }, // Adicionando a opção "Unidade"
         // Adicione mais opções conforme necessário
     ];
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300); // Delay para a transição
+
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleUnidadeChange = (event) => {
         setSelectedUnidade(event.target.value);
@@ -61,31 +72,48 @@ const Produtos = () => {
 
     const handleCadastrarProduto = () => {
         const novosProdutos = JSON.parse(localStorage.getItem('produtos')) || [];
+        
+        // Converta a quantidade para um número
+        const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
+        
+        // Calcule o preço por porção
+        const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0;
+
+        // Calcule o preço por porção com base no rendimento
+        const rendimentoNumerico = parseFloat(rendimento) || 0;
+        const precoPorcao = rendimentoNumerico > 0 ? (precoNumerico / rendimentoNumerico) : 0;
+
         const novoProduto = {
-            id: Date.now(), // Cria um ID único baseado no timestamp atual
+            id: Date.now(),
             nome,
             quantidadeMinima,
+            quantidadeTotal,
             rendimento,
-            categoria: categorias.find(cat => cat.id === selectedCategoria)?.nome || "Não informado", // Salva o nome da categoria
+            categoria: categorias.find(cat => cat.id === selectedCategoria)?.nome || "Não informado",
             unidade: selectedUnidade,
-            preco: preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0, // Salva o preço formatado como número
-            dataCriacao: new Date().toISOString(), // Adiciona a data de criação no formato ISO
+            preco: precoNumerico,
+            precoPorcao, // Adicione o preço por porção aqui
+            precoPorcaoFormatado: formatValor(precoPorcao), // Formatar o preço por porção
+            dataCriacao: new Date().toISOString(),
         };
-
+    
+        // Formatar o preço antes de adicionar ao estado
+        novoProduto.precoFormatado = formatValor(novoProduto.preco);
+        novoProduto.precoPorcaoFormatado = formatValor(precoPorcao); // Formatar o preço por porção
+    
         novosProdutos.push(novoProduto);
         localStorage.setItem('produtos', JSON.stringify(novosProdutos));
-        setProdutos(novosProdutos); // Atualiza o estado da tabela
-        handleCloseCadastroProdutos(); // Fecha o modal
+        setProdutos(novosProdutos);
+        handleCloseCadastroProdutos();
         setNome('');
         setQuantidadeMinima('');
+        setQuantidadeTotal('');
         setRendimento('');
         setSelectedCategoria('');
         setSelectedUnidade('');
-        setPreco(''); // Limpa o preço após o cadastro
+        setPreco('');
         CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
     };
-
-
     const handleSaveEdit = () => {
         const novosProdutos = produtos.map((produto) =>
             produto.id === produtoEditado.id
@@ -144,7 +172,10 @@ const Produtos = () => {
         setProdutos(produtosFormatados);
     }, []);
 
-
+    useEffect(() => {
+        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
+        setProdutos(produtosSalvos);
+    }, []);
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -154,7 +185,7 @@ const Produtos = () => {
                 <h1 className='justify-center  sm:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
                     <ProductionQuantityLimitsTwoTone /> Produtos
                 </h1>
-                <div className='w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4' >
+                <div className={`w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
 
                     
                     <div className='w-[80%] md:w-[20%] p-2  bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
@@ -165,7 +196,7 @@ const Produtos = () => {
                         </div>
                     </div>
                 </div>
-                <div className=" ml-0 flex flex-col w-[98%] md:ml-2 mr-3">
+                <div className={`ml-0 flex flex-col w-[98%] md:ml-2 mr-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                     <div className='flex gap-2 justify-center  flex-wrap md:justify-start items-center md:items-start'>
                         <TextField
                             fullWidth
@@ -269,12 +300,31 @@ const Produtos = () => {
                                     variant="outlined"
                                     size="small"
                                     type='number'
+                                    label="Quantidade"
+                                    name="quantidadeTotal"
+                                    value={quantidadeTotal}
+                                    onChange={(e) => setQuantidadeTotal(e.target.value)}
+                                    autoComplete="off"
+                                    sx={{ width: { xs: '43%', sm: '50%', md: '40%', lg: '18%' } }}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <Numbers />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    size="small"
+                                    type='number'
                                     label="Quantidade Mínima"
                                     name="quantidadeMinima"
                                     value={quantidadeMinima}
                                     onChange={(e) => setQuantidadeMinima(e.target.value)}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '43%', sm: '50%', md: '40%', lg: '43%' } }}
+                                    sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '23%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -292,7 +342,7 @@ const Produtos = () => {
                                     value={rendimento}
                                     onChange={(e) => setRendimento(e.target.value)}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
+                                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '50%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -308,7 +358,7 @@ const Produtos = () => {
                                     variant="outlined"
                                     size="small"
                                     label="Preço"
-                                    sx={{ width: { xs: '43%', sm: '50%', md: '40%', lg: '43%' }, }}
+                                    sx={{ width: { xs: '98%', sm: '50%', md: '40%', lg: '43%' }, }}
                                     value={preco}
                                     onValueChange={(values) => setPreco(values.value)}
                                     thousandSeparator="."

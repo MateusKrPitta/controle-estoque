@@ -35,7 +35,15 @@ const EntradaSaida = () => {
   const [dataFinal, setDataFinal] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('');
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
+    const [isVisible, setIsVisible] = useState(false);
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300); // Delay para a transição
+
+        return () => clearTimeout(timer);
+    }, []);
 
   // Estados para o registro atual
   const [produto, setProduto] = useState('');
@@ -167,7 +175,7 @@ const EntradaSaida = () => {
         <h1 className='flex justify-center items-center gap-2 sm: md:text-2xl font-bold w-full md:justify-start'>
           <AddchartIcon /> Entrada e Saída
         </h1>
-        <div className='w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4' >
+        <div className={`w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
 
           <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
             <label className='text-xs font-bold'>Total de Movimentações</label>
@@ -198,7 +206,7 @@ const EntradaSaida = () => {
             </div>
           </div>
         </div>
-        <div className=" ml-0 flex flex-col w-[98%] md:ml-2 mr-3">
+        <div className={`ml-0 flex flex-col w-[98%] md:ml-2 mr-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
           <div className='flex gap-2 justify-center flex-wrap md:justify-start items-center md:items-start'>
             <TextField
               fullWidth
