@@ -18,7 +18,7 @@ import ScaleIcon from '@mui/icons-material/Scale';
 import ModalLateral from '../../components/modal-lateral/index.js';
 import SelectTextFields from '../../components/select/index.js';
 import { NumericFormat } from 'react-number-format';
-import { formatValor } from '../../utils/functions.js';
+import { formatPrecoPorcao, formatValor } from '../../utils/functions.js';
 import CustomToast from '../../components/toast/index.js';
 import { MoneyOutlined } from '@mui/icons-material'; // Importando o ícone de exclusão
 import Caixa from '../../assets/icones/caixa.png'
@@ -73,16 +73,13 @@ const Produtos = () => {
     const handleCadastrarProduto = () => {
         const novosProdutos = JSON.parse(localStorage.getItem('produtos')) || [];
         
-        // Converta a quantidade para um número
         const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
-        
-        // Calcule o preço por porção
         const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0;
-
-        // Calcule o preço por porção com base no rendimento
         const rendimentoNumerico = parseFloat(rendimento) || 0;
+    
+        // Calcule o preço por porção
         const precoPorcao = rendimentoNumerico > 0 ? (precoNumerico / rendimentoNumerico) : 0;
-
+    
         const novoProduto = {
             id: Date.now(),
             nome,
@@ -93,14 +90,13 @@ const Produtos = () => {
             unidade: selectedUnidade,
             preco: precoNumerico,
             precoPorcao, // Adicione o preço por porção aqui
-            precoPorcaoFormatado: formatValor(precoPorcao), // Formatar o preço por porção
+            precoPorcaoFormatado: formatPrecoPorcao(precoPorcao), // Formatar o preço por porção sem arredondar
             dataCriacao: new Date().toISOString(),
         };
     
         // Formatar o preço antes de adicionar ao estado
         novoProduto.precoFormatado = formatValor(novoProduto.preco);
-        novoProduto.precoPorcaoFormatado = formatValor(precoPorcao); // Formatar o preço por porção
-    
+        
         novosProdutos.push(novoProduto);
         localStorage.setItem('produtos', JSON.stringify(novosProdutos));
         setProdutos(novosProdutos);
@@ -120,10 +116,11 @@ const Produtos = () => {
                 ? {
                     ...produtoEditado,
                     categoria: categorias.find(cat => cat.id === produtoEditado.categoria)?.nome || "Não informado", // Salva o nome da categoria
+                    precoPorcaoFormatado: formatValor(produtoEditado.preco / (parseFloat(produtoEditado.rendimento) || 1)), // Atualiza o preço por porção
                 }
                 : produto
         );
-
+    
         localStorage.setItem('produtos', JSON.stringify(novosProdutos));
         setProdutos(novosProdutos); // Atualiza o estado
         setEditandoCategoria(false); // Fecha o modal

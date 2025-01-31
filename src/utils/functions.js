@@ -157,7 +157,14 @@ export function validarCPF(cpf) {
 export const formatValor = (valor) => {
     const parsedValor = parseFloat(valor); // Converte o valor para número
     return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+        style: 'currency',
+        currency: 'BRL',
+        minimumFractionDigits: 2, // Garante que sempre tenha duas casas decimais
+        maximumFractionDigits: 2, // Garante que não tenha mais que duas casas decimais
     }).format(parsedValor);
-  };
+};
+
+// Função para formatar o preço por porção sem arredondar
+export const formatPrecoPorcao = (valor) => {
+    return `R$ ${valor.toFixed(3).replace('.', ',')}`; // Formata com 3 casas decimais
+};
