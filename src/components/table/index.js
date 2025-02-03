@@ -169,34 +169,41 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {pageList.map((row, rowIndex) => (
-                        <TableRow key={rowIndex} style={rowStyle ? rowStyle(row) : {}}>
-                            {headersList.map(({ key, sort }) => (
-                                sort !== false && (
-                                    key === "actions" && hasActions ? (
-                                        <TableCell key={key} style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
-                                            {renderActions(row)}
-                                        </TableCell>
-                                    ) : key === "entradas" || key === "estoqueInicial" || key === "estoqueFinal" ? (
-                                        <TableCell key={key}>
-                                            <TextField
-                                                type="number"
-                                                value={row[key] || ''}
-                                                onChange={(e) => handleInputChange(rowIndex, key, e.target.value)}
-                                                variant="outlined"
-                                                size="small"
-                                            />
-                                        </TableCell>
-                                    ) : key === "cpf" ? (
-                                        <TableCell style={{ fontSize: '12px' }} key={key}>{maskCPF(row[key])}</TableCell>
-                                    ) : (
-                                        <TableCell style={{ fontSize: '12px' }} key={key}>{row[key] || "-"}</TableCell>
-                                    )
-                                )
-                            ))}
-                        </TableRow>
-                    ))}
-                </TableBody>
+    {pageList.map((row, rowIndex) => (
+        <TableRow key={rowIndex}>
+            {headersList.map(({ key, sort }) => (
+                sort !== false && (
+                    key === "actions" && hasActions ? (
+                        <TableCell key={key} style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
+                            {renderActions(row)}
+                        </TableCell>
+                    ) : key === "tipo" ? ( // Verifica se a coluna é a que contém "entrada" ou "saida"
+                        <TableCell key={key} style={{
+                            backgroundColor: row[key] === 'entrada' ? '#006b33' : row[key] === 'saida' ? '#ff0000' : 'transparent',
+                            color: '#fff' // Para garantir que o texto seja legível
+                        }}>
+                            {row[key]}
+                        </TableCell>
+                    ) : key === "entradas" || key === "estoqueInicial" || key === "estoqueFinal" ? (
+                        <TableCell key={key}>
+                            <TextField
+                                type="number"
+                                value={row[key] || ''}
+                                onChange={(e) => handleInputChange(rowIndex, key, e.target.value)}
+                                variant="outlined"
+                                size="small"
+                            />
+                        </TableCell>
+                    ) : key === "cpf" ? (
+                        <TableCell style={{ fontSize: '12px' }} key={key}>{maskCPF(row[key])}</TableCell>
+                    ) : (
+                        <TableCell style={{ fontSize: '12px' }} key={key}>{row[key] || "-"}</TableCell>
+                    )
+                )
+            ))}
+        </TableRow>
+    ))}
+</TableBody>
             </Table>
         </TableContainer>
     );

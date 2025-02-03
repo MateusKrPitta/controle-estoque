@@ -42,6 +42,9 @@ const Produtos = () => {
     const [categorias, setCategorias] = useState([]);
     const [selectedCategoria, setSelectedCategoria] = useState('');
     const [preco, setPreco] = useState('');
+    const [filtroNome, setFiltroNome] = useState('');
+    const [filtroDataInicial, setFiltroDataInicial] = useState('');
+    const [filtroDataFinal, setFiltroDataFinal] = useState('');
     const userOptionsUnidade = [
         { value: 'kg', label: 'Kilograma' },
         { value: 'g', label: 'Grama' },
@@ -72,14 +75,14 @@ const Produtos = () => {
 
     const handleCadastrarProduto = () => {
         const novosProdutos = JSON.parse(localStorage.getItem('produtos')) || [];
-        
+
         const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
         const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0;
         const rendimentoNumerico = parseFloat(rendimento) || 0;
-    
+
         // Calcule o preço por porção
         const precoPorcao = rendimentoNumerico > 0 ? (precoNumerico / rendimentoNumerico) : 0;
-    
+
         const novoProduto = {
             id: Date.now(),
             nome,
@@ -89,14 +92,14 @@ const Produtos = () => {
             categoria: categorias.find(cat => cat.id === selectedCategoria)?.nome || "Não informado",
             unidade: selectedUnidade,
             preco: precoNumerico,
-            precoPorcao, // Adicione o preço por porção aqui
-            precoPorcaoFormatado: formatPrecoPorcao(precoPorcao), // Formatar o preço por porção sem arredondar
-            dataCriacao: new Date().toISOString(),
+            precoPorcao,
+            precoPorcaoFormatado: formatPrecoPorcao(precoPorcao),
+            dataCriacao: new Date().toLocaleDateString('pt-BR'),
         };
-    
+
         // Formatar o preço antes de adicionar ao estado
         novoProduto.precoFormatado = formatValor(novoProduto.preco);
-        
+
         novosProdutos.push(novoProduto);
         localStorage.setItem('produtos', JSON.stringify(novosProdutos));
         setProdutos(novosProdutos);
@@ -110,6 +113,24 @@ const Produtos = () => {
         setPreco('');
         CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
     };
+
+    const handlePesquisar = () => {
+        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
+
+        const produtosFiltrados = produtosSalvos.filter(produto => {
+            const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
+            const dataMatch = (!filtroDataInicial || new Date(produto.dataCriacao) >= new Date(filtroDataInicial)) &&
+                (!filtroDataFinal || new Date(produto.dataCriacao) <= new Date(filtroDataFinal));
+            const categoriaMatch = !selectedCategoria || produto.categoria === categorias.find(cat => cat.id === selectedCategoria)?.nome;
+
+            return nomeMatch && dataMatch && categoriaMatch;
+        });
+
+        setProdutos(produtosFiltrados);
+        handleCloseFiltro(); // Fecha a modal
+        CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
+    };
+
     const handleSaveEdit = () => {
         const novosProdutos = produtos.map((produto) =>
             produto.id === produtoEditado.id
@@ -120,7 +141,7 @@ const Produtos = () => {
                 }
                 : produto
         );
-    
+
         localStorage.setItem('produtos', JSON.stringify(novosProdutos));
         setProdutos(novosProdutos); // Atualiza o estado
         setEditandoCategoria(false); // Fecha o modal
@@ -145,16 +166,20 @@ const Produtos = () => {
         const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
         const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
             .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
-    
+
         setCategorias(categoriasUnicas);
         setUniqueCategoriesCount(categoriasUnicas.length); // Atualiza o estado com o número de categorias únicas
     }, []);
 
     useEffect(() => {
         const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-        setProdutos(produtosSalvos);
+        const produtosFormatados = produtosSalvos.map((produto) => ({
+            ...produto,
+            precoFormatado: formatValor(produto.preco),
+            dataCriacao: new Date(produto.dataCriacao).toLocaleDateString('pt-BR'), // Formata a data
+        }));
+        setProdutos(produtosFormatados);
     }, []);
-
 
     const handleCategoriaChange = (value) => {
         setSelectedCategoria(value);
@@ -165,13 +190,9 @@ const Produtos = () => {
         const produtosFormatados = produtosSalvos.map((produto) => ({
             ...produto,
             precoFormatado: formatValor(produto.preco),
+            dataCriacao: new Date(produto.dataCriacao).toLocaleDateString('pt-BR'), // Formata a data
         }));
         setProdutos(produtosFormatados);
-    }, []);
-
-    useEffect(() => {
-        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-        setProdutos(produtosSalvos);
     }, []);
     return (
         <div className="flex w-full ">
@@ -184,7 +205,7 @@ const Produtos = () => {
                 </h1>
                 <div className={`w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
 
-                    
+
                     <div className='w-[80%] md:w-[20%] p-2  bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
                         <label className='text-xs font-bold'>Produtos Cadastrados</label>
                         <div className='flex items-center justify-center gap-5'>
@@ -282,7 +303,7 @@ const Produtos = () => {
                                     name="nome"
                                     value={nome}
                                     onChange={(e) => setNome(e.target.value)}
-                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '40%' } }}
                                     autoComplete="off"
                                     InputProps={{
                                         startAdornment: (
@@ -292,25 +313,7 @@ const Produtos = () => {
                                         ),
                                     }}
                                 />
-                                <TextField
-                                    fullWidth
-                                    variant="outlined"
-                                    size="small"
-                                    type='number'
-                                    label="Quantidade"
-                                    name="quantidadeTotal"
-                                    value={quantidadeTotal}
-                                    onChange={(e) => setQuantidadeTotal(e.target.value)}
-                                    autoComplete="off"
-                                    sx={{ width: { xs: '43%', sm: '50%', md: '40%', lg: '18%' } }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Numbers />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
+
                                 <TextField
                                     fullWidth
                                     variant="outlined"
@@ -339,7 +342,7 @@ const Produtos = () => {
                                     value={rendimento}
                                     onChange={(e) => setRendimento(e.target.value)}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '50%' } }}
+                                    sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '27%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -355,7 +358,7 @@ const Produtos = () => {
                                     variant="outlined"
                                     size="small"
                                     label="Preço"
-                                    sx={{ width: { xs: '98%', sm: '50%', md: '40%', lg: '43%' }, }}
+                                    sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '25%' }, }}
                                     value={preco}
                                     onValueChange={(values) => setPreco(values.value)}
                                     thousandSeparator="."
@@ -372,7 +375,7 @@ const Produtos = () => {
                                     }}
                                 />
                                 <SelectTextFields
-                                    width={'265px'}
+                                    width={'150px'}
                                     icon={<CategoryIcon fontSize="small" />}
                                     label={'Categoria'}
                                     backgroundColor={"#D9D9D9"}
@@ -384,7 +387,7 @@ const Produtos = () => {
                                 />
 
                                 <SelectTextFields
-                                    width={'265px'}
+                                    width={'140px'}
                                     icon={<ScaleIcon fontSize="small" />}
                                     label={'Unidade'}
                                     backgroundColor={"#D9D9D9"}
@@ -546,6 +549,8 @@ const Produtos = () => {
                                     size="small"
                                     label="Nome do Produto"
                                     name="nome"
+                                    value={filtroNome}
+                                    onChange={(e) => setFiltroNome(e.target.value)}
                                     sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '95%' } }}
                                     autoComplete="off"
                                     InputProps={{
@@ -561,9 +566,9 @@ const Produtos = () => {
                                     variant="outlined"
                                     size="small"
                                     label="Data Inicial"
-                                    value={dataInicial}
+                                    value={filtroDataInicial}
                                     type='date'
-                                    // onChange={handleInputChange}
+                                    onChange={(e) => setFiltroDataInicial(e.target.value)}
                                     autoComplete="off"
                                     sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
                                     InputProps={{
@@ -580,8 +585,8 @@ const Produtos = () => {
                                     size="small"
                                     label="Data Final"
                                     type='date'
-                                    value={dataFinal}
-                                    //onChange={handleInputChange}
+                                    value={filtroDataFinal}
+                                    onChange={(e) => setFiltroDataFinal(e.target.value)}
                                     autoComplete="off"
                                     sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
                                     InputProps={{
@@ -603,16 +608,13 @@ const Produtos = () => {
                                     onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
                                     value={selectedCategoria} // Reflete o estado atual no componente
                                 />
-
-
-
                             </div>
                             <div className='w-[95%] mt-2 flex items-end justify-end'>
                                 <ButtonComponent
                                     title={'Pesquisar'}
                                     subtitle={'Pesquisar'}
                                     startIcon={<SearchIcon />}
-                                //onClick={handleCadastrarProduto}
+                                    onClick={handlePesquisar} // Chama a função de pesquisa
                                 />
                             </div>
                         </div>

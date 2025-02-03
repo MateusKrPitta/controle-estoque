@@ -35,15 +35,15 @@ const EntradaSaida = () => {
   const [dataFinal, setDataFinal] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('');
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
-    const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsVisible(true);
-        }, 300); // Delay para a transição
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 300); // Delay para a transição
 
-        return () => clearTimeout(timer);
-    }, []);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Estados para o registro atual
   const [produto, setProduto] = useState('');
@@ -90,9 +90,9 @@ const EntradaSaida = () => {
     setEditando(false);
     setRegistroEditado(null); // Limpa o registro editado
   };
-
   const handleCadastrarRegistro = () => {
-    const valorTotal = produtoSelecionado ? produtoSelecionado.preco * quantidade : 0; // Calcule o valor total
+    const quantidadeNumerica = parseFloat(quantidade) || 0; // Converte a quantidade para número
+    const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0; // Calcule o valor total
 
     const novoRegistro = {
       id: Date.now(), // Usando timestamp como ID único
@@ -100,7 +100,9 @@ const EntradaSaida = () => {
       quantidade,
       tipo, // Armazena como string formatada
       categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
-      valorTotal // Adiciona o valor total
+      precoPorcao: produtoSelecionado ? produtoSelecionado.precoPorcao : 0, // Adiciona precoPorcao
+      valorTotal, // Adiciona o valor total
+      dataCadastro: new Date().toISOString().split('T')[0] // Adiciona a data de cadastro
     };
 
     const updatedEntradasSaidas = [...entradasSaidas, novoRegistro];
@@ -116,7 +118,8 @@ const EntradaSaida = () => {
   };
 
   const handleSaveEdit = () => {
-    const valorTotal = produtoSelecionado ? produtoSelecionado.preco * quantidade : 0; // Calcule o valor total
+    const quantidadeNumerica = parseFloat(quantidade) || 0; // Converte a quantidade para número
+    const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0; // Calcule o valor total
 
     const updatedEntradasSaidas = entradasSaidas.map((registro) =>
       registro === registroEditado
@@ -126,6 +129,7 @@ const EntradaSaida = () => {
           quantidade,
           tipo, // Armazena como string formatada
           categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
+          precoPorcao: produtoSelecionado ? produtoSelecionado.precoPorcao : 0, // Atualiza precoPorcao
           valorTotal // Atualiza o valor total
         }
         : registro
@@ -258,17 +262,23 @@ const EntradaSaida = () => {
               </div>
             ) : (
               <TableComponent
-                headers={headerEntradaSaida}
-                rows={entradasSaidas.map(registro => ({
+              headers={[
+                  ...headerEntradaSaida,
+                  { label: 'Data', key: 'dataCadastro' } // Adiciona o cabeçalho da nova coluna
+              ]}
+              rows={entradasSaidas.map(registro => ({
                   ...registro,
-                  valorTotal: formatValor(registro.valorTotal) // Formata o valor total
-                }))}
-                actionsLabel={"Ações"}
-                actionCalls={{
+                  valorTotal: formatValor(registro.valorTotal), // Formata o valor total
+                  precoPorcao: formatValor(registro.precoPorcao), // Formata o precoPorcao
+                  dataCadastro: new Date(registro.dataCadastro).toLocaleDateString('pt-BR'), // Formata a data para o formato desejado
+                  backgroundColor: registro.tipo === 'entrada' ? '#006b33' : '#ff0000' // Define a cor de fundo com base no tipo
+              }))}
+              actionsLabel={"Ações"}
+              actionCalls={{
                   edit: handleEditar,
                   delete: (registro) => handleDelete(registro)
-                }}
-              />
+              }}
+          />
             )}
           </div>
         </div>
@@ -294,7 +304,7 @@ const EntradaSaida = () => {
                 fontWeight={500}
                 options={produtos.map(produto => ({
                   value: produto.nome, // O valor que será armazenado
-                  label: `${produto.nome} - R$ ${formatValor(produto.preco)}` // Exibe o nome e o preço formatado
+                  label: `${produto.nome} - ${formatValor(produto.precoPorcao)}` // Exibe o nome e o preço por porção formatado
                 }))}
                 value={produto} // Preenche o campo com o produto atual
                 onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto

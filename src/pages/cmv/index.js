@@ -15,10 +15,11 @@ import SelectTextFields from '../../components/select/index.js';
 import CategoryIcon from '@mui/icons-material/Category';
 import SearchIcon from '@mui/icons-material/Search';
 import PercentIcon from '@mui/icons-material/Percent';
+import { NumericFormat } from 'react-number-format';
 
 const CMV = () => {
   const [produtos, setProdutos] = useState([]);
-  const [totals, setTotals] = useState({ totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
+  const [totals, setTotals] = useState({ totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0, totalUtilizado: 0 });
   const [filtro, setFiltro] = useState(false);
   const [dataInicial, setDataInicial] = useState('');
   const [dataFinal, setDataFinal] = useState('');
@@ -27,7 +28,7 @@ const CMV = () => {
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [faturamento, setFaturamento] = useState(''); // Mantenha como string para a máscara
-  const [cmv, setCmv] = useState(0); // Novo estado para o CMV
+  const [cmv, setCmv] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -51,8 +52,8 @@ const CMV = () => {
       const entradas = Number(row.entradas || 0);
       const preco = Number(row.preco || 0);
 
-      // Calcular utilizado
-      const utilizado = estoqueInicial + estoqueFinal;
+      // Calcular utilizado com a fórmula correta
+      const utilizado = estoqueInicial + entradas - estoqueFinal;
 
       // Calcular valor total
       const valorTotal = ((estoqueInicial + entradas + estoqueFinal) * preco).toFixed(2);
@@ -77,10 +78,12 @@ const CMV = () => {
       return acc;
     }, { totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
 
+    // Calcular totalUtilizado
+    newTotals.totalUtilizado = newTotals.estoqueInicial + newTotals.totalEntradas - newTotals.estoqueFinal;
+
     console.log("Total Entradas:", newTotals.totalEntradas);
     setTotals(newTotals);
   };
-
   const formatCurrency = (value) => {
     return value.toLocaleString('pt-BR', {
       style: 'currency',
@@ -160,18 +163,31 @@ const CMV = () => {
   };
 
   // Função para calcular o CMV
+  // Função para calcular o CMV
   const calculateCmv = () => {
-    const totalUtilizado = produtos.reduce((acc, produto) => acc + (Number(produto.valorUtilizado.replace('R$', '').replace('.', '').replace(',', '.')) || 0), 0);
+    const totalUtilizado = totals.totalUtilizado; // Use the total utilized from totals
     const faturamentoValue = Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')) || 1; // Evitar divisão por zero
+
+    // Check if faturamentoValue is zero to avoid division by zero
+    if (faturamentoValue === 0) {
+      setCmv(0); // Set CMV to 0 if faturamento is 0
+      return;
+    }
+
     const cmvValue = (totalUtilizado / faturamentoValue) * 100; // Cálculo do CMV em porcentagem
-    setCmv(cmvValue.toFixed(2)); // Armazena o CMV com duas casas decimais
+    setCmv(cmvValue); // Store cmv as a number
   };
+
+  // UseEffect to recalculate CMV when faturamento or totals change
+  useEffect(() => {
+    calculateCmv(); // Recalcula o CMV sempre que faturamento ou totals mudam
+  }, [faturamento, totals]);
 
   useEffect(() => {
     if (faturamento) {
       calculateCmv(); // Recalcula o CMV somente quando o faturamento é alterado
     }
-  }, [faturamento, produtos]);
+  }, [faturamento, totals]);
 
   return (
     <div className="flex w-full ">
@@ -210,13 +226,13 @@ const CMV = () => {
               </IconButton>
               <div className='w-[90%] flex items-center gap-3 justify-end'>
                 <div className='w-[70%] md:w-[20%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
-                  <TextField
+                <TextField
                     fullWidth
                     variant="outlined"
                     size="large"
                     label="CMV"
                     name="CMV"
-                    value={`${cmv}%`} // Exibe o CMV em porcentagem
+                    value={`${cmv.toFixed(2)}%`} // Exibe o CMV como fração
                     autoComplete="off"
                     InputProps={{
                       startAdornment: (
@@ -256,49 +272,58 @@ const CMV = () => {
                   />
                 </div>
                 <div className='w-[70%] md:w-[20%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
-                  <TextField
+                <NumericFormat
                     fullWidth
                     variant="outlined"
                     size="large"
                     label="Faturamento"
                     name="Faturamento"
-                    value={formatValor(faturamento)} // Aplica a máscara de valor
-                    onChange={(e) => setFaturamento(e.target.value.replace('R$', '').replace('.', '').replace(',', '.'))} // Atualiza o estado do faturamento
-                    autoComplete="off"
-                    sx={{
-                      width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
-                      fontSize: '20px',
-                      backgroundColor: '#ffffff', // Fundo branco para o campo
-                      borderRadius: '8px', // Arredondar bordas
-                      '& .MuiOutlinedInput-root': {
-                        '& fieldset': {
-                          borderColor: '#1a894f', // Cor da borda padrão
-                        },
-                        '&:hover fieldset': {
-                          borderColor: '#2563eb', // Cor da borda ao passar o mouse
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1a894f', // Cor da borda quando em foco
-                        },
-                        backgroundColor: '#f3f4f6', // Fundo interno do campo
-                      },
-                      '& .MuiInputLabel-root': {
-                        color: '#1a894f', // Cor do texto do label
-                        fontWeight: 700
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#2563eb', // Cor do label quando em foco
-                      },
-                      '& .MuiSvgIcon-root': {
-                        color: '#006b33', // Cor do ícone
-                      },
+                    value={faturamento} // Mantenha o valor como string
+                    onValueChange={(values) => {
+                      const { formattedValue, value } = values;
+                      setFaturamento(value); // Atualiza o estado com o valor numérico
                     }}
+                    autoComplete="off"
+                    customInput={TextField} // Usando o TextField do MUI
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    decimalScale={2}
+                    fixedDecimalScale
+                    allowNegative={false}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
                           <NumbersIcon fontSize="large" />
                         </InputAdornment>
                       ),
+                    }}
+                    sx={{
+                      width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
+                      fontSize: '20px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '8px',
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: '#1a894f',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#2563eb',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#1a894f',
+                        },
+                        backgroundColor: '#f3f4f6',
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: '#1a894f',
+                        fontWeight: 700,
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#2563eb',
+                      },
+                      '& .MuiSvgIcon-root': {
+                        color: '#006b33',
+                      },
                     }}
                   />
                 </div>
@@ -311,23 +336,28 @@ const CMV = () => {
             />
             <div className='w-full flex items-center gap-5'>
               <label className='w-[23%] flex items-center justify-end mr-3 font-bold text-sm'>Total:</label>
-              <div className=' md:flex flex-wrap items-center w-[60%] ml-8'>
+              <div className=' md:flex flex-wrap items-center w-[70%] '>
                 <span
-                  className=' w-[80%] md:w-[25%] flex items-center text-sm font-bold justify-center p-2 mr-6'
+                  className=' w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-12'
                   style={{ backgroundColor: '#1a894f', borderRadius: '10px', color: 'white' }}>
                   {formatCurrency(totals.estoqueInicial)}
                 </span>
 
                 <span
-                  className='w-[80%] md:w-[25%] flex items-center text-sm font-bold justify-center  mr-6 p-2'
+                  className='w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center  mr-12 p-2'
                   style={{ backgroundColor: '#2563eb', borderRadius: '10px', color: 'white' }}>
                   {formatCurrency(totals.totalEntradas)}
                 </span>
 
                 <span
-                  className='w-[80%] md:w-[25%] flex items-center text-sm font-bold justify-center p-2 '
+                  className='w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-5 '
                   style={{ backgroundColor: '#69706c', borderRadius: '10px', color: 'white' }}>
                   {formatCurrency(totals.estoqueFinal)}
+                </span>
+                <span
+                  className='w-[80%] md:w-[15%] flex items-center text-sm font-bold justify-center p-2 '
+                  style={{ backgroundColor: '#BCDA72', borderRadius: '10px', color: 'white' }}>
+                  {formatCurrency(totals.totalUtilizado)} {/* Exibe o total utilizado formatado */}
                 </span>
               </div>
             </div>

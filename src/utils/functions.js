@@ -168,3 +168,11 @@ export const formatValor = (valor) => {
 export const formatPrecoPorcao = (valor) => {
     return `R$ ${valor.toFixed(3).replace('.', ',')}`; // Formata com 3 casas decimais
 };
+
+export const formatCmvReal = (valor) => {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'percent',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(valor / 100); // Divida por 100 para formatar corretamente
+};

@@ -4,8 +4,8 @@ export const headerProdutos = [
   { key: "rendimento", label: "Rendimento" },
   { key: "unidade", label: "Medida" },
   { key: "categoria", label: "Categoria" },
-  { key: "quantidadeTotal", label: "Quantidade" },
   { key: "precoPorcao", label: "Preço Porção" },
   { key: "precoFormatado", label: "Valor Preço" },
+  { key: "dataCriacao", label: "Data Criacao" },
 ];
 

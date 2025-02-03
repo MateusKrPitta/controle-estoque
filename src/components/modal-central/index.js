@@ -6,7 +6,7 @@ import Lines from "../lines";
 import Label from "../label";
 import ButtonClose from "../buttons/button-close";
 
-const CentralModal = ({ open, onClose, title, children, icon, width, top, left, maxHeight, tamanhoTitulo }) => {
+const CentralModal = ({ open, onClose, bottom, title, children, icon, width, top, left, maxHeight, tamanhoTitulo }) => {
     return (
         <Modal
             style={{ padding: 20 }}
@@ -25,6 +25,7 @@ const CentralModal = ({ open, onClose, title, children, icon, width, top, left, 
                         position: "absolute",
                         top: { xs: '10%', sm: top || '20%' }, // Ajuste para telas menores
                         left: { xs: '5%', sm: left || '28%' }, // Ajuste para telas menores
+                        bottom: { bottom },
                         maxHeight: maxHeight,
                         overflowY: 'auto',
                         transform: "translate(-50%, -50%)",
@@ -47,7 +48,7 @@ const CentralModal = ({ open, onClose, title, children, icon, width, top, left, 
                             <ButtonClose width={'10%'} display={'flex'} alignItems={'end'} justifyContent={'end'} funcao={onClose} />
                         </>}></Lines>
                     </Typography>
-                    <Typography id="central-modal-description" sx={{ mb: 2 }}>
+                    <Typography style={{width:'100%'}} id="central-modal-description" sx={{ mb: 2 }}>
                         {children}
                     </Typography>
                 </Box>

@@ -45,7 +45,7 @@ const Navbar = ({ user }) => {
 
 
     return (
-        <div className='hidden sm:hidden md:block lg:block'>
+        <div className='hidden sm:hidden md:block lg:block' style={{backgroundColor:'black'}}>
             <div className="lg:block hidden h-[100%]">
                 <div className={` transition-all w-64 h-screen bg-cover bg-no-repeat bg-center flex flex-col p-5`} style={{ backgroundColor: 'black' }}>
                     <div className="flex flex-col justify-center items-center mb-5 cursor-pointer" onClick={() => handleNavigate("/dashboard")}>

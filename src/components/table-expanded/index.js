@@ -1,17 +1,16 @@
-// TabelaProdutos.js
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Collapse, Box, Typography } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import EditIcon from '@mui/icons-material/Edit'; // Importar o ícone de edição
 import { formatValor } from '../../utils/functions';
 
-const TabelaProdutos = ({ pratos, onRowClick }) => {
+const TabelaProdutos = ({ pratos, onEditClick }) => {
     const [openRow, setOpenRow] = React.useState(null);
 
     const handleRowClick = (index) => {
         setOpenRow(openRow === index ? null : index);
-        onRowClick(index);
     };
 
     return (
@@ -21,10 +20,11 @@ const TabelaProdutos = ({ pratos, onRowClick }) => {
                     <TableRow>
                         <TableCell />
                         <TableCell>Nome do Prato</TableCell>
-                        <TableCell style={{textAlign:'center'}}>Custo Total</TableCell>
-                        <TableCell style={{textAlign:'center'}}>Valor Venda</TableCell>
-                        <TableCell style={{textAlign:'center'}}>CMV Real</TableCell>
-                        <TableCell style={{textAlign:'center'}}>Lucro Real</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Custo Total</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Valor Venda</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>CMV Real</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Lucro Real</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Ações</TableCell> {/* Coluna para ações */}
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -41,16 +41,21 @@ const TabelaProdutos = ({ pratos, onRowClick }) => {
                                     </IconButton>
                                 </TableCell>
                                 <TableCell>{prato.nomePrato}</TableCell>
-                                <TableCell style={{backgroundColor:'#B0D847',  borderRadius:'5px',  textAlign:'center', fontWeight:700}}>{formatValor(prato.custoTotal)}</TableCell>
-                                <TableCell style={{backgroundColor:'#FC6D26', borderRadius:'5px',  textAlign:'center', fontWeight:700}}>{formatValor(prato.valorVenda)}</TableCell>
-                                <TableCell style={{backgroundColor:'#D9D9D9', borderRadius:'5px',  textAlign:'center', fontWeight:700}}>{formatValor(prato.cmvReal)}</TableCell>
-                                <TableCell style={{backgroundColor:'#0173E5', borderRadius:'5px',  textAlign:'center', fontWeight:700}}>{formatValor(prato.lucroReal)}</TableCell>
+                                <TableCell style={{ backgroundColor: '#B0D847', borderRadius: '5px', textAlign: 'center', fontWeight: 700 }}>{formatValor(prato.custoTotal)}</TableCell>
+                                <TableCell style={{ borderRadius: '5px', textAlign: 'center', fontWeight: 700 }}>{formatValor(prato.valorVenda)}</TableCell>
+                                <TableCell style={{ backgroundColor: '#B0D847', borderRadius: '5px', textAlign: 'center', fontWeight: 700 }}>{formatValor(prato.cmvReal)}</TableCell>
+                                <TableCell style={{ borderRadius: '5px', textAlign: 'center', fontWeight: 700 }}>{formatValor(prato.lucroReal)}</TableCell>
+                                <TableCell style={{ textAlign: 'center' }}>
+                                    <IconButton onClick={() => onEditClick(index)}>
+                                        <EditIcon />
+                                    </IconButton>
+                                </TableCell>
                             </TableRow>
                             <TableRow>
                                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
                                     <Collapse in={openRow === index} timeout="auto" unmountOnExit>
-                                        <Box sx={{ margin: 1 }} style={{backgroundColor:'#d9d9d9', padding:'10px', bordeRadius:'10px'}}>
-                                            <Typography variant="h6" gutterBottom component="div" >
+                                        <Box sx={{ margin: 1 }} style={{ backgroundColor: '#d9d9d9', padding: '10px', borderRadius: '10px' }}>
+                                            <Typography variant="h6" gutterBottom component="div">
                                                 Detalhes dos Produtos
                                             </Typography>
                                             <Table>
@@ -89,7 +94,7 @@ const TabelaProdutos = ({ pratos, onRowClick }) => {
 
 TabelaProdutos.propTypes = {
     pratos: PropTypes.array.isRequired,
-    onRowClick: PropTypes.func.isRequired,
+    onEditClick: PropTypes.func.isRequired, // Alterado para onEditClick
 };
 
 export default TabelaProdutos;

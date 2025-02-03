@@ -19,6 +19,7 @@ import CentralModal from '../../../components/modal-central';
 import SelectTextFields from '../../../components/select';
 import CategoryIcon from '@mui/icons-material/Category';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import Logo from '../../../assets/png/logo_preta.png'
 
 const EstoqueReal = () => {
     const [produtos, setProdutos] = useState([]);
@@ -90,15 +91,19 @@ const EstoqueReal = () => {
         return produtos.map(produto => {
             const estoqueAtual = calcularEstoqueAtual(produto.nome);
             const isBelowMin = estoqueAtual < produto.quantidadeMinima;
-
+    
+            // Aqui, utilize o precoPorcao para o preço unitário
+            const precoUnitario = produto.precoPorcao; // Certifique-se de que o produto tem essa propriedade
+            const valorTotal = estoqueAtual * precoUnitario; // Calcule o valor total corretamente
+    
             return {
                 categoria,
                 produto: produto.nome,
                 unidade: produto.unidade,
                 quantidadeMinima: produto.quantidadeMinima,
                 estoqueAtual,
-                precoUnitario: formatValor(produto.preco),
-                valorTotal: formatValor((produto.preco * estoqueAtual)),
+                precoUnitario: formatValor(precoUnitario), // Formate o preço unitário
+                valorTotal: formatValor(valorTotal), // Formate o valor total
                 isBelowMin
             };
         });
@@ -121,21 +126,37 @@ const EstoqueReal = () => {
                 <head>
                     <title>Imprimir Estoque</title>
                     <style>
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            background-color: white;
+                            color: black;
+                            text-align: center;
                         }
-                        th, td {
-                            border: 1px solid black;
-                            padding: 8px;
-                            text-align: left;
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-top: 20px;
                         }
-                        th {
+                        th, td { 
+                            border: 1px solid #000;
+                            padding: 8px; 
+                            text-align: left; 
+                        }
+                        th { 
                             background-color: #f2f2f2;
+                        }
+                        img { 
+                            width: 100px; 
+                            height: auto; 
+                            display: block;
+                            margin: 0 auto;
+                            background-color: black; /* Fundo preto na impressão */
+
                         }
                     </style>
                 </head>
                 <body>
+                <img src="${Logo}" alt="Logo" />
                     <h1>Relatório de Estoque</h1>
                     <table>
                         <thead>

@@ -23,7 +23,7 @@ const ButtonClose = ({
       style={{
         gap: gap,
         padding: padding || '10px',
-        justifyContent: 'center',
+        justifyContent: 'end',
         width: width,
         alignItems: alignItems,
         display: display || 'flex',
