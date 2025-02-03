@@ -93,7 +93,7 @@ const EntradaSaida = () => {
   const handleCadastrarRegistro = () => {
     const quantidadeNumerica = parseFloat(quantidade) || 0; // Converte a quantidade para número
     const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0; // Calcule o valor total
-
+  
     const novoRegistro = {
       id: Date.now(), // Usando timestamp como ID único
       produto: produtoSelecionado ? produtoSelecionado.nome : produto,
@@ -104,11 +104,11 @@ const EntradaSaida = () => {
       valorTotal, // Adiciona o valor total
       dataCadastro: new Date().toISOString().split('T')[0] // Adiciona a data de cadastro
     };
-
+  
     const updatedEntradasSaidas = [...entradasSaidas, novoRegistro];
     setEntradasSaidas(updatedEntradasSaidas);
     localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
-
+  
     // Resetar os campos
     setProduto('');
     setQuantidade('');
@@ -117,10 +117,11 @@ const EntradaSaida = () => {
     handleCloseCadastro();
   };
 
+
   const handleSaveEdit = () => {
     const quantidadeNumerica = parseFloat(quantidade) || 0; // Converte a quantidade para número
     const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0; // Calcule o valor total
-
+  
     const updatedEntradasSaidas = entradasSaidas.map((registro) =>
       registro === registroEditado
         ? {
@@ -134,7 +135,7 @@ const EntradaSaida = () => {
         }
         : registro
     );
-
+  
     setEntradasSaidas(updatedEntradasSaidas);
     localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
     handleCloseEditar(); // Fecha a modal de edição
@@ -262,23 +263,25 @@ const EntradaSaida = () => {
               </div>
             ) : (
               <TableComponent
-              headers={[
+                headers={[
                   ...headerEntradaSaida,
                   { label: 'Data', key: 'dataCadastro' } // Adiciona o cabeçalho da nova coluna
-              ]}
-              rows={entradasSaidas.map(registro => ({
+                ]}
+                rows={entradasSaidas.map(registro => ({
                   ...registro,
                   valorTotal: formatValor(registro.valorTotal), // Formata o valor total
                   precoPorcao: formatValor(registro.precoPorcao), // Formata o precoPorcao
                   dataCadastro: new Date(registro.dataCadastro).toLocaleDateString('pt-BR'), // Formata a data para o formato desejado
-                  backgroundColor: registro.tipo === 'entrada' ? '#006b33' : '#ff0000' // Define a cor de fundo com base no tipo
-              }))}
-              actionsLabel={"Ações"}
-              actionCalls={{
+                  backgroundColor: registro.tipo === 'entrada' ? '#006b33' :
+                    registro.tipo === 'saida' ? '#ff0000' :
+                      '#000000' // Define a cor de fundo como #d9d9d9 para desperdício
+                }))}
+                actionsLabel={"Ações"}
+                actionCalls={{
                   edit: handleEditar,
                   delete: (registro) => handleDelete(registro)
-              }}
-          />
+                }}
+              />
             )}
           </div>
         </div>
@@ -336,6 +339,7 @@ const EntradaSaida = () => {
                 options={[
                   { value: 'entrada', label: 'Entrada' },
                   { value: 'saida', label: 'Saída' },
+                  { value: 'desperdicio', label: 'Desperdício' }, // Nova opção adicionada
                 ]}
                 onChange={(e) => setTipo(e.target.value)} // Passando o valor correto
               />

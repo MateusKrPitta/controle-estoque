@@ -52,14 +52,17 @@ const EstoqueReal = () => {
 
     const calcularEstoqueAtual = (produtoNome) => {
         const entradas = entradasSaidas.filter(registro => registro.produto === produtoNome && registro.tipo === 'entrada');
-        const saídas = entradasSaidas.filter(registro => registro.produto === produtoNome && registro.tipo === 'saida');
+        const saídas = entradasSaidas.filter(registro => registro.produto === produtoNome && (registro.tipo === 'saida' || registro.tipo === 'desperdicio'));
 
         const totalEntradas = entradas.reduce((total, registro) => total + parseInt(registro.quantidade, 10), 0);
         const totalSaidas = saídas.reduce((total, registro) => total + parseInt(registro.quantidade, 10), 0);
 
-        return totalEntradas - totalSaidas;
-    };
+        const estoqueAtual = totalEntradas - totalSaidas;
 
+        console.log(`Produto: ${produtoNome}, Entradas: ${totalEntradas}, Saídas: ${totalSaidas}, Estoque Atual: ${estoqueAtual}`);
+
+        return estoqueAtual;
+    };
     // Calcular total de itens em estoque e quantidade abaixo da mínima
     const totalItensEmEstoque = produtos.reduce((total, produto) => total + calcularEstoqueAtual(produto.nome), 0);
     const totalAbaixoMinimo = produtos.reduce((total, produto) => {
@@ -91,11 +94,11 @@ const EstoqueReal = () => {
         return produtos.map(produto => {
             const estoqueAtual = calcularEstoqueAtual(produto.nome);
             const isBelowMin = estoqueAtual < produto.quantidadeMinima;
-    
+
             // Aqui, utilize o precoPorcao para o preço unitário
             const precoUnitario = produto.precoPorcao; // Certifique-se de que o produto tem essa propriedade
             const valorTotal = estoqueAtual * precoUnitario; // Calcule o valor total corretamente
-    
+
             return {
                 categoria,
                 produto: produto.nome,

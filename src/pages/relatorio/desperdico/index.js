@@ -6,14 +6,14 @@ import HeaderRelatorio from '../../../components/navbars/relatorios';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { InputAdornment, TextField } from '@mui/material';
 import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
-import { AddCircleOutline, MoneyRounded, Numbers } from '@mui/icons-material';
+import { AddCircleOutline, MoneyRounded, Numbers, Print } from '@mui/icons-material';
 import { formatValor } from '../../../utils/functions';
 import ButtonComponent from '../../../components/button';
 import { headerDesperdicio } from '../../../entities/headers/header-desperdicio';
 import TableComponent from '../../../components/table';
 import SelectTextFields from '../../../components/select/index.js'; // Import your SelectTextFields component
 import { NumericFormat } from 'react-number-format';
-
+import Logo from '../../../assets/png/logo_preta.png'
 const Desperdicio = () => {
     const [produto, setProduto] = useState('');
     const [quantidade, setQuantidade] = useState('');
@@ -34,6 +34,13 @@ const Desperdicio = () => {
         // Fetch products from local storage
         const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
         setProdutos(produtosSalvos);
+
+        // Fetch entradas e saídas from local storage
+        const entradasSaidasSalvas = JSON.parse(localStorage.getItem('entradasSaidas')) || [];
+
+        // Filtrar apenas os registros de desperdício
+        const desperdicioSalvo = entradasSaidasSalvas.filter(item => item.tipo === 'desperdicio');
+        setDesperdicioRows(desperdicioSalvo);
     }, []);
 
     const handleAddDesperdicio = () => {
@@ -52,15 +59,18 @@ const Desperdicio = () => {
         const total = parsedPreco * parseInt(quantidade, 10);
 
         const newDesperdicio = {
+            id: Date.now(), // Adiciona um ID único
             produto,
             quantidade,
-            preco: formatValor(parsedPreco), // Mantém a formatação correta
-            total: formatValor(total),
+            precoPorcao: parsedPreco, // Mantém o preço por porção
+            total: total, // Mantém o total
+            tipo: 'desperdicio', // Adiciona o tipo
+            dataCadastro: new Date().toISOString().split('T')[0] // Adiciona a data de cadastro
         };
 
         const updatedDesperdicioRows = [...desperdicioRows, newDesperdicio];
         setDesperdicioRows(updatedDesperdicioRows);
-        localStorage.setItem('desperdicio', JSON.stringify(updatedDesperdicioRows));
+        localStorage.setItem('entradasSaidas', JSON.stringify(updatedDesperdicioRows)); // Salva no localStorage
 
         // Resetar os campos
         setProduto('');
@@ -68,8 +78,78 @@ const Desperdicio = () => {
         setPrecoRaw('');
     };
 
+    const handlePrint = () => {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) return;
 
+        const tableHTML = `
+            <html>
+            <head>
+                <title>Impressão de Desperdícios</title>
+                <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            background-color: white;
+                            color: black;
+                            text-align: center;
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-top: 20px;
+                        }
+                        th, td { 
+                            border: 1px solid #000;
+                            padding: 8px; 
+                            text-align: left; 
+                        }
+                        th { 
+                            background-color: #f2f2f2;
+                        }
+                        img { 
+                            width: 100px; 
+                            height: auto; 
+                            display: block;
+                            margin: 0 auto;
+                            background-color: black; /* Fundo preto na impressão */
 
+                        }
+                    </style>
+            </head>
+            <body>
+             <img src="${Logo}" alt="Logo" />
+                <h2>Relatório de Desperdício</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            ${headerDesperdicio.map(header => `<th>${header.label}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${desperdicioRows.map(row => `
+                            <tr>
+                                <td>${row.produto}</td>
+                                <td>${row.quantidade}</td>
+                               <td>${formatValor(parseFloat(row.precoPorcao) || 0)}</td>
+<td>${formatValor((parseFloat(row.precoPorcao) || 0) * (parseInt(row.quantidade, 10) || 0))}</td>
+
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        window.onafterprint = function() { window.close(); };
+                    };
+                </script>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.write(tableHTML);
+        printWindow.document.close();
+    };
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -141,28 +221,39 @@ const Desperdicio = () => {
                                 }}
                             />
 
-
                             <ButtonComponent
                                 title="Adicionar"
                                 subtitle="Adicionar"
                                 startIcon={<AddCircleOutline />}
                                 onClick={handleAddDesperdicio}
                             />
+                            <ButtonComponent
+                                title="Imprimir"
+                                subtitle="Imprimir"
+                                startIcon={<Print />}
+                                onClick={handlePrint}
+                            />
+
                         </div>
                         <div className={`w-[100%] md:w-[80%] flex-col flex items-center justify-center transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                             <TableComponent
                                 headers={headerDesperdicio}
-                                rows={desperdicioRows}
+                                rows={desperdicioRows.map(row => ({
+                                    ...row,
+                                    total: formatValor(row.precoPorcao * row.quantidade), // Calcula o total
+                                    precoPorcao: formatValor(row.precoPorcao), // Formata o preço por porção
+                                    dataCadastro: new Date(row.dataCadastro).toLocaleDateString('pt-BR'), // Formata a data
+                                }))}
                                 actionsLabel={"Ações"} // Se você quiser adicionar ações
-                                actionCalls={{}} // Se você quiser adicionar ações
+                                actionCalls={{
+                                    // Aqui você pode adicionar ações como editar ou deletar
+                                }}
                             />
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
-        
     );
 }
 
