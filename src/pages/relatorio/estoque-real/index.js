@@ -24,6 +24,7 @@ import Logo from '../../../assets/png/logo_preta.png'
 const EstoqueReal = () => {
     const [produtos, setProdutos] = useState([]);
     const [entradasSaidas, setEntradasSaidas] = useState([]);
+    
     const [dataInicio, setDataInicio] = useState('');
     const [dataFim, setDataFim] = useState('');
     const [filtro, setFiltro] = useState(false);
