@@ -1,39 +1,43 @@
 import React, { useState, useEffect } from "react";
-import Navbar from '../../../components/navbars/header';
-import HeaderPerfil from '../../../components/navbars/perfil';
-import { InputAdornment, TextField } from '@mui/material';
-import ButtonComponent from '../../../components/button';
-import SearchIcon from '@mui/icons-material/Search';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import HeaderCadastro from '../../../components/navbars/cadastro';
-import TableComponent from '../../../components/table';
-import CentralModal from '../../../components/modal-central';
-import EditIcon from '@mui/icons-material/Edit';
-import { LocationOnOutlined, Phone, Save } from "@mui/icons-material";
+import Navbar from "../../../components/navbars/header";
+import HeaderPerfil from "../../../components/navbars/perfil";
+import { InputAdornment, TextField } from "@mui/material";
+import ButtonComponent from "../../../components/button";
+import SearchIcon from "@mui/icons-material/Search";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import HeaderCadastro from "../../../components/navbars/cadastro";
+import TableComponent from "../../../components/table";
+import CentralModal from "../../../components/modal-central";
+import EditIcon from "@mui/icons-material/Edit";
+import { LocationOnOutlined, Save } from "@mui/icons-material";
 import ModalLateral from "../../../components/modal-lateral";
 import MenuMobile from "../../../components/menu-mobile";
 import estadosJSON from "../../../utils/json/estados.json";
 import { headerUnidade } from "../../../entities/headers/header-unidades";
 import CustomToast from "../../../components/toast";
+import axios from "axios";
+import api from "../../../services/api";
+import { useNavigate } from "react-router-dom";
 
 const Unidades = () => {
   const [cadastrarUnidade, setCadastrarUnidade] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
   const [estadosList, setEstadosList] = useState([]);
   const [unidades, setUnidades] = useState([]);
+  const navigate = useNavigate();
   const [unidadeEditando, setUnidadeEditando] = useState(null);
   const [nomeUnidade, setNomeUnidade] = useState(""); // Estado para o nome da unidade
   const [editandoUnidade, setEditandoUnidade] = useState(false);
   const [unidadeEditada, setUnidadeEditada] = useState(null);
-    const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsVisible(true);
-        }, 300); // Delay para a transição
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 300); // Delay para a transição
 
-        return () => clearTimeout(timer);
-    }, []); 
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCadastroUnidade = () => {
     setCadastrarUnidade(true);
@@ -45,106 +49,128 @@ const Unidades = () => {
     setCadastrarUnidade(false);
   };
 
-  const carregarUnidades = () => {
-    const unidadesSalvas = JSON.parse(localStorage.getItem("unidades")) || [];
-    setUnidades(unidadesSalvas);
+  const carregarUnidades = async () => {
+    try {
+      const response = await api.get("/unidade");
+      setUnidades(response.data.data);
+    } catch (error) {
+      console.error("Erro ao carregar as unidades:", error);
+  
+      if (
+        error.response &&
+        error.response.data.message === "Credenciais inválidas" &&
+        error.response.data.data === "Token de acesso inválido"
+      ) {
+        CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
+        navigate("/login");
+      } else {
+        CustomToast({ type: "error", message: "Erro ao carregar as unidades!" });
+      }
+    }
   };
-  const handleSalvarUnidade = () => {
+  
+
+  const handleSalvarUnidade = async () => {
     if (!nomeUnidade.trim()) {
       alert("O nome da unidade é obrigatório.");
       return;
     }
 
-    const novaUnidade = {
-      cnpj: unidadeEditando ? unidadeEditando.cnpj : Date.now(), // Identificador único
-      nome: nomeUnidade,
-    };
-
-    let unidadesSalvas = JSON.parse(localStorage.getItem("unidades")) || [];
-
-    if (unidadeEditando) {
-      // Atualizar unidade existente
-      unidadesSalvas = unidadesSalvas.map((unidade) =>
-        unidade.cnpj === unidadeEditando.cnpj ? novaUnidade : unidade
-      );
-      setModalEditar(false); // Fecha o modal de edição
-    } else {
-      // Adicionar nova unidade
-      unidadesSalvas.push(novaUnidade);
-      setCadastrarUnidade(false); // Fecha o modal de cadastro
+    try {
+      const novaUnidade = { nome: nomeUnidade };
+      const response = await api.post("/unidade", novaUnidade);
+    
+      if (response.status === 201) {
+        CustomToast({ type: "success", message: "Unidade cadastrada com sucesso!" });
+        setNomeUnidade("");
+        setCadastrarUnidade(false);
+        await carregarUnidades(); // Recarrega as unidades após a criação
+      }
+    } catch (error) {
+      console.log("Erro completo:", error);
     }
-
-    localStorage.setItem("unidades", JSON.stringify(unidadesSalvas));
-    setUnidades(unidadesSalvas);
-
-    // Limpar os estados
-    setNomeUnidade("");
-    setUnidadeEditando(null);
-    CustomToast({ type: "success", message: "Unidade cadastrada com sucesso!" });
   };
 
-
-  useEffect(() => {
-    setEstadosList(estadosJSON.estados);
-    carregarUnidades();
-  }, []);
-
-  const handleEditarUnidade = (unidade) => {
-    setUnidadeEditando(unidade);
-    setNomeUnidade(unidade.nome); // Carrega o nome da unidade no estado
-    setModalEditar(true); // Abre o modal de edição
-  };
-
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (unidadeEditada) {
       if (!unidadeEditada.nome.trim()) {
         CustomToast({ type: "error", message: "O nome da unidade é obrigatório!" });
         return;
       }
-
-      const updatedUnidades = unidades.map((unidade) =>
-        unidade.cnpj === unidadeEditada.cnpj
-          ? { ...unidade, nome: unidadeEditada.nome } // Atualiza apenas a unidade correspondente
-          : unidade
-      );
-
-      setUnidades(updatedUnidades);
-      localStorage.setItem("unidades", JSON.stringify(updatedUnidades));
+  
+      // Fecha a modal antes da requisição assíncrona
       setEditandoUnidade(false);
-      setUnidadeEditada(null);
-      CustomToast({ type: "success", message: "Unidade editada com sucesso!" });
+  
+      try {
+        // Envia a solicitação PUT para editar a unidade na API
+        const response = await api.put(`/unidade/${unidadeEditada.id}`, unidadeEditada);
+  
+        CustomToast({ type: "success", message: "Unidade editada com sucesso!" });
+        carregarUnidades();
+        if (response.status === 200) {
+          // Atualiza o estado local das unidades com a unidade editada
+          setUnidades((prevUnidades) => {
+            // Aqui, estamos garantindo que a unidade com o id correspondente seja atualizada
+            return prevUnidades.map((unidade) =>
+              unidade.id === unidadeEditada.id ? { ...unidade, nome: unidadeEditada.nome } : unidade
+            );
+          });
+  
+          // Feedback para o usuário
+          
+        }
+      } catch (error) {
+        console.error("Erro ao editar a unidade:", error);
+        CustomToast({ type: "error", message: "Erro ao editar a unidade!" });
+      }
     }
   };
-
+  
+  
 
   const handleEditUnidade = (unidade) => {
-    setUnidadeEditada({ ...unidade }); // Clona a categoria para edição
+    setUnidadeEditada({ ...unidade }); // Clona a unidade para edição
     setEditandoUnidade(true);
-
   };
 
-
-  const handleDeleteUnidade = (unidade) => {
-    const updatedUnidades = unidades.filter(cat => cat.cnpj !== unidade.cnpj); // Corrigido para usar cnpj
-    setUnidades(updatedUnidades);
-    localStorage.setItem('unidades', JSON.stringify(updatedUnidades));
-    CustomToast({ type: "success", message: "Unidade deletada com sucesso!" });
+  const handleDeleteUnidade = async (unidade) => {
+    try {
+      // Faz a requisição DELETE para a API
+      const response = await api.delete(`/unidade/${unidade.id}`);
+      
+      if (response.status === 200) {
+        // Atualiza o estado local removendo a unidade deletada
+        const updatedUnidades = unidades.filter((cat) => cat.id !== unidade.id);
+        setUnidades(updatedUnidades);
+        CustomToast({ type: "success", message: "Unidade deletada com sucesso!" });
+      } else {
+        CustomToast({ type: "error", message: "Erro ao excluir a unidade!" });
+      }
+    } catch (error) {
+      console.error("Erro ao excluir a unidade:", error);
+      CustomToast({ type: "error", message: "Erro ao excluir a unidade!" });
+    }
   };
-
-  const handleSelectUnidade = (event) => {
-    const selectedCnpj = event.target.value;
-    // Aqui você pode fazer algo com a unidade selecionada, como armazenar em um estado
-    console.log("Unidade selecionada:", selectedCnpj);
-  };
+  
+  useEffect(() => {
+    carregarUnidades();
+  }, []);
 
   return (
     <div className="flex w-full ">
       <Navbar />
-      <div className='flex ml-0 flex-col gap-3 w-full items-end md:ml-2'>
+      <div className="flex ml-0 flex-col gap-3 w-full items-end md:ml-2">
         <MenuMobile />
         <HeaderPerfil />
-        <h1 className='flex justify-center text-base items-center gap-2 sm:ml-1  md:text-2xl  font-bold  w-full md:justify-start   '><LocationOnOutlined />Cadastro Unidades</h1>
-        <div className={` items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
+        <h1 className="flex justify-center text-base items-center gap-2 sm:ml-1  md:text-2xl  font-bold  w-full md:justify-start   ">
+          <LocationOnOutlined />
+          Cadastro Unidades
+        </h1>
+        <div
+          className={` items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start transition-opacity duration-500 ${
+            isVisible ? "opacity-100" : "opacity-0 translate-y-4"
+          }`}
+        >
           <div className="hidden md:w-[14%] md:flex ">
             <HeaderCadastro />
           </div>
@@ -156,7 +182,7 @@ const Unidades = () => {
                 size="small"
                 label="Buscar unidade"
                 autoComplete="off"
-                sx={{ width: { xs: '90%', sm: '50%', md: '40%', lg: '40%' }, }}
+                sx={{ width: { xs: "90%", sm: "50%", md: "40%", lg: "40%" } }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -166,15 +192,15 @@ const Unidades = () => {
                 }}
               />
               <ButtonComponent
-                startIcon={<SearchIcon fontSize='small' />}
-                title={'Pesquisar'}
-                subtitle={'Pesquisar'}
+                startIcon={<SearchIcon fontSize="small" />}
+                title={"Pesquisar"}
+                subtitle={"Pesquisar"}
                 buttonSize="large"
               />
               <ButtonComponent
-                startIcon={<AddCircleOutlineIcon fontSize='small' />}
-                title={'Cadastrar'}
-                subtitle={'Cadastrar'}
+                startIcon={<AddCircleOutlineIcon fontSize="small" />}
+                title={"Cadastrar"}
+                subtitle={"Cadastrar"}
                 buttonSize="large"
                 onClick={handleCadastroUnidade}
               />
@@ -190,9 +216,19 @@ const Unidades = () => {
               }}
             />
 
-            <CentralModal tamanhoTitulo={'81%'} maxHeight={'90vh'} top={'20%'} left={'28%'} width={'400px'} icon={<AddCircleOutlineIcon fontSize="small" />} open={cadastrarUnidade} onClose={handleCloseCadastroUnidade} title="Cadastrar Unidade">
+            <CentralModal
+              tamanhoTitulo={"81%"}
+              maxHeight={"90vh"}
+              top={"20%"}
+              left={"28%"}
+              width={"400px"}
+              icon={<AddCircleOutlineIcon fontSize="small" />}
+              open={cadastrarUnidade}
+              onClose={handleCloseCadastroUnidade}
+              title="Cadastrar Unidade"
+            >
               <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
-                <div className='mt-4 flex gap-3 flex-wrap'>
+                <div className="mt-4 flex gap-3 flex-wrap">
                   <TextField
                     id="nomeUnidade"
                     fullWidth
@@ -202,7 +238,7 @@ const Unidades = () => {
                     autoComplete="off"
                     value={nomeUnidade} // Use o estado para o valor
                     onChange={(e) => setNomeUnidade(e.target.value)} // Atualiza o estado ao digitar
-                    sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '95%' } }}
+                    sx={{ width: { xs: "95%", sm: "50%", md: "40%", lg: "95%" } }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -214,9 +250,9 @@ const Unidades = () => {
 
                   <div className="flex w-[96%] items-end justify-end ">
                     <ButtonComponent
-                      startIcon={<AddCircleOutlineIcon fontSize='small' />}
-                      title={'Cadastrar'}
-                      subtitle={'Cadastrar'}
+                      startIcon={<AddCircleOutlineIcon fontSize="small" />}
+                      title={"Cadastrar"}
+                      subtitle={"Cadastrar"}
                       buttonSize="large"
                       onClick={handleSalvarUnidade}
                     />
@@ -229,21 +265,22 @@ const Unidades = () => {
               open={editandoUnidade}
               handleClose={() => setEditandoUnidade(false)}
               icon={<EditIcon fontSize={"small"} />}
-              tituloModal={'Editar Unidade'}
-              tamanhoTitulo={'73%'}
+              tituloModal={"Editar Unidade"}
+              tamanhoTitulo={"73%"}
               conteudo={
                 <>
                   <div className="mt-4 flex gap-3 flex-wrap">
-
                     <TextField
                       fullWidth
                       variant="outlined"
                       size="small"
                       label="Nome da Unidade"
                       autoComplete="off"
-                      value={unidadeEditada ? unidadeEditada.nome : ''}
-                      onChange={(e) => setUnidadeEditada({ ...unidadeEditada, nome: e.target.value })} // Atualiza o estado corretamente
-                      sx={{ width: '100%' }}
+                      value={unidadeEditada ? unidadeEditada.nome : ""}
+                      onChange={(e) =>
+                        setUnidadeEditada({ ...unidadeEditada, nome: e.target.value })
+                      } // Atualiza o estado corretamente
+                      sx={{ width: "100%" }}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -260,7 +297,6 @@ const Unidades = () => {
                         subtitle={"Salvar"}
                         buttonSize="large"
                         onClick={handleSaveEdit}
-
                       />
                     </div>
                   </div>

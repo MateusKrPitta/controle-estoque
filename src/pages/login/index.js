@@ -7,6 +7,8 @@ import packageJson from '../../../package.json';
 import CustomToast from '../../components/toast';
 import { formatCPF } from '../../utils/formatCPF';
 import './login.css'
+import axios from 'axios'; 
+import api from '../../services/api';
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -38,7 +40,6 @@ const LoginPage = () => {
             logar();
         }
     };
-
     const logar = async () => {
         if (!cpf) {
             CustomToast({ type: 'warning', message: 'Informe o CPF!' });
@@ -48,56 +49,40 @@ const LoginPage = () => {
             CustomToast({ type: 'warning', message: 'Informe sua senha!' });
             return;
         }
-
-        const usuario = {
-            nome: 'Aderbal',
-            id: 1,
-            tipo: 1
+    
+        setLoading(true);
+    
+        try {
+            const response = await api.post('/login', {
+                cpf: cpf,  // CPF com máscara
+                senha: senha
+            });
+    
+            const { token, nome } = response.data.data;
+    
+            if (token) {
+                // Armazenar o token no localStorage
+                localStorage.setItem('token', token);
+    
+                CustomToast({ type: 'success', message: `Bem-vindo(a), ${nome}` });
+                setTimeout(() => {
+                    setCpf('');
+                    setSenha('');
+                    setLoading(false);
+                    navigate('/dashboard');  // Redireciona para o dashboard
+                }, 1000);
+            }
+        } catch (error) {
+            setLoading(false);
+            if (error.response && error.response.data.message) {
+                CustomToast({ type: 'warning', message: error.response.data.message });
+            } else {
+                CustomToast({ type: 'error', message: 'Erro ao fazer login. Tente novamente mais tarde.' });
+            }
         }
-        sessionStorage.setItem('user', JSON.stringify(usuario));
-        
-        sessionStorage.setItem('page', '/dashboard');
-        navigate('/dashboard');
-        // try {
-        //     setLoading(true);
-        //     const response = await login(cpf, senha);
-        //     if (response.status) {
-        //         sessionStorage.clear();
-        //         const usuario = {
-        //             nome: response.data.usuario.nome,
-        //             id: response.data.usuario.id,
-        //         }
-        //         sessionStorage.setItem('user', JSON.stringify(usuario));
-        //         sessionStorage.setItem('key', response.data.token);
-        //         sessionStorage.setItem('page', '/dashboard');
-        //         setUser(usuario);
-
-        //         CustomToast({ type: 'success', message: 'Bem vindo(a)' });
-        //         setTimeout(() => {
-        //             setCpf("");
-        //             setSenha("");
-        //             navigate('/dashboard');
-        //             setLoading(false);
-        //         }, 2000);
-        //     } else {
-        //         if (response.mensagem && typeof response.mensagem === 'object') {
-        //             Object.values(response.mensagem).forEach(mensagem => {
-        //                 CustomToast({ type: 'warning', message: mensagem });
-        //                 setLoading(false);
-        //             });
-        //         } else {
-        //             CustomToast({ type: 'warning', message: response.mensagem });
-        //             setLoading(false);
-        //         }
-        //     }
-        // } catch (error) {
-        //     CustomToast({ type: 'error', message: error });
-        //     setLoading(false);
-        // }
-        //teste local
-
-
     };
+    
+    
 
     
 

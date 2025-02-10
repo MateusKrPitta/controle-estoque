@@ -9,7 +9,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import EditIcon from '@mui/icons-material/Edit';
 
 const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowChange, rowStyle }) => {
-    const [pageList, setPageList] = useState([]);
+    const [pageList, setPageList] = useState([]); // Inicialize como um array
     const hasActions = Object.keys(actionCalls).length > 0;
     const actionTypes = Object.keys(actionCalls);
     const [totals, setTotals] = useState({ entradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
@@ -37,9 +37,15 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
     };
 
     useEffect(() => {
-        setPageList(rows);
-        calculateTotals(rows);
+        if (Array.isArray(rows)) {
+            setPageList(rows);
+            calculateTotals(rows);
+        } else {
+            console.error('As rows não são um array', rows);
+            setPageList([]); // Defina como um array vazio se não for um array
+        }
     }, [rows]);
+    
 
     const renderActions = (row) => {
         let actions = {

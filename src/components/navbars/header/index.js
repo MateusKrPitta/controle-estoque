@@ -11,7 +11,6 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import { Button, Drawer, IconButton, List } from '@mui/material';
 import AddchartIcon from '@mui/icons-material/Addchart';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
-import { ProductionQuantityLimitsTwoTone } from '@mui/icons-material';
 import DataThresholdingIcon from '@mui/icons-material/DataThresholding';
 import ContentPasteSearchIcon from '@mui/icons-material/ContentPasteSearch';
 
@@ -63,8 +62,17 @@ const Navbar = ({ user }) => {
                             <DashboardIcon fontSize={"small"} />
                             <span>Dashboard</span>
                         </button>
-                        
                         <label className="text-sm mt-1 text-white font-bold">Funções</label>
+                        <button
+                            onClick={() => handleNavigate("/entrada-saida")}
+                            className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/entrada-saida" ? "border-b-2 border-primary" : ""}`}
+                            title={'Entradas/Saída'}
+                        >
+                            <AddchartIcon fontSize={"small"} />
+                            <span>Entradas/Saída</span>
+                        </button>
+                        
+                      
                         <button
                             onClick={() => handleNavigate("/cmv")}
                             className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/cmv" ? "border-b-2 border-primary" : ""}`}
@@ -72,14 +80,6 @@ const Navbar = ({ user }) => {
                         >
                             <AddToQueueIcon fontSize={"small"} />
                             <span>CMV</span>
-                        </button>
-                        <button
-                            onClick={() => handleNavigate("/produtos")}
-                            className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm  ${activeRoute === "/produtos" ? "border-b-2 border-primary" : ""}`}
-                            title={'Produtos'}
-                        >
-                            <ProductionQuantityLimitsTwoTone style={{color:'black'}} fontSize={"small"} />
-                            <span>Produtos</span>
                         </button>
                         <button
                             onClick={() => handleNavigate("/ficha-tecnica")}
@@ -97,14 +97,9 @@ const Navbar = ({ user }) => {
                             <DataThresholdingIcon fontSize={"small"} />
                             <span>Relatórios</span>
                         </button>
-                        <button
-                            onClick={() => handleNavigate("/entrada-saida")}
-                            className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/entrada-saida" ? "border-b-2 border-primary" : ""}`}
-                            title={'Entradas/Saída'}
-                        >
-                            <AddchartIcon fontSize={"small"} />
-                            <span>Entradas/Saída</span>
-                        </button>
+
+                       
+                        
                         
                         <label className="text-sm mt-1 text-white font-bold">Configurações</label>
                         <button

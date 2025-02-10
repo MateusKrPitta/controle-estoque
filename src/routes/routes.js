@@ -2,7 +2,7 @@ import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import LoginPage from '../pages/login';
 import Dashboard from '../pages/dashboard';
-import Produtos from '../pages/produtos/index.js';
+import Produtos from '../pages/cadastro/produtos/index.js';
 import Cadastro from '../pages/cadastro/index.js';
 import Categoria from '../pages/cadastro/categoria/index.js';
 import EntradaSaida from '../pages/entrada-saida/index.js';
@@ -20,7 +20,6 @@ const AppRoutes = () => {
         <Routes>
             <Route path="/" element={<LoginPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/produtos" element={<Produtos />} />
             <Route path="/login" element={<LoginPage /> }/>
             <Route path="/entrada-saida" element={<EntradaSaida /> }/>
             <Route path="/cmv" element={<CMV /> }/>
@@ -32,6 +31,7 @@ const AppRoutes = () => {
             <Route path="/cadastro" element={<Cadastro /> }/>
            <Route path="/cadastro/categoria" element={<Categoria /> }/>
            <Route path="/cadastro/usuarios" element={<Usuario /> }/>
+           <Route path="/cadastro/produtos" element={<Produtos />} />
            <Route path="/cadastro/unidades" element={<Unidades /> }/>
         </Routes>
     );

@@ -1,16 +1,17 @@
 import axios from 'axios';
-import { baseUrl } from './url';
 
-export async function fetchCidadesPorEstado(uf) {
-    try {
-        if (uf) {
-            const response = await axios.get(`${baseUrl}/estados/${uf}/distritos`);
-            // Certificando-se de que o formato de resposta seja correto
-            const cidades = response.data.map(cidade => cidade.nome); // Ajuste se a estrutura da resposta for diferente
-            return cidades.sort((a, b) => a.localeCompare(b)); // Ordenando as cidades
-        }
-        return [];
-    } catch (error) {
-        throw new Error(`Erro ao buscar cidades: ${error}`);
-    }
-}
+const api = axios.create({
+  baseURL: 'http://localhost:3333/api/v1', // Certifique-se de que a URL esteja correta
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+
+export default api;
