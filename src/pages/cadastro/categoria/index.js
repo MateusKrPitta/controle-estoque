@@ -40,16 +40,21 @@ const Categoria = () => {
     }, []);
 
     const carregarCategorias = async () => {
+        setLoading(true); // Inicia o loading
         try {
             const response = await api.get('/categoria');
-            if (Array.isArray(response.data)) {
-                setCategorias(response.data);
+            // Acesse a propriedade 'data' da resposta
+            if (Array.isArray(response.data.data)) {
+                setCategorias(response.data.data); // Atualiza o estado com o array de categorias
+                console.log(response.data.data); // Verifique os dados aqui
             } else {
-                console.error("A resposta da API não é um array:", response.data);
+                console.error("A resposta da API não é um array:", response.data.data);
                 setCategorias([]); // Defina como um array vazio se não for um array
             }
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
+        } finally {
+            setLoading(false); // Finaliza o loading
         }
     };
     const handleInputChange = (e) => {
@@ -133,7 +138,10 @@ const Categoria = () => {
         }
     };
 
+
+
     useEffect(() => {
+        carregarCategorias();
         carregarUnidades();
     }, []);
 

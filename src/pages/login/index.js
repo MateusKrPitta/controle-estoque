@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import {  VisibilityOffOutlined, VisibilityOutlined } from '@mui/icons-material';
+import { VisibilityOffOutlined, VisibilityOutlined } from '@mui/icons-material';
 import logoPaxVerde from '../../assets/png/logo.png';
 import LoadingLogin from '../../components/loading/loading-login';
 import { useNavigate } from 'react-router-dom';
@@ -7,11 +7,12 @@ import packageJson from '../../../package.json';
 import CustomToast from '../../components/toast';
 import { formatCPF } from '../../utils/formatCPF';
 import './login.css'
-import axios from 'axios'; 
 import api from '../../services/api';
+import { useUnidade } from '../../components/unidade-context';
 
 const LoginPage = () => {
     const navigate = useNavigate();
+    const { setUnidadeId, setUnidadeNome } = useUnidade();  // Acessa as funções do contexto
     const [cpf, setCpf] = useState('');
     const [senha, setSenha] = useState('');
     const [loading, setLoading] = useState(false);
@@ -33,63 +34,64 @@ const LoginPage = () => {
         setShowPassword(!showPassword);
     };
 
-
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             logar();
         }
     };
+
     const logar = async () => {
         if (!cpf) {
-            CustomToast({ type: 'warning', message: 'Informe o CPF!' });
-            return;
+          CustomToast({ type: 'warning', message: 'Informe o CPF!' });
+          return;
         }
         if (!senha) {
-            CustomToast({ type: 'warning', message: 'Informe sua senha!' });
-            return;
+          CustomToast({ type: 'warning', message: 'Informe sua senha!' });
+          return;
         }
-    
+      
         setLoading(true);
-    
+      
         try {
-            const response = await api.post('/login', {
-                cpf: cpf,  // CPF com máscara
-                senha: senha
-            });
-    
-            const { token, nome } = response.data.data;
-    
-            if (token) {
-                // Armazenar o token no localStorage
-                localStorage.setItem('token', token);
-    
-                CustomToast({ type: 'success', message: `Bem-vindo(a), ${nome}` });
-                setTimeout(() => {
-                    setCpf('');
-                    setSenha('');
-                    setLoading(false);
-                    navigate('/dashboard');  // Redireciona para o dashboard
-                }, 1000);
+          const response = await api.post('/login', { cpf, senha });
+          const { token, nome, unidade } = response.data.data;
+      
+          if (token) {
+            localStorage.setItem('token', token);
+            localStorage.setItem('userName', nome);
+      
+            if (unidade && unidade.length > 0) {
+              const unidadeSelecionada = unidade[0];
+              setUnidadeId(unidadeSelecionada.id);
+              setUnidadeNome(unidadeSelecionada.nome);
+      
+              // Salva unidadeId e unidadeNome no localStorage
+              localStorage.setItem('unidadeId', unidadeSelecionada.id);
+              localStorage.setItem('unidadeNome', unidadeSelecionada.nome);
             }
+      
+            CustomToast({ type: 'success', message: `Bem-vindo(a), ${nome}` });
+            setTimeout(() => {
+              setCpf('');
+              setSenha('');
+              setLoading(false);
+              navigate('/dashboard');
+            }, 1000);
+          }
         } catch (error) {
-            setLoading(false);
-            if (error.response && error.response.data.message) {
-                CustomToast({ type: 'warning', message: error.response.data.message });
-            } else {
-                CustomToast({ type: 'error', message: 'Erro ao fazer login. Tente novamente mais tarde.' });
-            }
+          setLoading(false);
+          if (error.response && error.response.data.message) {
+            CustomToast({ type: 'warning', message: error.response.data.message });
+          } else {
+            CustomToast({ type: 'error', message: 'Erro ao fazer login. Tente novamente mais tarde.' });
+          }
         }
-    };
-    
-    
-
-    
+      };
+      
 
     return (
         <div className="login-container flex h-screen items-center justify-center ">
-
-
             <div className="relative bg-black p-8 rounded-lg shadow-lg max-w-md w-full z-10">
                 <div className="flex justify-center mb-10">
                     <img src={logoPaxVerde} alt="Logo Pax Verde" className="w-28" />
@@ -142,7 +144,6 @@ const LoginPage = () => {
                     <p> Versão {packageJson.version}</p>
                 </div>
             </div>
-            
         </div>
     );
 };

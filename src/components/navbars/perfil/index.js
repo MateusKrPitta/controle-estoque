@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ClearIcon from '@mui/icons-material/Clear';
@@ -8,6 +8,9 @@ import ButtonComponent from "../../button";
 import SelectTextFields from "../../select";
 import LogoutIcon from '@mui/icons-material/Logout';
 import CategoryIcon from '@mui/icons-material/Category';
+import api from '../../../services/api';
+import { useUnidade } from "../../unidade-context";
+
 const style = {
   position: "absolute",
   top: "50%",
@@ -22,11 +25,13 @@ const style = {
 
 const HeaderPerfil = () => {
   const navigate = useNavigate();
+  const { setUnidadeId } = useUnidade(); // Obtém a função setUnidadeId do contexto
   const [anchorEl, setAnchorEl] = useState(null);
   const [openLogoutConfirm, setOpenLogoutConfirm] = useState(false);
-  const [categorias, setCategorias] = useState([]);
-  const [selectedCategoria, setSelectedCategoria] = useState('');
-  const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
+  const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
+  const [selectedUnidade, setSelectedUnidade] = useState('');
+  const [userName, setUserName] = useState('');
+
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -40,56 +45,69 @@ const HeaderPerfil = () => {
 
   const confirmLogout = async () => {
     handleCloseLogoutConfirm();
-    // const response = await logout();
-    // setTimeout(() => {
-    //   sessionStorage.clear();
-    //   navigate("/login");
-    //   CustomToast({ type: 'success', message: response.message });
-    // }, 10);
+    localStorage.clear(); // Limpa o localStorage
+    navigate("/login"); // Redireciona para a página de login
   };
-  useEffect(() => {
-    const categoriasSalvas = JSON.parse(localStorage.getItem('unidades')) || [];
-    const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
-      .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
 
-    setCategorias(categoriasUnicas);
-    setUniqueCategoriesCount(categoriasUnicas.length); // Atualiza o estado com o número de categorias únicas
+  const handleUnidadeChange = (event) => {
+    const selectedValue = event.target.value;
+    setSelectedUnidade(selectedValue);
+    setUnidadeId(selectedValue); // Atualiza o contexto com a unidade selecionada
+  };
+
+  const carregarUnidades = async () => {
+    try {
+      const response = await api.get("/unidade");
+      const unidadesOptions = response.data.data.map(unidade => ({
+        value: unidade.id,
+        label: unidade.nome
+      }));
+      setUserOptionsUnidade(unidadesOptions);
+    } catch (error) {
+      console.error("Erro ao carregar as unidades:", error);
+    }
+  };
+
+  useEffect(() => {
+    carregarUnidades();
+    const storedUserName = localStorage.getItem('userName');
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
   }, []);
+
   return (
     <>
       <div className="hidden md:flex justify-end w-full h-8">
         <div
-          className="flex items-center justify-center  w-[35%] h-20 bg-cover bg-no-repeat rounded-bl-lg"
+          className="flex items-center justify-center w-[35%] h-20 bg-cover bg-no-repeat rounded-bl-lg"
           style={{ backgroundColor: '#BCDA72' }}
         >
           <div className="w-[80%] items-star flex flex-wrap gap-2">
-
-          <SelectTextFields
-                width={'150px'}
-                icon={<CategoryIcon fontSize="small" />}
-                label={'Unidades'}
-                backgroundColor={"#D9D9D9"}
-                name={"Unidades"}
-                fontWeight={500}
-                options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
-                onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
-                value={selectedCategoria} // Reflete o estado atual no componente
-              />
-            <div className="flex items-center justify-start text-black  ">
-              <a className="cursor-pointer p-1" >
+            <SelectTextFields
+              width={'150px'}
+              icon={<CategoryIcon fontSize="small" />}
+              label={'Unidades'}
+              backgroundColor={"#D9D9D9"}
+              name={"Unidades"}
+              fontWeight={500}
+              options={userOptionsUnidade}
+              value={selectedUnidade}
+              onChange={handleUnidadeChange}
+            />
+            <div className="flex items-center justify-start text-black">
+              <a className="cursor-pointer p-1">
                 <AccountCircleIcon />
               </a>
-              <span className="text-xs text-black font-bold ">Administrador</span>
-
+              <span className="text-xs text-black font-bold">{userName || "Usuário"}</span>
             </div>
           </div>
-          <div className="w-[10%] flex justify-center items-center" style={{backgroundColor:'white', borderRadius:'50px', padding:'5px'}} >
+          <div className="w-[10%] flex justify-center items-center" style={{ backgroundColor: 'white', borderRadius: '50px', padding: '5px' }}>
             <a onClick={handleMenuOpen} className="cursor-pointer p-1">
               <LogoutIcon />
             </a>
           </div>
         </div>
-
       </div>
       <Menu
         anchorEl={anchorEl}
@@ -127,7 +145,7 @@ const HeaderPerfil = () => {
           </Typography>
           <div className="flex gap-2 justify-end mt-4">
             <ButtonComponent
-              subtitle={"Corfirmar Logout"}
+              subtitle={"Confirmar Logout"}
               title={"SIM"}
               onClick={confirmLogout}
             />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../../components/navbars/header/index.js';
-import { AddCircleOutline, DateRange, Edit, Numbers, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
+import { AddCircleOutline, DateRange, Edit, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
 import { IconButton, InputAdornment, TextField } from '@mui/material';
 import ButtonComponent from '../../../components/button/index.js';
 import SearchIcon from '@mui/icons-material/Search';
@@ -20,49 +20,52 @@ import SelectTextFields from '../../../components/select/index.js';
 import { NumericFormat } from 'react-number-format';
 import { formatPrecoPorcao, formatValor } from '../../../utils/functions.js';
 import CustomToast from '../../../components/toast/index.js';
-import { MoneyOutlined } from '@mui/icons-material'; // Importando o ícone de exclusão
-import Caixa from '../../../assets/icones/caixa.png'
+import { MoneyOutlined } from '@mui/icons-material';
+import Caixa from '../../../assets/icones/caixa.png';
 import HeaderCadastro from '../../../components/navbars/cadastro/index.js';
+import api from '../../../services/api.js';
+import { useUnidade } from '../../../components/unidade-context/index.js';
 
 const Produtos = () => {
+    const { unidadeId } = useUnidade();
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
     const [filtro, setFiltro] = useState(false);
     const [editandoCategoria, setEditandoCategoria] = useState(false);
     const [quantidadeTotal, setQuantidadeTotal] = useState('');
     const [loading, setLoading] = useState(false);
-    const [dataInicial, setDataInicial] = useState('');
-    const [dataFinal, setDataFinal] = useState('');
     const [nome, setNome] = useState('');
-    const [quantidadeMinima, setQuantidadeMinima] = useState('');
+    const [qtdMin, setQtdMin] = useState('');
     const [rendimento, setRendimento] = useState('');
     const [produtoEditado, setProdutoEditado] = useState(null);
     const [produtos, setProdutos] = useState([]);
-    const [quantidade, setQuantidade] = useState('');
     const [selectedUnidade, setSelectedUnidade] = useState("");
-    const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0); // Novo estado para contar categorias únicas
+    const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
     const [categorias, setCategorias] = useState([]);
     const [selectedCategoria, setSelectedCategoria] = useState('');
     const [preco, setPreco] = useState('');
     const [filtroNome, setFiltroNome] = useState('');
     const [filtroDataInicial, setFiltroDataInicial] = useState('');
     const [filtroDataFinal, setFiltroDataFinal] = useState('');
+
     const userOptionsUnidade = [
-        { value: 'kg', label: 'Kilograma' },
-        { value: 'g', label: 'Grama' },
-        { value: 'l', label: 'Litro' },
-        { value: 'ml', label: 'Mililitro' },
-        { value: 'unidade', label: 'Unidade' }, // Adicionando a opção "Unidade"
-        // Adicione mais opções conforme necessário
+        { value: 1, label: 'Kilograma' },
+        { value: 2, label: 'Grama' },
+        { value: 3, label: 'Litro' },
+        { value: 4, label: 'Mililitro' },
+        { value: 5, label: 'Unidade' },
     ];
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsVisible(true);
-        }, 300); // Delay para a transição
+        }, 300);
 
         return () => clearTimeout(timer);
     }, []);
+
+    // Fetch products from the API
+
 
     const handleUnidadeChange = (event) => {
         setSelectedUnidade(event.target.value);
@@ -74,45 +77,87 @@ const Produtos = () => {
     const handleFiltro = () => setFiltro(true);
     const handleCloseFiltro = () => setFiltro(false);
 
-    const handleCadastrarProduto = () => {
-        const novosProdutos = JSON.parse(localStorage.getItem('produtos')) || [];
-
+    const handleCadastrarProduto = async () => {
         const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
         const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0;
         const rendimentoNumerico = parseFloat(rendimento) || 0;
+        const qtdMinNumerica = parseFloat(qtdMin) || 0; // Converte qtdMin para número
 
-        // Calcule o preço por porção
-        const precoPorcao = rendimentoNumerico > 0 ? (precoNumerico / rendimentoNumerico) : 0;
+        const precoPorcao = rendimentoNumerico > 0 ? precoNumerico / rendimentoNumerico : 0;
 
         const novoProduto = {
-            id: Date.now(),
             nome,
-            quantidadeMinima,
-            quantidadeTotal,
-            rendimento,
-            categoria: categorias.find(cat => cat.id === selectedCategoria)?.nome || "Não informado",
-            unidade: selectedUnidade,
-            preco: precoNumerico,
-            precoPorcao,
-            precoPorcaoFormatado: formatPrecoPorcao(precoPorcao),
-            dataCriacao: new Date().toLocaleDateString('pt-BR'),
+            qtdMin: qtdMinNumerica, // Envia qtdMin como número
+            quantidade: quantidadeNumerica,
+            rendimento: rendimentoNumerico,
+            valor: precoNumerico,
+            unidadeMedida: selectedUnidade,
+            unidadeId,
+            categoriaId: selectedCategoria,
         };
 
-        // Formatar o preço antes de adicionar ao estado
-        novoProduto.precoFormatado = formatValor(novoProduto.preco);
+        try {
+            const response = await api.post('/produto', novoProduto);
+            console.log('Produto cadastrado com sucesso:', response.data);
 
-        novosProdutos.push(novoProduto);
-        localStorage.setItem('produtos', JSON.stringify(novosProdutos));
-        setProdutos(novosProdutos);
-        handleCloseCadastroProdutos();
-        setNome('');
-        setQuantidadeMinima('');
-        setQuantidadeTotal('');
-        setRendimento('');
-        setSelectedCategoria('');
-        setSelectedUnidade('');
-        setPreco('');
-        CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
+            setProdutos(prevProdutos => [
+                ...prevProdutos,
+                {
+                    ...novoProduto,
+                    id: response.data.id,
+                    precoPorcao,
+                    precoPorcaoFormatado: formatPrecoPorcao(precoPorcao),
+                    dataCriacao: new Date().toLocaleDateString('pt-BR'),
+                    precoFormatado: formatValor(precoNumerico),
+                }
+            ]);
+
+            handleCloseCadastroProdutos();
+            CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
+        } catch (error) {
+            console.error('Erro ao cadastrar produto:', error);
+
+            if (error.response && error.response.data) {
+                CustomToast({ type: "error", message: `Erro: ${error.response.data.message || 'Erro ao cadastrar produto!'}` });
+            } else {
+                CustomToast({ type: "error", message: "Erro ao cadastrar produto!" });
+            }
+        }
+    };
+
+    const carregaProdutos = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('/produto');
+            if (Array.isArray(response.data.data)) {
+                const mappedProdutos = response.data.data.map(produto => {
+                    const categoria = categorias.find(cat => cat.id === parseInt(produto.categoriaId, 10));
+                    const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
+                
+                    return {
+                        id: produto.id,
+                        nome: produto.nome,
+                        rendimento: produto.rendimento,
+                        unidadeMedida: unidade ? unidade.label : 'N/A',
+                        categoriaNome: categoria ? categoria.nome : 'N/A', // Aqui está o problema
+                        valorPorcao: formatValor(produto.valorPorcao),
+                        valor: formatValor(produto.valor),
+                        createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'),
+                    };
+                });
+                
+                setProdutos(mappedProdutos);
+                console.log(mappedProdutos); // Verifique se os produtos estão sendo mapeados corretamente
+            } else {
+                console.error("A resposta da API não é um array:", response.data.data);
+                setProdutos([]);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar produtos:', error);
+            CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handlePesquisar = () => {
@@ -128,7 +173,7 @@ const Produtos = () => {
         });
 
         setProdutos(produtosFiltrados);
-        handleCloseFiltro(); // Fecha a modal
+        handleCloseFiltro();
         CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
     };
 
@@ -137,64 +182,59 @@ const Produtos = () => {
             produto.id === produtoEditado.id
                 ? {
                     ...produtoEditado,
-                    categoria: categorias.find(cat => cat.id === produtoEditado.categoria)?.nome || "Não informado", // Salva o nome da categoria
-                    precoPorcaoFormatado: formatValor(produtoEditado.preco / (parseFloat(produtoEditado.rendimento) || 1)), // Atualiza o preço por porção
+                    // Certifique-se de usar as chaves corretas
+                    categoriaId: produtoEditado.categoriaId,
+                    unidadeId: produtoEditado.unidadeId,
+                    // Adicione outros campos que você precisa atualizar
                 }
                 : produto
         );
 
-        localStorage.setItem('produtos', JSON.stringify(novosProdutos));
-        setProdutos(novosProdutos); // Atualiza o estado
-        setEditandoCategoria(false); // Fecha o modal
+        setProdutos(novosProdutos);
+        setEditandoCategoria(false);
         CustomToast({ type: "success", message: "Produto editado com sucesso!" });
     };
-    const handleDeleteProduto = (produtoId) => {
-        const produtosAtualizados = produtos.filter((produto) => produto.id !== produtoId); // Remove o produto pelo ID
-        localStorage.setItem('produtos', JSON.stringify(produtosAtualizados)); // Atualiza o localStorage
-        setProdutos(produtosAtualizados); // Atualiza o estado da tabela
-        CustomToast({ type: "success", message: "Produto deletado com sucesso!" });
+
+    const handleDeleteProduto = async (produtoId) => {
+        try {
+            // Chama a API para deletar o produto
+            await api.delete(`/produto/${produtoId}`);
+
+            // Atualiza o estado local para remover o produto deletado
+            const produtosAtualizados = produtos.filter((produto) => produto.id !== produtoId);
+            setProdutos(produtosAtualizados);
+
+            CustomToast({ type: "success", message: "Produto deletado com sucesso!" });
+        } catch (error) {
+            console.error('Erro ao deletar produto:', error);
+            CustomToast({ type: "error", message: "Erro ao deletar produto!" });
+        }
     };
 
-    const calcularValorTotalEstoque = () => {
-        return produtos.reduce((total, produto) => {
-            return total + (produto.preco * (produto.quantidadeMinima || 0)); // Supondo que quantidadeMinima seja a quantidade em estoque
-        }, 0);
+    const carregaCategorias = async () => {
+        try {
+            const response = await api.get('/categoria');
+            console.log('Categorias recebidas:', response.data);
+
+            if (Array.isArray(response.data.data)) {
+                setCategorias(response.data.data);
+            } else {
+                console.error('A resposta não contém um array de categorias:', response.data);
+                CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
+            }
+        } catch (error) {
+            console.error('Erro ao buscar categorias:', error);
+            CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
+        }
     };
 
     const quantidadeProdutosCadastrados = produtos.length;
 
     useEffect(() => {
-        const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
-        const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
-            .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
-
-        setCategorias(categoriasUnicas);
-        setUniqueCategoriesCount(categoriasUnicas.length); // Atualiza o estado com o número de categorias únicas
+        carregaProdutos(); // Fetch products when the component mounts
+        carregaCategorias(); // Fetch categories when the component mounts
     }, []);
 
-    useEffect(() => {
-        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-        const produtosFormatados = produtosSalvos.map((produto) => ({
-            ...produto,
-            precoFormatado: formatValor(produto.preco),
-            dataCriacao: new Date(produto.dataCriacao).toLocaleDateString('pt-BR'), // Formata a data
-        }));
-        setProdutos(produtosFormatados);
-    }, []);
-
-    const handleCategoriaChange = (value) => {
-        setSelectedCategoria(value);
-    };
-
-    useEffect(() => {
-        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-        const produtosFormatados = produtosSalvos.map((produto) => ({
-            ...produto,
-            precoFormatado: formatValor(produto.preco),
-            dataCriacao: new Date(produto.dataCriacao).toLocaleDateString('pt-BR'), // Formata a data
-        }));
-        setProdutos(produtosFormatados);
-    }, []);
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -210,8 +250,6 @@ const Produtos = () => {
                     </div>
                     <div className="w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col md:w-[80%]">
                         <div className={`w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
-
-
                             <div className='w-[80%] md:w-[20%] p-2  bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
                                 <label className='text-xs font-bold'>Produtos Cadastrados</label>
                                 <div className='flex items-center justify-center gap-5'>
@@ -278,13 +316,12 @@ const Produtos = () => {
                                         actionsLabel={"Ações"}
                                         actionCalls={{
                                             edit: (produto) => {
-                                                setProdutoEditado(produto); // Define o produto selecionado para edição
-                                                setEditandoCategoria(true); // Abre o modal de edição
+                                                setProdutoEditado(produto);
+                                                setEditandoCategoria(true);
                                             },
-                                            delete: (produto) => handleDeleteProduto(produto.id),
+                                            delete: (produto) => handleDeleteProduto(produto.id), // Chama a função de deletar
                                         }}
                                     />
-
                                 )}
                             </div>
 
@@ -327,8 +364,8 @@ const Produtos = () => {
                                             type='number'
                                             label="Quantidade Mínima"
                                             name="quantidadeMinima"
-                                            value={quantidadeMinima}
-                                            onChange={(e) => setQuantidadeMinima(e.target.value)}
+                                            value={qtdMin}
+                                            onChange={(e) => setQtdMin(e.target.value)}
                                             autoComplete="off"
                                             sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '23%' } }}
                                             InputProps={{
@@ -387,9 +424,9 @@ const Produtos = () => {
                                             backgroundColor={"#D9D9D9"}
                                             name={"categoria"}
                                             fontWeight={500}
-                                            options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
-                                            onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
-                                            value={selectedCategoria} // Reflete o estado atual no componente
+                                            options={Array.isArray(categorias) ? categorias.map(categoria => ({ label: categoria.nome, value: categoria.id })) : []}
+                                            onChange={(e) => setSelectedCategoria(e.target.value)}
+                                            value={selectedCategoria}
                                         />
 
                                         <SelectTextFields
@@ -403,7 +440,6 @@ const Produtos = () => {
                                             onChange={handleUnidadeChange}
                                             value={selectedUnidade}
                                         />
-
                                     </div>
                                     <div className='w-[95%] mt-2 flex items-end justify-end'>
                                         <ButtonComponent
@@ -430,7 +466,7 @@ const Produtos = () => {
                                             size="small"
                                             label="Nome do Produto"
                                             name="nome"
-                                            value={produtoEditado?.nome || ''}
+                                            value={produtoEditado?.nome || ''} // Use optional chaining
                                             onChange={(e) => setProdutoEditado({ ...produtoEditado, nome: e.target.value })}
                                             sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
                                             InputProps={{
@@ -447,8 +483,8 @@ const Produtos = () => {
                                             size="small"
                                             label="Quantidade Mínima"
                                             name="quantidadeMinima"
-                                            value={produtoEditado?.quantidadeMinima || ''}
-                                            onChange={(e) => setProdutoEditado({ ...produtoEditado, quantidadeMinima: e.target.value })}
+                                            value={produtoEditado?.qtdMin || ''} // Certifique-se de que isso corresponde à chave nos dados do produto
+                                            onChange={(e) => setProdutoEditado({ ...produtoEditado, qtdMin: e.target.value })} // Certifique-se de que você está atualizando o campo correto
                                             sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '47%' } }}
                                             InputProps={{
                                                 startAdornment: (
@@ -464,7 +500,7 @@ const Produtos = () => {
                                             size="small"
                                             label="Rendimento"
                                             name="rendimento"
-                                            value={produtoEditado?.rendimento || ''}
+                                            value={produtoEditado?.rendimento || ''} // Use optional chaining
                                             onChange={(e) => setProdutoEditado({ ...produtoEditado, rendimento: e.target.value })}
                                             sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' }, }}
                                             InputProps={{
@@ -483,24 +519,24 @@ const Produtos = () => {
                                             name="categoria"
                                             fontWeight={500}
                                             options={categorias.map((categoria) => ({ label: categoria.nome, value: categoria.id }))}
-                                            value={produtoEditado?.categoria || ''}
+                                            value={produtoEditado?.categoriaId || ''} // Use optional chaining
                                             onChange={(e) =>
                                                 setProdutoEditado({
                                                     ...produtoEditado,
-                                                    categoria: e.target.value // Salva o ID da categoria selecionada
+                                                    categoriaId: e.target.value // Ensure you're updating the correct field
                                                 })
                                             }
                                         />
                                         <SelectTextFields
                                             width="300px"
                                             icon={<ScaleIcon fontSize="small" />}
-                                            label="Unidade"
+                                            label="Unidade Medida"
                                             backgroundColor="#D9D9D9"
                                             name="unidadeMedida"
                                             fontWeight={500}
-                                            options={userOptionsUnidade}
-                                            value={produtoEditado?.unidade || ''}
-                                            onChange={(e) => setProdutoEditado({ ...produtoEditado, unidade: e.target.value })}
+                                            options={userOptionsUnidade} // Certifique-se de que isso é a lista correta de opções
+                                            value={produtoEditado?.unidadeMedida || ''} // Use optional chaining para evitar erros
+                                            onChange={(e) => setProdutoEditado({ ...produtoEditado, unidadeMedida: e.target.value })}
                                         />
                                         <NumericFormat
                                             customInput={TextField}
@@ -509,8 +545,8 @@ const Produtos = () => {
                                             size="small"
                                             label="Preço"
                                             sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
-                                            value={produtoEditado?.preco || ''} // Use o preço do produto editado
-                                            onValueChange={(values) => setProdutoEditado({ ...produtoEditado, preco: values.value })} // Atualize o preço no produto editado
+                                            value={produtoEditado?.valor || ''} // Use optional chaining
+                                            onValueChange={(values) => setProdutoEditado({ ...produtoEditado, valor: values.value })}
                                             thousandSeparator="."
                                             decimalSeparator=","
                                             prefix="R$ "
@@ -611,8 +647,8 @@ const Produtos = () => {
                                             name={"categoria"}
                                             fontWeight={500}
                                             options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
-                                            onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
-                                            value={selectedCategoria} // Reflete o estado atual no componente
+                                            onChange={(e) => setSelectedCategoria(e.target.value)}
+                                            value={selectedCategoria}
                                         />
                                     </div>
                                     <div className='w-[95%] mt-2 flex items-end justify-end'>
@@ -620,14 +656,13 @@ const Produtos = () => {
                                             title={'Pesquisar'}
                                             subtitle={'Pesquisar'}
                                             startIcon={<SearchIcon />}
-                                            onClick={handlePesquisar} // Chama a função de pesquisa
+                                            onClick={handlePesquisar}
                                         />
                                     </div>
                                 </div>
                             </CentralModal>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

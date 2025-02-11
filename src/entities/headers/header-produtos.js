@@ -1,11 +1,9 @@
-
 export const headerProdutos = [
-  { key: "nome", label: "Nome" }, // Chave para o nome do titular
+  { key: "nome", label: "Nome" },
   { key: "rendimento", label: "Rendimento" },
-  { key: "unidade", label: "Medida" },
-  { key: "categoria", label: "Categoria" },
-  { key: "precoPorcao", label: "Preço Porção" },
-  { key: "precoFormatado", label: "Valor Preço" },
-  { key: "dataCriacao", label: "Data Criacao" },
+  { key: "unidadeMedida", label: "Unidade de Medida" }, // Atualizado para exibir o nome da unidade
+  { key: "categoriaNome", label: "Categoria" }, // Adicionado para exibir o nome da categoria
+  { key: "valorPorcao", label: "Preço Porção" },
+  { key: "valor", label: "Valor" },
+  { key: "createdAt", label: "Data de Criação" },
 ];
-
