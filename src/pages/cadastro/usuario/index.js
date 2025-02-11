@@ -10,7 +10,6 @@ import HeaderCadastro from '../../../components/navbars/cadastro';
 import TableComponent from '../../../components/table/index';
 import CentralModal from '../../../components/modal-central';
 import SelectTextFields from "../../../components/select";
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import Checkbox from '@mui/material/Checkbox';
 import NotesIcon from '@mui/icons-material/Notes';
@@ -24,11 +23,12 @@ import { Edit } from '@mui/icons-material';
 import { formatCPF } from "../../../utils/functions";
 import CustomToast from "../../../components/toast";
 import api from "../../../services/api";
-import axios from 'axios';
+import { useNavigate } from "react-router-dom";
 
 const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 
 const Usuario = () => {
+  const navigate = useNavigate();
   const [cadastroUsuario, setCadastroUsuario] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,7 @@ const Usuario = () => {
   const [editandoUsuario, setEditandoUsuario] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [users, setUsers] = useState([]);
-
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [newUser, setNewUser] = useState({
     nome: '',
     cpf: '',
@@ -85,7 +85,37 @@ const Usuario = () => {
 
 
   const handleCadastroUsuario = () => setCadastroUsuario(true);
-  const handleCloseCadastroUsuario = () => setCadastroUsuario(false);
+  const handleCloseCadastroUsuario = () => {
+    setCadastroUsuario(false);
+    setNewUser ({
+      nome: '',
+      cpf: '',
+      senha: '',
+      funcao: '',
+      unidade: '',
+      permissoes: {
+        administrador: false,
+        basico: false,
+      },
+    });
+    setSelectedUnidades([]); // Limpa as unidades selecionadas
+  };
+
+  const handleCloseEditUser  = () => {
+    setEditandoUsuario(false);
+    setEditUser (null);
+    setNewUser ({
+      nome: '',
+      cpf: '',
+      senha: '',
+      unidade: '',
+      permissoes: {
+        administrador: false,
+        basico: false,
+      },
+    });
+    setSelectedUnidades([]); // Limpa as unidades selecionadas
+  };
 
   const removeUnidade = (unidade) => {
     setSelectedUnidades(selectedUnidades.filter(item => item !== unidade));
@@ -159,7 +189,18 @@ const Usuario = () => {
       CustomToast({ type: "success", message: "Usuário cadastrado com sucesso!" });
     } catch (error) {
       console.error("Erro ao cadastrar usuário:", error);
-      CustomToast({ type: "error", message: "Erro ao cadastrar usuário!" });
+
+      // Verifica se o erro é devido a um token expirado
+      if (
+        error.response &&
+        error.response.data.message === "Credenciais inválidas" &&
+        error.response.data.data === "Token de acesso inválido"
+      ) {
+        CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
+        navigate("/login"); // Redireciona para a tela de login
+      } else {
+        CustomToast({ type: "error", message: "Erro ao cadastrar usuário!" });
+      }
     }
   };
 
@@ -285,7 +326,18 @@ const Usuario = () => {
       setUsers(response.data.data || []); // Ajuste conforme a estrutura da resposta
     } catch (error) {
       console.error("Erro ao buscar usuários:", error);
-      CustomToast({ type: "error", message: "Erro ao buscar usuários!" });
+
+      // Verifica se o erro é devido a um token expirado
+      if (
+        error.response &&
+        error.response.data.message === "Credenciais inválidas" &&
+        error.response.data.data === "Token de acesso inválido"
+      ) {
+        CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
+        navigate("/login"); // Redireciona para a tela de login
+      } else {
+        CustomToast({ type: "error", message: "Erro ao buscar usuários!" });
+      }
     }
   };
 
@@ -293,7 +345,7 @@ const Usuario = () => {
 
 
 
-  
+
 
   const handleUnidadeChange = (event) => {
     const selectedValue = event.target.value;
@@ -337,12 +389,12 @@ const Usuario = () => {
       const unidadeObj = userOptionsUnidade.find(option => option.value === id);
       return unidadeObj ? unidadeObj.label : "Unidade Desconhecida";
     });
-  
+
     return {
       ...user,
       unidade: unidadeNames.join(", ") || "Unidade Desconhecida",
-      edit: () => handleEditUser (user),
-      delete: () => handleDeleteUser (user),
+      edit: () => handleEditUser(user),
+      delete: () => handleDeleteUser(user),
     };
   });
   useEffect(() => {
@@ -384,12 +436,12 @@ const Usuario = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonIcon />
+                      <SearchIcon />
                     </InputAdornment>
                   ),
                 }}
               />
-              
+
               <ButtonComponent
                 startIcon={<AddCircleOutlineIcon fontSize='small' />}
                 title={'Cadastrar'}
@@ -462,8 +514,10 @@ const Usuario = () => {
                         <InputAdornment position="start">
                           <NotesIcon />
                         </InputAdornment>
-
                       ),
+                      inputProps: {
+                        maxLength: 11, // Adiciona o limite de comprimento aqui
+                      },
                     }}
                   />
                   <TextField
@@ -544,7 +598,7 @@ const Usuario = () => {
 
             <ModalLateral
               open={editandoUsuario}
-              handleClose={() => setEditandoUsuario(false)}
+              handleClose={handleCloseEditUser }
               tituloModal="Editar Usuário"
               icon={<Edit />}
               tamanhoTitulo="75%"
@@ -585,6 +639,9 @@ const Usuario = () => {
                             <NotesIcon />
                           </InputAdornment>
                         ),
+                        inputProps: {
+                          maxLength: 11, // Adiciona o limite de comprimento aqui
+                        },
                       }}
                     />
                     <TextField
