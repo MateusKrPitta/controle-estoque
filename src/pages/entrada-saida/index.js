@@ -22,6 +22,7 @@ import Entradas from '../../assets/icones/entradas.png'
 import Valor from '../../assets/icones/valor.png'
 import CategoryIcon from '@mui/icons-material/Category';
 import SearchIcon from '@mui/icons-material/Search';
+import api from '../../services/api.js';
 
 const EntradaSaida = () => {
   const [cadastro, setCadastro] = useState(false);
@@ -36,7 +37,7 @@ const EntradaSaida = () => {
   const [selectedCategoria, setSelectedCategoria] = useState('');
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-
+  const [observacao, setObservacao] = useState('');
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
@@ -90,38 +91,47 @@ const EntradaSaida = () => {
     setEditando(false);
     setRegistroEditado(null); // Limpa o registro editado
   };
-  const handleCadastrarRegistro = () => {
+  
+  const handleCadastrarRegistro = async () => {
     const quantidadeNumerica = parseFloat(quantidade) || 0; // Converte a quantidade para número
     const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0; // Calcule o valor total
-  
+
+    // Crie o objeto com os dados a serem enviados
     const novoRegistro = {
-      id: Date.now(), // Usando timestamp como ID único
-      produto: produtoSelecionado ? produtoSelecionado.nome : produto,
-      quantidade,
-      tipo, // Armazena como string formatada
-      categoria: produtoSelecionado ? produtoSelecionado.categoria : '',
-      precoPorcao: produtoSelecionado ? produtoSelecionado.precoPorcao : 0, // Adiciona precoPorcao
-      valorTotal, // Adiciona o valor total
-      dataCadastro: new Date().toISOString().split('T')[0] // Adiciona a data de cadastro
+      data: new Date().toISOString().split('T')[0], // Data atual
+      movTipo: tipo === 'entrada' ? 1 : tipo === 'saida' ? 2 : 3, // Mapeia o tipo para 1, 2 ou 3
+      quantidade: quantidadeNumerica,
+      produtoId: produtoSelecionado ? produtoSelecionado.id : null, // ID do produto selecionado
+      observacao: observacao // Observação do campo
     };
-  
-    const updatedEntradasSaidas = [...entradasSaidas, novoRegistro];
-    setEntradasSaidas(updatedEntradasSaidas);
-    localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
-  
-    // Resetar os campos
-    setProduto('');
-    setQuantidade('');
-    setTipo('entrada');
-    setProdutoSelecionado(null);
-    handleCloseCadastro();
+
+    try {
+      // Envie os dados para a API
+      const response = await api.post('/movimentacao', novoRegistro); // Altere a rota conforme necessário
+      console.log('Registro cadastrado com sucesso:', response.data);
+
+      // Atualize o estado local
+      const updatedEntradasSaidas = [...entradasSaidas, { ...novoRegistro, valorTotal }];
+      setEntradasSaidas(updatedEntradasSaidas);
+
+      // Resetar os campos
+      setProduto('');
+      setQuantidade('');
+      setTipo('entrada');
+      setProdutoSelecionado(null);
+      setObservacao(''); // Limpa o campo de observação
+      handleCloseCadastro();
+    } catch (error) {
+      console.error('Erro ao cadastrar registro:', error);
+      CustomToast({ type: "error", message: "Erro ao cadastrar registro!" });
+    }
   };
 
 
   const handleSaveEdit = () => {
     const quantidadeNumerica = parseFloat(quantidade) || 0; // Converte a quantidade para número
     const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0; // Calcule o valor total
-  
+
     const updatedEntradasSaidas = entradasSaidas.map((registro) =>
       registro === registroEditado
         ? {
@@ -135,7 +145,7 @@ const EntradaSaida = () => {
         }
         : registro
     );
-  
+
     setEntradasSaidas(updatedEntradasSaidas);
     localStorage.setItem('entradasSaidas', JSON.stringify(updatedEntradasSaidas));
     handleCloseEditar(); // Fecha a modal de edição
@@ -162,13 +172,35 @@ const EntradaSaida = () => {
     return acc + (registro.tipo === 'entrada' ? valorRegistro : -valorRegistro);
   }, 0);
 
+  const fetchProdutos = async () => {
+    try {
+      const response = await api.get('/produto'); // Altere a rota conforme necessário
+      const produtosCadastrados = response.data.data; // Ajuste conforme a estrutura da resposta
+
+      // Mapeie os produtos para incluir o valorPorcao
+      const produtosComPreco = produtosCadastrados.map(produto => ({
+        id: produto.id,
+        nome: produto.nome,
+        valorPorcao: produto.valorPorcao, // Certifique-se de que este campo existe na resposta
+        // Adicione outros campos que você precisa
+      }));
+
+      setProdutos(produtosComPreco);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
+    }
+  };
+
   useEffect(() => {
     const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
     const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
       .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
 
     setCategorias(categoriasUnicas);
-    setUniqueCategoriesCount(categoriasUnicas.length); // Atualiza o estado com o número de categorias únicas
+    setUniqueCategoriesCount(categoriasUnicas.length);
+    fetchProdutos();
+    // Atualiza o estado com o número de categorias únicas
   }, []);
 
   return (
@@ -307,7 +339,7 @@ const EntradaSaida = () => {
                 fontWeight={500}
                 options={produtos.map(produto => ({
                   value: produto.nome, // O valor que será armazenado
-                  label: `${produto.nome} - ${formatValor(produto.precoPorcao)}` // Exibe o nome e o preço por porção formatado
+                  label: `${produto.nome} - ${formatValor(produto.valorPorcao)}` // Exibe o nome e o preço por porção formatado
                 }))}
                 value={produto} // Preenche o campo com o produto atual
                 onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
@@ -325,6 +357,23 @@ const EntradaSaida = () => {
                   startAdornment: (
                     <InputAdornment position="start">
                       <ScaleIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Observação"
+                value={observacao} // Adicione um estado para armazenar a observação
+                sx={{ width: { xs: '30%', sm: '50%', md: '40%', lg: '96%' }, }}
+                onChange={(e) => setObservacao(e.target.value)} // Função para atualizar a observação
+                autoComplete="off"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <ArticleIcon fontSize="small" /> {/* Ícone para o campo de observação */}
                     </InputAdornment>
                   ),
                 }}
@@ -350,7 +399,7 @@ const EntradaSaida = () => {
                 title={'Cadastrar'}
                 subtitle={'Cadastrar'}
                 startIcon={<Save />}
-                onClick={handleCadastrarRegistro}
+                onClick={handleCadastrarRegistro} // Chama a função para cadastrar
               />
             </div>
           </div>

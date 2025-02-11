@@ -36,17 +36,17 @@ const Produtos = () => {
     const [nome, setNome] = useState('');
     const [qtdMin, setQtdMin] = useState('');
     const [rendimento, setRendimento] = useState('');
-    const [produtoEditado, setProdutoEditado] = useState(null);
     const [produtos, setProdutos] = useState([]);
     const [selectedUnidade, setSelectedUnidade] = useState("");
-    const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
     const [categorias, setCategorias] = useState([]);
     const [selectedCategoria, setSelectedCategoria] = useState('');
     const [preco, setPreco] = useState('');
     const [filtroNome, setFiltroNome] = useState('');
     const [filtroDataInicial, setFiltroDataInicial] = useState('');
     const [filtroDataFinal, setFiltroDataFinal] = useState('');
-
+    const [produtoEditado, setProdutoEditado] = useState(null);
+    const [valorReajuste, setValorReajuste] = useState('');
+    const [dataReajuste, setDataReajuste] = useState('');
     const userOptionsUnidade = [
         { value: 1, label: 'Kilograma' },
         { value: 2, label: 'Grama' },
@@ -79,18 +79,16 @@ const Produtos = () => {
 
     const handleCadastrarProduto = async () => {
         const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
-        const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0;
+        const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0; // Mude para 0 se não houver preço
         const rendimentoNumerico = parseFloat(rendimento) || 0;
-        const qtdMinNumerica = parseFloat(qtdMin) || 0; // Converte qtdMin para número
-
-        const precoPorcao = rendimentoNumerico > 0 ? precoNumerico / rendimentoNumerico : 0;
+        const qtdMinNumerica = parseFloat(qtdMin) || 0;
 
         const novoProduto = {
             nome,
-            qtdMin: qtdMinNumerica, // Envia qtdMin como número
+            qtdMin: qtdMinNumerica,
             quantidade: quantidadeNumerica,
             rendimento: rendimentoNumerico,
-            valor: precoNumerico,
+            valor: precoNumerico, // Aqui, o valor nunca será null
             unidadeMedida: selectedUnidade,
             unidadeId,
             categoriaId: selectedCategoria,
@@ -100,28 +98,14 @@ const Produtos = () => {
             const response = await api.post('/produto', novoProduto);
             console.log('Produto cadastrado com sucesso:', response.data);
 
-            setProdutos(prevProdutos => [
-                ...prevProdutos,
-                {
-                    ...novoProduto,
-                    id: response.data.id,
-                    precoPorcao,
-                    precoPorcaoFormatado: formatPrecoPorcao(precoPorcao),
-                    dataCriacao: new Date().toLocaleDateString('pt-BR'),
-                    precoFormatado: formatValor(precoNumerico),
-                }
-            ]);
+            // Recarregar produtos após o cadastro
+            await carregaProdutos();
 
             handleCloseCadastroProdutos();
             CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
         } catch (error) {
             console.error('Erro ao cadastrar produto:', error);
-
-            if (error.response && error.response.data) {
-                CustomToast({ type: "error", message: `Erro: ${error.response.data.message || 'Erro ao cadastrar produto!'}` });
-            } else {
-                CustomToast({ type: "error", message: "Erro ao cadastrar produto!" });
-            }
+            CustomToast({ type: "error", message: "Erro ao cadastrar produto!" });
         }
     };
 
@@ -129,25 +113,28 @@ const Produtos = () => {
         setLoading(true);
         try {
             const response = await api.get('/produto');
+            console.log(response.data);
             if (Array.isArray(response.data.data)) {
                 const mappedProdutos = response.data.data.map(produto => {
-                    const categoria = categorias.find(cat => cat.id === parseInt(produto.categoriaId, 10));
+                    const categoriaNome = categorias.find(cat => cat.id === produto.categoriaId)?.nome || 'N/A';
                     const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
-                
+                    const valorFormatado = formatValor(produto.valorReajuste || produto.valor); // Valor formatado
+    
                     return {
                         id: produto.id,
                         nome: produto.nome,
                         rendimento: produto.rendimento,
                         unidadeMedida: unidade ? unidade.label : 'N/A',
-                        categoriaNome: categoria ? categoria.nome : 'N/A', // Aqui está o problema
+                        categoria: categoriaNome,
                         valorPorcao: formatValor(produto.valorPorcao),
-                        valor: formatValor(produto.valor),
+                        valor: formatValor(produto.valorReajuste || produto.valor), // Mantém para uso na tabela
+                        valorFormatado: valorFormatado, // Novo campo com valor formatado
+                        qtdMin: produto.qtdMin,
+                        categoriaId: produto.categoriaId,
                         createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'),
                     };
                 });
-                
                 setProdutos(mappedProdutos);
-                console.log(mappedProdutos); // Verifique se os produtos estão sendo mapeados corretamente
             } else {
                 console.error("A resposta da API não é um array:", response.data.data);
                 setProdutos([]);
@@ -160,6 +147,10 @@ const Produtos = () => {
         }
     };
 
+
+
+
+
     const handlePesquisar = () => {
         const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
 
@@ -167,7 +158,8 @@ const Produtos = () => {
             const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
             const dataMatch = (!filtroDataInicial || new Date(produto.dataCriacao) >= new Date(filtroDataInicial)) &&
                 (!filtroDataFinal || new Date(produto.dataCriacao) <= new Date(filtroDataFinal));
-            const categoriaMatch = !selectedCategoria || produto.categoria === categorias.find(cat => cat.id === selectedCategoria)?.nome;
+            const categoriaMatch = !selectedCategoria || produto.categoriaId === parseInt(selectedCategoria);
+
 
             return nomeMatch && dataMatch && categoriaMatch;
         });
@@ -177,23 +169,6 @@ const Produtos = () => {
         CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
     };
 
-    const handleSaveEdit = () => {
-        const novosProdutos = produtos.map((produto) =>
-            produto.id === produtoEditado.id
-                ? {
-                    ...produtoEditado,
-                    // Certifique-se de usar as chaves corretas
-                    categoriaId: produtoEditado.categoriaId,
-                    unidadeId: produtoEditado.unidadeId,
-                    // Adicione outros campos que você precisa atualizar
-                }
-                : produto
-        );
-
-        setProdutos(novosProdutos);
-        setEditandoCategoria(false);
-        CustomToast({ type: "success", message: "Produto editado com sucesso!" });
-    };
 
     const handleDeleteProduto = async (produtoId) => {
         try {
@@ -208,6 +183,84 @@ const Produtos = () => {
         } catch (error) {
             console.error('Erro ao deletar produto:', error);
             CustomToast({ type: "error", message: "Erro ao deletar produto!" });
+        }
+    };
+
+    const handleEditProduto = (produto) => {
+        console.log(produto); // Verifique se qtdMin está presente
+        setProdutoEditado(produto);
+        setNome(produto.nome);
+        setQtdMin(produto.qtdMin); // Certifique-se de que isso está correto
+        setRendimento(produto.rendimento);
+
+        // Use o valorFormatado para definir o preco
+        setPreco(produto.valorFormatado);
+
+        // Mapeie a unidade de medida para o valor correspondente
+        const unidadeSelecionada = userOptionsUnidade.find(unit => unit.label === produto.unidadeMedida);
+        setSelectedUnidade(unidadeSelecionada ? unidadeSelecionada.value : ""); // Defina o valor correspondente
+
+        setSelectedCategoria(produto.categoriaId);
+        setEditandoCategoria(true); // Abre o modal de edição
+    };
+
+    const handleSalvarProduto = async () => {
+        // Verifica se o preço está definido e é uma string válida
+        if (!preco || typeof preco !== 'string') {
+            CustomToast({ type: "error", message: "Preço inválido!" });
+            return;
+        }
+
+        // Converte o preço formatado em número
+        let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", "."));
+        if (isNaN(precoNumerico)) {
+            precoNumerico = 0; // Define como 0 se não for um número válido
+        }
+
+        // Formata a data de reajuste
+        const dataReajusteFormatada = dataReajuste ? new Date(dataReajuste).toISOString().split('T')[0] : '';
+
+        // Verifica se a data de reajuste é válida
+        if (!dataReajusteFormatada) {
+            CustomToast({ type: "error", message: "Data de reajuste é inválida!" });
+            return;
+        }
+
+        // Converte o valor de reajuste formatado em número
+        let valorReajusteNumerico = 0;
+        if (valorReajuste) {
+            valorReajusteNumerico = parseFloat(valorReajuste.replace("R$ ", "").replace(/\./g, "").replace(",", "."));
+            if (isNaN(valorReajusteNumerico)) {
+                valorReajusteNumerico = 0; // Define como 0 se não for um número válido
+            }
+        }
+
+        // Cria o objeto com os dados atualizados do produto
+        const produtoAtualizado = {
+            nome,
+            qtdMin: parseFloat(qtdMin) || 0,
+            quantidade: parseFloat(quantidadeTotal) || 0,
+            rendimento: parseFloat(rendimento) || 0,
+            valor: 5, // Usa o preço numérico
+            dataReajuste: dataReajusteFormatada,
+            valorReajuste: valorReajusteNumerico,
+            unidadeMedida: selectedUnidade,
+            unidadeId,
+            categoriaId: selectedCategoria,
+        };
+
+        // Adiciona logs para depuração
+        console.log('Dados a serem enviados:', produtoAtualizado);
+
+        try {
+            const response = await api.put(`/produto/${produtoEditado.id}`, produtoAtualizado);
+            console.log('Produto atualizado com sucesso:', response.data);
+            await carregaProdutos();
+            setEditandoCategoria(false);
+            CustomToast({ type: "success", message: "Produto atualizado com sucesso!" });
+        } catch (error) {
+            console.error('Erro ao atualizar produto:', error);
+            CustomToast({ type: "error", message: "Erro ao atualizar produto!" });
         }
     };
 
@@ -231,9 +284,14 @@ const Produtos = () => {
     const quantidadeProdutosCadastrados = produtos.length;
 
     useEffect(() => {
-        carregaProdutos(); // Fetch products when the component mounts
-        carregaCategorias(); // Fetch categories when the component mounts
+        const carregarDados = async () => {
+            await carregaCategorias();  // Aguarda o carregamento das categorias
+            await carregaProdutos();    // Só então carrega os produtos
+        };
+        carregarDados();
     }, []);
+
+
 
     return (
         <div className="flex w-full ">
@@ -315,10 +373,7 @@ const Produtos = () => {
                                         rows={produtos}
                                         actionsLabel={"Ações"}
                                         actionCalls={{
-                                            edit: (produto) => {
-                                                setProdutoEditado(produto);
-                                                setEditandoCategoria(true);
-                                            },
+                                            edit: (produto) => handleEditProduto(produto),
                                             delete: (produto) => handleDeleteProduto(produto.id), // Chama a função de deletar
                                         }}
                                     />
@@ -466,8 +521,8 @@ const Produtos = () => {
                                             size="small"
                                             label="Nome do Produto"
                                             name="nome"
-                                            value={produtoEditado?.nome || ''} // Use optional chaining
-                                            onChange={(e) => setProdutoEditado({ ...produtoEditado, nome: e.target.value })}
+                                            value={nome} // Certifique-se de que está usando o estado correto
+                                            onChange={(e) => setNome(e.target.value)}
                                             sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
                                             InputProps={{
                                                 startAdornment: (
@@ -483,8 +538,8 @@ const Produtos = () => {
                                             size="small"
                                             label="Quantidade Mínima"
                                             name="quantidadeMinima"
-                                            value={produtoEditado?.qtdMin || ''} // Certifique-se de que isso corresponde à chave nos dados do produto
-                                            onChange={(e) => setProdutoEditado({ ...produtoEditado, qtdMin: e.target.value })} // Certifique-se de que você está atualizando o campo correto
+                                            value={qtdMin} // Certifique-se de que está usando o estado correto
+                                            onChange={(e) => setQtdMin(e.target.value)} // Atualiza o estado ao mudar
                                             sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '47%' } }}
                                             InputProps={{
                                                 startAdornment: (
@@ -500,9 +555,71 @@ const Produtos = () => {
                                             size="small"
                                             label="Rendimento"
                                             name="rendimento"
-                                            value={produtoEditado?.rendimento || ''} // Use optional chaining
-                                            onChange={(e) => setProdutoEditado({ ...produtoEditado, rendimento: e.target.value })}
-                                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' }, }}
+                                            value={rendimento} // Certifique-se de que está usando o estado correto
+                                            onChange={(e) => setRendimento(e.target.value)}
+                                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <AddchartIcon />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                        <NumericFormat
+                                            customInput={TextField}
+                                            fullWidth
+                                            variant="outlined"
+                                            size="small"
+                                            label="Preço"
+                                            sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '47%' }, }}
+                                            value={preco}
+                                            onValueChange={(values) => setPreco(values.value)}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
+                                            prefix="R$ "
+                                            decimalScale={2}
+                                            fixedDecimalScale={true}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <MoneyOutlined />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+
+                                        <NumericFormat
+                                            customInput={TextField}
+                                            fullWidth
+                                            variant="outlined"
+                                            size="small"
+                                            label="Valor Reajuste"
+                                            sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '47%' }, }}
+                                            value={valorReajuste}
+                                            onValueChange={(values) => setValorReajuste(values.value)} // Atualiza o estado com o valor formatado
+                                            thousandSeparator="."
+                                            decimalSeparator=","
+                                            prefix="R$ "
+                                            decimalScale={2}
+                                            fixedDecimalScale={true}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <MoneyOutlined />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                        <TextField
+                                            fullWidth
+                                            variant="outlined"
+                                            size="small"
+                                            label="Data Reajuste"
+                                            type='date'
+                                            value={dataReajuste}
+                                            onChange={(e) => setDataReajuste(e.target.value)}
+                                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
                                             InputProps={{
                                                 startAdornment: (
                                                     <InputAdornment position="start">
@@ -518,14 +635,9 @@ const Produtos = () => {
                                             backgroundColor="#D9D9D9"
                                             name="categoria"
                                             fontWeight={500}
-                                            options={categorias.map((categoria) => ({ label: categoria.nome, value: categoria.id }))}
-                                            value={produtoEditado?.categoriaId || ''} // Use optional chaining
-                                            onChange={(e) =>
-                                                setProdutoEditado({
-                                                    ...produtoEditado,
-                                                    categoriaId: e.target.value // Ensure you're updating the correct field
-                                                })
-                                            }
+                                            options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+                                            onChange={(e) => setSelectedCategoria(e.target.value)}
+                                            value={selectedCategoria} // Certifique-se de que está usando o estado correto
                                         />
                                         <SelectTextFields
                                             width="300px"
@@ -534,38 +646,16 @@ const Produtos = () => {
                                             backgroundColor="#D9D9D9"
                                             name="unidadeMedida"
                                             fontWeight={500}
-                                            options={userOptionsUnidade} // Certifique-se de que isso é a lista correta de opções
-                                            value={produtoEditado?.unidadeMedida || ''} // Use optional chaining para evitar erros
-                                            onChange={(e) => setProdutoEditado({ ...produtoEditado, unidadeMedida: e.target.value })}
-                                        />
-                                        <NumericFormat
-                                            customInput={TextField}
-                                            fullWidth
-                                            variant="outlined"
-                                            size="small"
-                                            label="Preço"
-                                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '48%' }, }}
-                                            value={produtoEditado?.valor || ''} // Use optional chaining
-                                            onValueChange={(values) => setProdutoEditado({ ...produtoEditado, valor: values.value })}
-                                            thousandSeparator="."
-                                            decimalSeparator=","
-                                            prefix="R$ "
-                                            decimalScale={2}
-                                            fixedDecimalScale={true}
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <MoneyOutlined />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
+                                            options={userOptionsUnidade}
+                                            onChange={handleUnidadeChange}
+                                            value={selectedUnidade} // Certifique-se de que está usando o estado correto
                                         />
                                         <div className="w-[95%] mt-2 flex items-end justify-end">
                                             <ButtonComponent
                                                 title="Salvar"
                                                 subtitle="Salvar"
                                                 startIcon={<Save />}
-                                                onClick={handleSaveEdit}
+                                                onClick={handleSalvarProduto} // Chama a função de salvar
                                             />
                                         </div>
                                     </div>
