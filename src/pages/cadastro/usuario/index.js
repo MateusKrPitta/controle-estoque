@@ -293,7 +293,7 @@ const Usuario = () => {
 
 
 
-
+  
 
   const handleUnidadeChange = (event) => {
     const selectedValue = event.target.value;
@@ -335,17 +335,16 @@ const Usuario = () => {
   const rows = filteredUsers.map(user => {
     const unidadeNames = user.unidadeId.map(id => {
       const unidadeObj = userOptionsUnidade.find(option => option.value === id);
-      return unidadeObj ? unidadeObj.label : "Unidade Desconhecida"; // Retorna o nome da unidade ou "Unidade Desconhecida"
+      return unidadeObj ? unidadeObj.label : "Unidade Desconhecida";
     });
-
+  
     return {
       ...user,
-      unidade: unidadeNames.join(", ") || "Unidade Desconhecida", // Concatena os nomes das unidades
-      edit: () => handleEditUser(user), // Adiciona a função de edição
-      delete: () => handleDeleteUser(user), // Adiciona a função de exclusão
+      unidade: unidadeNames.join(", ") || "Unidade Desconhecida",
+      edit: () => handleEditUser (user),
+      delete: () => handleDeleteUser (user),
     };
   });
-
   useEffect(() => {
     carregarUnidades();
   }, []);
@@ -390,12 +389,7 @@ const Usuario = () => {
                   ),
                 }}
               />
-              <ButtonComponent
-                startIcon={<SearchIcon fontSize='small' />}
-                title={'Pesquisar'}
-                subtitle={'Pesquisar'}
-                buttonSize="large"
-              />
+              
               <ButtonComponent
                 startIcon={<AddCircleOutlineIcon fontSize='small' />}
                 title={'Cadastrar'}
@@ -643,7 +637,7 @@ const Usuario = () => {
 
                   <div className="w-[96%] border-[1px] p-2 rounded-lg">
                     {Object.keys(newUser.permissoes).map((permissao) => (
-                      <div className="w-full flex]  items-center" key={permissao}>
+                      <div className="w-full flex  items-center" key={permissao}>
                         <div className="w-[12%]">
                           <Checkbox
                             checked={newUser.permissoes[permissao]} // Verifica se a permissão está ativa
