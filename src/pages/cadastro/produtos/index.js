@@ -68,50 +68,72 @@ const Produtos = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    // Fetch products from the API
+    // Função para limpar os campos do cadastro
+    const clearCadastroFields = () => {
+        setNome('');
+        setQtdMin('');
+        setRendimento('');
+        setPreco('');
+        setSelectedUnidade('');
+        setSelectedCategoria('');
+    };
 
+    // Função para limpar os campos de edição
+    const clearEditFields = () => {
+        setNome('');
+        setQtdMin('');
+        setRendimento('');
+        setPreco('');
+        setValorReajuste('');
+        setDataReajuste('');
+        setSelectedUnidade('');
+        setSelectedCategoria('');
+    };
 
     const handleUnidadeChange = (event) => {
         setSelectedUnidade(event.target.value);
     };
 
     const handleCadastroProdutos = () => setCadastroAdicionais(true);
-    const handleCloseCadastroProdutos = () => setCadastroAdicionais(false);
+    const handleCloseCadastroProdutos = () => {
+        setCadastroAdicionais(false);
+        clearCadastroFields(); // Limpa os campos ao fechar a modal
+    };
 
     const handleFiltro = () => setFiltro(true);
     const handleCloseFiltro = () => setFiltro(false);
 
-const handleCadastrarProduto = async () => {
-    const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
-    const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0; // Mude para 0 se não houver preço
-    const rendimentoNumerico = parseFloat(rendimento) || 0;
-    const qtdMinNumerica = parseFloat(qtdMin) || 0;
+    const handleCadastrarProduto = async () => {
+        const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
+        const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0; // Mude para 0 se não houver preço
+        const rendimentoNumerico = parseFloat(rendimento) || 0;
+        const qtdMinNumerica = parseFloat(qtdMin) || 0;
 
-    const novoProduto = {
-        nome,
-        qtdMin: qtdMinNumerica,
-        quantidade: quantidadeNumerica,
-        rendimento: rendimentoNumerico,
-        valor: precoNumerico, // Aqui, o valor nunca será null
-        unidadeMedida: selectedUnidade,
-        unidadeId,
-        categoriaId: selectedCategoria, // Certifique-se de que isso está correto
+        const novoProduto = {
+            nome,
+            qtdMin: qtdMinNumerica,
+            quantidade: quantidadeNumerica,
+            rendimento: rendimentoNumerico,
+            valor: precoNumerico, // Aqui, o valor nunca será null
+            unidadeMedida: selectedUnidade,
+            unidadeId,
+            categoriaId: selectedCategoria, // Certifique-se de que isso está correto
+        };
+
+        try {
+            const response = await api.post('/produto', novoProduto);
+            console.log('Produto cadastrado com sucesso:', response.data);
+
+            // Recarregar produtos após o cadastro
+            await carregaProdutos();
+
+            handleCloseCadastroProdutos();
+            CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
+        } catch (error) {
+            console.error('Erro ao cadastrar produto:', error);
+            CustomToast({ type: "error", message: "Erro ao cadastrar produto!" });
+        }
     };
-
-    try {
-        const response = await api.post('/produto', novoProduto);
-        console.log('Produto cadastrado com sucesso:', response.data);
-
-        // Recarregar produtos após o cadastro
-        await carregaProdutos();
-
-        handleCloseCadastroProdutos();
-        CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
-    } catch (error) {
-        console.error('Erro ao cadastrar produto:', error);
-        CustomToast({ type: "error", message: "Erro ao cadastrar produto!" });
-    }
-};
 
     const carregaProdutos = async () => {
         setLoading(true);
@@ -120,10 +142,9 @@ const handleCadastrarProduto = async () => {
             console.log(response.data);
             if (Array.isArray(response.data.data)) {
                 const mappedProdutos = response.data.data.map(produto => {
-                   
                     const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
                     const valorFormatado = formatValor(produto.valorReajuste || produto.valor); // Valor formatado
-                
+
                     return {
                         id: produto.id,
                         nome: produto.nome,
@@ -148,7 +169,7 @@ const handleCadastrarProduto = async () => {
             }
         } catch (error) {
             console.error('Erro ao buscar produtos:', error);
-            
+
             // Verifica se o erro é devido a um token expirado
             if (error.response && error.response.data.message === "Credenciais inválidas" && error.response.data.data === "Token de acesso inválido") {
                 CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
@@ -161,25 +182,26 @@ const handleCadastrarProduto = async () => {
         }
     };
 
-const handlePesquisar = () => {
-    const produtosFiltrados = produtosOriginais.filter(produto => {
-        const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
-        const dataInicialMatch = filtroDataInicial ? new Date(produto.createdAt) >= new Date(filtroDataInicial) : true;
-        const dataFinalMatch = filtroDataFinal ? new Date(produto.createdAt) <= new Date(filtroDataFinal) : true;
-        const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
+    const handlePesquisar = () => {
+        const produtosFiltrados = produtosOriginais.filter(produto => {
+            const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
+            const dataInicialMatch = filtroDataInicial ? new Date(produto.createdAt) >= new Date(filtroDataInicial) : true;
+            const dataFinalMatch = filtroDataFinal ? new Date(produto.createdAt) <= new Date(filtroDataFinal) : true;
+            const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
 
-        return nomeMatch && dataInicialMatch && dataFinalMatch && categoriaMatch;
-    });
+            return nomeMatch && dataInicialMatch && dataFinalMatch && categoriaMatch;
+        });
 
-    setProdutosFiltrados(produtosFiltrados);
-    handleCloseFiltro(); // Fecha a modal de filtro
+        setProdutosFiltrados(produtosFiltrados);
+        handleCloseFiltro(); // Fecha a modal de filtro
 
-    if (produtosFiltrados.length === 0) {
-        CustomToast({ type: "error", message: "Nenhum produto encontrado com os critérios de pesquisa." });
-    } else {
-        CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
-    }
-};
+        if (produtosFiltrados.length === 0) {
+            CustomToast({ type: "error", message: "Nenhum produto encontrado com os critérios de pesquisa." });
+        } else {
+            CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
+        }
+    };
+
     const handleDeleteProduto = async (produtoId) => {
         try {
             // Chama a API para deletar o produto
@@ -251,7 +273,7 @@ const handlePesquisar = () => {
             qtdMin: parseFloat(qtdMin) || 0,
             quantidade: parseFloat(quantidadeTotal) || 0,
             rendimento: parseFloat(rendimento) || 0,
-            valor: 5, // Usa o preço numérico
+            valor: precoNumerico, // Usa o preço numérico
             dataReajuste: dataReajusteFormatada,
             valorReajuste: valorReajusteNumerico,
             unidadeMedida: selectedUnidade,
@@ -267,6 +289,7 @@ const handlePesquisar = () => {
             console.log('Produto atualizado com sucesso:', response.data);
             await carregaProdutos();
             setEditandoCategoria(false);
+            clearEditFields(); // Limpa os campos ao fechar a modal de edição
             CustomToast({ type: "success", message: "Produto atualizado com sucesso!" });
         } catch (error) {
             console.error('Erro ao atualizar produto:', error);
@@ -310,7 +333,6 @@ const handlePesquisar = () => {
         // Atualiza o estado com os produtos filtrados
         setProdutosFiltrados(produtosFiltrados);
     }, [filtroNome, produtosOriginais]);
-
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -400,7 +422,7 @@ const handlePesquisar = () => {
                                 top={'20%'}
                                 left={'28%'}
                                 width={'620px'}
-                                icon={<AddCircleOutline fontSize="small" />}
+                                icon={<AddCircleOutline fontSize ="small" />}
                                 open={cadastroAdicionais}
                                 onClose={handleCloseCadastroProdutos}
                                 title="Cadastrar Produtos"
@@ -549,7 +571,7 @@ const handlePesquisar = () => {
                                         <TextField
                                             fullWidth
                                             variant="outlined"
-                                            size="small"
+ size="small"
                                             label="Quantidade Mínima"
                                             name="quantidadeMinima"
                                             value={qtdMin} // Certifique-se de que está usando o estado correto
@@ -688,7 +710,7 @@ const handlePesquisar = () => {
                                 title="Filtro"
                             >
                                 <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
-                                    <div className='mt-4 flex gap-3 flex-wrap'>
+ <div className='mt-4 flex gap-3 flex-wrap'>
                                         <TextField
                                             fullWidth
                                             variant="outlined"
