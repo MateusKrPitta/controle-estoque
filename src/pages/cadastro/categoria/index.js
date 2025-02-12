@@ -18,8 +18,10 @@ import api from '../../../services/api';
 import TableLoading from '../../../components/loading/loading-table/loading';
 import AddCircleOutline from "@mui/icons-material/AddCircleOutline";
 import ArticleIcon from '@mui/icons-material/Article';
+import { useNavigate } from 'react-router-dom';
 
 const Categoria = () => {
+    const navigate = useNavigate();
     const [cadastroCategoria, setCadastroCategoria] = useState(false);
     const [loading, setLoading] = useState(false);
     const [categorias, setCategorias] = useState([]);
@@ -46,7 +48,7 @@ const Categoria = () => {
 
     useEffect(() => {
         // Filtra as categorias sempre que filtroNome mudar
-        const categoriasFiltradas = categorias.filter(categoria => 
+        const categoriasFiltradas = categorias.filter(categoria =>
             categoria.nome.toLowerCase().includes(filtroNome.toLowerCase())
         );
         setProdutosFiltrados(categoriasFiltradas);
@@ -64,6 +66,16 @@ const Categoria = () => {
             }
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
+            if (
+                error.response &&
+                error.response.data.message === "Credenciais inválidas" &&
+                error.response.data.data === "Token de acesso inválido"
+            ) {
+                CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
+                navigate("/login");
+            } else {
+                CustomToast({ type: "error", message: "Erro ao carregar as unidades!" });
+            }
         } finally {
             setLoading(false);
         }
@@ -79,9 +91,9 @@ const Categoria = () => {
 
     const handleCadastrarCategoria = async () => {
         try {
-            const novaCategoria = { 
-                nome: categoria.nome, 
-                unidadeId: categoria.unidadeId 
+            const novaCategoria = {
+                nome: categoria.nome,
+                unidadeId: categoria.unidadeId
             };
             await api.post('/categoria', novaCategoria);
             await carregarCategorias();
@@ -224,7 +236,7 @@ const Categoria = () => {
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <ArticleIcon/>
+                                        <ArticleIcon />
                                     </InputAdornment>
                                 ),
                             }}
