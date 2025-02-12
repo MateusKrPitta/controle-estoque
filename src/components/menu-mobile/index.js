@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useNavigate } from 'react-router-dom';
@@ -7,13 +7,16 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import MenuIcon from "@mui/icons-material/Menu";
 import { ExitToApp } from '@mui/icons-material';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
-import { ProductionQuantityLimitsTwoTone } from '@mui/icons-material';
 import DataThresholdingIcon from '@mui/icons-material/DataThresholding';
 import ContentPasteSearchIcon from '@mui/icons-material/ContentPasteSearch';
 import AddchartIcon from '@mui/icons-material/Addchart';
-
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import Estoque from '../../assets/png/logo.png';
+import SelectTextFields from '../select';
+import api from '../../services/api';
 const MenuMobile = ({ user }) => {
+    const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
+    const [selectedUnidade, setSelectedUnidade] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
     const navigate = useNavigate();
@@ -31,12 +34,51 @@ const MenuMobile = ({ user }) => {
         handleClose(); // Fecha o menu após a navegação
     };
 
+    const handleUnidadeChange = (event) => {
+        const selectedValue = event.target.value;
+        const unidadeObj = userOptionsUnidade.find(option => option.value === selectedValue);
+        if (unidadeObj) {
+          setSelectedUnidade(unidadeObj.value);
+        }
+      };
+
+      
+    const carregarUnidades = async () => {
+        try {
+            const response = await api.get("/unidade");
+            const unidadesOptions = response.data.data.map(unidade => ({
+                value: unidade.id,
+                label: unidade.nome
+            }));
+            setUserOptionsUnidade(unidadesOptions);
+        } catch (error) {
+            console.error("Erro ao carregar as unidades:", error);
+        }
+    };
+
+    useEffect(() => {
+        carregarUnidades();
+    }, []);
+
     return (
-        <div className='w-[100%] sm:hidden flex items-center p-3 justify-center z-30 md:hidden lg:hidden' style={{ backgroundColor: 'black' }}>
-            <div className='flex items-start w-[90%]'>
-                <img style={{ width: '35%', marginRight: '150px' }} src={Estoque} alt="Total de Produtos" />
+        <div className='w-[100%]  flex items-center justify-center p-3 gap-10  z-30  lg:hidden' style={{ backgroundColor: 'black' }}>
+            <div className='flex items-start w-[30%]'>
+                <img style={{ width: '100%', marginRight: '150px', padding:'10px' }} src={Estoque} alt="Total de Produtos" />
             </div>
-            <div className='flex items-start w-[10%]'>
+            <div className='flex items-start w-[30%]'>
+                <SelectTextFields
+                    width={'150px'}
+                    icon={<LocationOnIcon fontSize="small" />}
+                    label={'Unidades'}
+                    backgroundColor={"#D9D9D9"}
+                    name={"Unidades"}
+                    fontWeight={500}
+                    options={userOptionsUnidade}
+                    value={selectedUnidade}
+                    onChange={handleUnidadeChange}
+                />
+            </div>
+            <div className='flex items-start w-[15%] sm:w-[10%] md:w-[10%] ml-7'>
                 <button
                     id="basic-button"
                     aria-controls={open ? 'basic-menu' : undefined}

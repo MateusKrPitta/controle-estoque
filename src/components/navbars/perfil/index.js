@@ -6,10 +6,10 @@ import { Modal, Box, Menu, MenuItem, Typography } from "@mui/material";
 import Title from "../../title";
 import ButtonComponent from "../../button";
 import SelectTextFields from "../../select";
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LogoutIcon from '@mui/icons-material/Logout';
 import CategoryIcon from '@mui/icons-material/Category';
 import api from '../../../services/api';
-import { useUnidade } from "../../unidade-context";
 
 const style = {
   position: "absolute",
@@ -25,9 +25,11 @@ const style = {
 
 const HeaderPerfil = () => {
   const navigate = useNavigate();
-  const { setUnidadeId } = useUnidade(); // Obtém a função setUnidadeId do contexto
   const [anchorEl, setAnchorEl] = useState(null);
   const [openLogoutConfirm, setOpenLogoutConfirm] = useState(false);
+  const [categorias, setCategorias] = useState([]);
+  const [selectedCategoria, setSelectedCategoria] = useState('');
+  const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
   const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
   const [selectedUnidade, setSelectedUnidade] = useState('');
   const [userName, setUserName] = useState('');
@@ -45,14 +47,18 @@ const HeaderPerfil = () => {
 
   const confirmLogout = async () => {
     handleCloseLogoutConfirm();
+    // Aqui você pode adicionar a lógica para logout, se necessário
+    // Exemplo: await api.post('/logout');
     localStorage.clear(); // Limpa o localStorage
     navigate("/login"); // Redireciona para a página de login
   };
 
   const handleUnidadeChange = (event) => {
     const selectedValue = event.target.value;
-    setSelectedUnidade(selectedValue);
-    setUnidadeId(selectedValue); // Atualiza o contexto com a unidade selecionada
+    const unidadeObj = userOptionsUnidade.find(option => option.value === selectedValue);
+    if (unidadeObj) {
+      setSelectedUnidade(unidadeObj.value);
+    }
   };
 
   const carregarUnidades = async () => {
@@ -69,6 +75,15 @@ const HeaderPerfil = () => {
   };
 
   useEffect(() => {
+    const categoriasSalvas = JSON.parse(localStorage.getItem('unidades')) || [];
+    const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
+      .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
+
+    setCategorias(categoriasUnicas);
+    setUniqueCategoriesCount(categoriasUnicas.length);
+  }, []);
+
+  useEffect(() => {
     carregarUnidades();
     const storedUserName = localStorage.getItem('userName');
     if (storedUserName) {
@@ -78,15 +93,15 @@ const HeaderPerfil = () => {
 
   return (
     <>
-      <div className="hidden md:flex justify-end w-full h-8">
+      <div className="hidden lg:flex justify-end w-full h-8">
         <div
-          className="flex items-center justify-center w-[35%] h-20 bg-cover bg-no-repeat rounded-bl-lg"
+          className="flex items-center justify-between pl-3 pr-4 w-[35%] h-20 bg-cover bg-no-repeat rounded-bl-lg"
           style={{ backgroundColor: '#BCDA72' }}
         >
           <div className="w-[80%] items-star flex flex-wrap gap-2">
             <SelectTextFields
               width={'150px'}
-              icon={<CategoryIcon fontSize="small" />}
+              icon={<LocationOnIcon fontSize="small" />}
               label={'Unidades'}
               backgroundColor={"#D9D9D9"}
               name={"Unidades"}

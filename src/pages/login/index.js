@@ -43,51 +43,59 @@ const LoginPage = () => {
 
     const logar = async () => {
         if (!cpf) {
-          CustomToast({ type: 'warning', message: 'Informe o CPF!' });
-          return;
+            CustomToast({ type: 'warning', message: 'Informe o CPF!' });
+            return;
         }
         if (!senha) {
-          CustomToast({ type: 'warning', message: 'Informe sua senha!' });
-          return;
+            CustomToast({ type: 'warning', message: 'Informe sua senha!' });
+            return;
         }
-      
+    
         setLoading(true);
-      
+    
         try {
-          const response = await api.post('/login', { cpf, senha });
-          const { token, nome, unidade } = response.data.data;
-      
-          if (token) {
-            localStorage.setItem('token', token);
-            localStorage.setItem('userName', nome);
-      
-            if (unidade && unidade.length > 0) {
-              const unidadeSelecionada = unidade[0];
-              setUnidadeId(unidadeSelecionada.id);
-              setUnidadeNome(unidadeSelecionada.nome);
-      
-              // Salva unidadeId e unidadeNome no localStorage
-              localStorage.setItem('unidadeId', unidadeSelecionada.id);
-              localStorage.setItem('unidadeNome', unidadeSelecionada.nome);
+            const response = await api.post('/login', { cpf, senha });
+            console.log('Resposta da API:', response.data);  // Log para verificar a resposta da API
+    
+            const { token, nome, unidade } = response.data.data;  // Verifique se realmente está em response.data.data
+    
+            if (token) {
+                localStorage.setItem('token', token);
+                localStorage.setItem('userName', nome);
+    
+                if (unidade && unidade.length > 0) {
+                    const unidadeSelecionada = unidade[0];
+                    setUnidadeId(unidadeSelecionada.id);
+                    setUnidadeNome(unidadeSelecionada.nome);
+    
+                    // Salva unidadeId e unidadeNome no localStorage
+                    localStorage.setItem('unidadeId', unidadeSelecionada.id);
+                    localStorage.setItem('unidadeNome', unidadeSelecionada.nome);
+                }
+    
+                CustomToast({ type: 'success', message: `Bem-vindo(a), ${nome}` });
+                console.log('Navegando para o dashboard');  // Log para verificar se o navigate está sendo chamado
+                setTimeout(() => {
+                    setCpf('');
+                    setSenha('');
+                    setLoading(false);
+                    navigate('/dashboard');
+                }, 1000);
+            } else {
+                CustomToast({ type: 'error', message: 'Erro ao receber o token de autenticação.' });
+                setLoading(false);
             }
-      
-            CustomToast({ type: 'success', message: `Bem-vindo(a), ${nome}` });
-            setTimeout(() => {
-              setCpf('');
-              setSenha('');
-              setLoading(false);
-              navigate('/dashboard');
-            }, 1000);
-          }
         } catch (error) {
-          setLoading(false);
-          if (error.response && error.response.data.message) {
-            CustomToast({ type: 'warning', message: error.response.data.message });
-          } else {
-            CustomToast({ type: 'error', message: 'Erro ao fazer login. Tente novamente mais tarde.' });
-          }
+            setLoading(false);
+            console.error('Erro ao fazer login:', error);  // Log detalhado do erro
+            if (error.response && error.response.data.message) {
+                CustomToast({ type: 'warning', message: error.response.data.message });
+            } else {
+                CustomToast({ type: 'error', message: 'Erro ao fazer login. Tente novamente mais tarde.' });
+            }
         }
-      };
+    };
+    
       
 
     return (

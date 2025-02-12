@@ -23,10 +23,12 @@ import Valor from '../../assets/icones/valor.png';
 import CategoryIcon from '@mui/icons-material/Category';
 import SearchIcon from '@mui/icons-material/Search';
 import api from '../../services/api.js';
+import { useNavigate } from 'react-router-dom';
 
 const EntradaSaida = () => {
   const [cadastro, setCadastro] = useState(false);
   const [categorias, setCategorias] = useState([]);
+  const navigate = useNavigate();
   const [produtos, setProdutos] = useState([]);
   const [entradasSaidas, setEntradasSaidas] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,6 +41,7 @@ const EntradaSaida = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [observacao, setObservacao] = useState('');
   const [selectedTipo, setSelectedTipo] = useState('');
+  
   // Estados para o registro atual
   const [produto, setProduto] = useState('');
   const [quantidade, setQuantidade] = useState('');
@@ -167,6 +170,16 @@ const EntradaSaida = () => {
       setEntradasSaidasOriginais(formattedMovimentacoes);
     } catch (error) {
       console.error('Erro ao buscar movimentações:', error);
+      if (
+        error.response &&
+        error.response.data.message === "Credenciais inválidas" &&
+        error.response.data.data === "Token de acesso inválido"
+      ) {
+        CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
+        navigate("/login");
+      } else {
+        CustomToast({ type: "error", message: "Erro ao carregar as movimentações!" });
+      }
       CustomToast({ type: "error", message: "Erro ao carregar movimentações!" });
     }
   };

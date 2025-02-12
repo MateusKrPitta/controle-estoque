@@ -229,7 +229,7 @@ const Dashboard = () => {
     }, []);
 
     return (
-        <div className="md:flex w-[100%] h-[100%]">
+        <div className="lg:flex w-[100%] h-[100%]">
             <MenuMobile />
             <Navbar />
             <div className='flex flex-col gap-2 w-full items-end'>
@@ -304,7 +304,7 @@ const Dashboard = () => {
                         </div>
                         <div className="mt-8 w-[100%] md:w-[30%] h-64">
                             <h2 className="text-lg text-center w-full font-bold text-primary mt-12 md:mt-0 mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
-                            <ResponsiveContainer width="100%" height={300}>
+                            <ResponsiveContainer width="100%" height={250}>
                                 <BarChart data={dataGrafico}>
                                     <XAxis dataKey="nome" />
                                     <YAxis />

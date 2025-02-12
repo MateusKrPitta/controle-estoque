@@ -1,26 +1,21 @@
-// src/context/UnidadeContext.js
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
+// Cria o contexto
 const UnidadeContext = createContext();
 
+// Provedor do contexto
 export const UnidadeProvider = ({ children }) => {
-  const [unidadeId, setUnidadeId] = useState(null);
-  const [unidadeNome, setUnidadeNome] = useState('');
-  useEffect(() => {
-    const storedUnidadeId = localStorage.getItem('unidadeId');
-    const storedUnidadeNome = localStorage.getItem('unidadeNome');
-  
-    if (storedUnidadeId) setUnidadeId(Number(storedUnidadeId));
-    if (storedUnidadeNome) setUnidadeNome(storedUnidadeNome);
-  }, []);
-  
-  return (
-    <UnidadeContext.Provider value={{ unidadeId, setUnidadeId, unidadeNome, setUnidadeNome }}>
-      {children}
-    </UnidadeContext.Provider>
-  );
+    const [unidadeId, setUnidadeId] = useState(null);
+    const [unidadeNome, setUnidadeNome] = useState(''); // Adicionado unidadeNome e setUnidadeNome
+
+    return (
+        <UnidadeContext.Provider value={{ unidadeId, setUnidadeId, unidadeNome, setUnidadeNome }}>
+            {children}
+        </UnidadeContext.Provider>
+    );
 };
 
+// Hook para usar o contexto
 export const useUnidade = () => {
-  return useContext(UnidadeContext);
+    return useContext(UnidadeContext);
 };
