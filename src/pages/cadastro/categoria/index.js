@@ -7,15 +7,17 @@ import CategoryIcon from '@mui/icons-material/Category';
 import { InputAdornment, TextField } from '@mui/material';
 import ButtonComponent from '../../../components/button';
 import SearchIcon from '@mui/icons-material/Search';
-import { AddCircleOutline, Edit, LocationOnOutlined, Save } from '@mui/icons-material';
 import CentralModal from '../../../components/modal-central';
-import ArticleIcon from '@mui/icons-material/Article';
+import { Edit, LocationOnOutlined, Save } from "@mui/icons-material";
 import TableComponent from '../../../components/table';
 import { headerCategoria } from '../../../entities/headers/header-categoria';
 import ModalLateral from '../../../components/modal-lateral';
 import CustomToast from '../../../components/toast';
 import SelectTextFields from '../../../components/select';
 import api from '../../../services/api';
+import TableLoading from '../../../components/loading/loading-table/loading';
+import AddCircleOutline from "@mui/icons-material/AddCircleOutline";
+import ArticleIcon from '@mui/icons-material/Article';
 
 const Categoria = () => {
     const [cadastroCategoria, setCadastroCategoria] = useState(false);
@@ -26,37 +28,47 @@ const Categoria = () => {
     const [categoriaEditada, setCategoriaEditada] = useState(null);
     const [isVisible, setIsVisible] = useState(false);
     const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
+    const [filtroNome, setFiltroNome] = useState('');
+    const [produtosFiltrados, setProdutosFiltrados] = useState([]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsVisible(true);
-        }, 300); // Delay para a transição
+        }, 300);
 
         return () => clearTimeout(timer);
     }, []);
 
     useEffect(() => {
         carregarCategorias();
+        carregarUnidades();
     }, []);
 
+    useEffect(() => {
+        // Filtra as categorias sempre que filtroNome mudar
+        const categoriasFiltradas = categorias.filter(categoria => 
+            categoria.nome.toLowerCase().includes(filtroNome.toLowerCase())
+        );
+        setProdutosFiltrados(categoriasFiltradas);
+    }, [filtroNome, categorias]);
+
     const carregarCategorias = async () => {
-        setLoading(true); // Inicia o loading
+        setLoading(true);
         try {
             const response = await api.get('/categoria');
-            // Acesse a propriedade 'data' da resposta
             if (Array.isArray(response.data.data)) {
-                setCategorias(response.data.data); // Atualiza o estado com o array de categorias
-                console.log(response.data.data); // Verifique os dados aqui
+                setCategorias(response.data.data);
             } else {
                 console.error("A resposta da API não é um array:", response.data.data);
-                setCategorias([]); // Defina como um array vazio se não for um array
+                setCategorias([]);
             }
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
         } finally {
-            setLoading(false); // Finaliza o loading
+            setLoading(false);
         }
     };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setCategoria({ ...categoria, [name]: value });
@@ -71,13 +83,9 @@ const Categoria = () => {
                 nome: categoria.nome, 
                 unidadeId: categoria.unidadeId 
             };
-
-            // Enviar a nova categoria para a API
-            await api.post('/categoria', novaCategoria); // A URL está correta
-
-            // Recarregar as categorias após a criação
+            await api.post('/categoria', novaCategoria);
             await carregarCategorias();
-            setCategoria({ nome: '', unidadeId: '' }); // Limpa os campos
+            setCategoria({ nome: '', unidadeId: '' });
             handleCloseCadastroCategoria();
             CustomToast({ type: "success", message: "Categoria cadastrada com sucesso!" });
         } catch (error) {
@@ -87,15 +95,15 @@ const Categoria = () => {
     };
 
     const handleEditCategoria = (categoria) => {
-        setCategoriaEditada({ ...categoria }); // Clona a categoria para edição
+        setCategoriaEditada({ ...categoria });
         setEditandoCategoria(true);
     };
 
     const handleSaveEdit = async () => {
         if (categoriaEditada) {
             try {
-                await api.put(`/categoria/${categoriaEditada.id}`, categoriaEditada); // A URL está correta
-                await carregarCategorias(); // Recarrega as categorias após a edição
+                await api.put(`/categoria/${categoriaEditada.id}`, categoriaEditada);
+                await carregarCategorias();
                 setEditandoCategoria(false);
                 setCategoriaEditada(null);
                 CustomToast({ type: "success", message: "Categoria editada com sucesso!" });
@@ -108,8 +116,8 @@ const Categoria = () => {
 
     const handleDeleteCategoria = async (categoria) => {
         try {
-            await api.delete(`/categoria/${categoria.id}`); // A URL está correta
-            await carregarCategorias(); // Recarrega as categorias após a exclusão
+            await api.delete(`/categoria/${categoria.id}`);
+            await carregarCategorias();
             CustomToast({ type: "success", message: "Categoria deletada com sucesso!" });
         } catch (error) {
             console.error("Erro ao deletar categoria:", error);
@@ -117,33 +125,18 @@ const Categoria = () => {
         }
     };
 
-    const handleUnidadeChange = (event) => {
-        const selectedValue = event.target.value;
-        const unidadeObj = userOptionsUnidade.find(option => option.value === selectedValue);
-        if (unidadeObj) {
-            setCategoria({ ...categoria, unidadeId: unidadeObj.value }); // Armazena o ID da unidade
-        }
-    };
-
     const carregarUnidades = async () => {
         try {
             const response = await api.get("/unidade");
             const unidadesOptions = response.data.data.map(unidade => ({
-                value: unidade.id, // ID da unidade
-                label: unidade.nome // Nome da unidade
+                value: unidade.id,
+                label: unidade.nome
             }));
-            setUserOptionsUnidade(unidadesOptions); // Armazena as unidades como um array de objetos
+            setUserOptionsUnidade(unidadesOptions);
         } catch (error) {
             console.error("Erro ao carregar as unidades:", error);
         }
     };
-
-
-
-    useEffect(() => {
-        carregarCategorias();
-        carregarUnidades();
-    }, []);
 
     return (
         <div className="flex w-full ">
@@ -165,6 +158,8 @@ const Categoria = () => {
                                 variant="outlined"
                                 size="small"
                                 label="Buscar categoria"
+                                value={filtroNome}
+                                onChange={(e) => setFiltroNome(e.target.value)}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -174,12 +169,6 @@ const Categoria = () => {
                                 }}
                                 autoComplete="off"
                                 sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '40%' }, }}
-                            />
-                            <ButtonComponent
-                                startIcon={<SearchIcon fontSize='small' />}
-                                title={'Pesquisar'}
-                                subtitle={'Pesquisar'}
-                                buttonSize="large"
                             />
                             <ButtonComponent
                                 startIcon={<AddCircleOutline fontSize='small' />}
@@ -192,12 +181,12 @@ const Categoria = () => {
                         <div className="tamanho-tabela">
                             {loading ? (
                                 <div className='flex items-center justify-center h-96'>
-                                    {/* Componente de loading */}
+                                    <TableLoading />
                                 </div>
                             ) : (
                                 <TableComponent
                                     headers={headerCategoria}
-                                    rows={categorias}
+                                    rows={produtosFiltrados.length > 0 ? produtosFiltrados : categorias} // Usa a lista filtrada ou a original
                                     actionsLabel={"Ações"}
                                     actionCalls={{
                                         edit: handleEditCategoria,
@@ -235,20 +224,20 @@ const Categoria = () => {
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <ArticleIcon />
+                                        <ArticleIcon/>
                                     </InputAdornment>
                                 ),
                             }}
                         />
                         <SelectTextFields
-                            width={'260px'}
-                            icon={<LocationOnOutlined fontSize="small" />}
+                            width={'150px'}
+                            icon={<CategoryIcon fontSize="small" />}
                             label={'Unidade'}
                             backgroundColor={"#D9D9D9"}
                             name={"unidade"}
                             fontWeight={500}
                             options={userOptionsUnidade}
-                            onChange={handleUnidadeChange}
+                            onChange={(e) => setCategoria({ ...categoria, unidadeId: e.target.value })}
                         />
                     </div>
                     <div className='w-[95%] mt-2 flex items-end justify-end'>
@@ -262,7 +251,6 @@ const Categoria = () => {
                 </div>
             </CentralModal>
 
-            {/* Modal Lateral para Edição */}
             <ModalLateral
                 open={editandoCategoria}
                 handleClose={() => setEditandoCategoria(false)}
@@ -277,7 +265,6 @@ const Categoria = () => {
                             size="small"
                             label="Nome da Categoria"
                             name="nome"
-                            sx={{ width: '100%' }}
                             value={categoriaEditada ? categoriaEditada.nome : ''}
                             onChange={(e) => setCategoriaEditada({ ...categoriaEditada, nome: e.target.value })}
                             autoComplete="off"

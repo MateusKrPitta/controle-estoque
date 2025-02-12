@@ -20,6 +20,8 @@ import { useNavigate } from "react-router-dom";
 const Unidades = () => {
   const [cadastrarUnidade, setCadastrarUnidade] = useState(false);
   const [unidades, setUnidades] = useState([]);
+  const [filtroNome, setFiltroNome] = useState(""); // Estado para o filtro de busca
+  const [unidadesFiltradas, setUnidadesFiltradas] = useState([]); // Estado para as unidades filtradas
   const navigate = useNavigate();
   const [unidadeEditando, setUnidadeEditando] = useState(null);
   const [nomeUnidade, setNomeUnidade] = useState(""); // Estado para o nome da unidade
@@ -49,6 +51,7 @@ const Unidades = () => {
     try {
       const response = await api.get("/unidade");
       setUnidades(response.data.data);
+      setUnidadesFiltradas(response.data.data); // Inicializa as unidades filtradas
     } catch (error) {
       console.error("Erro ao carregar as unidades:", error);
   
@@ -64,7 +67,18 @@ const Unidades = () => {
       }
     }
   };
-  
+
+  useEffect(() => {
+    carregarUnidades();
+  }, []);
+
+  useEffect(() => {
+    // Filtra as unidades sempre que filtroNome mudar
+    const unidadesFiltradas = unidades.filter(unidade =>
+      unidade.nome.toLowerCase().includes(filtroNome.toLowerCase())
+    );
+    setUnidadesFiltradas(unidadesFiltradas);
+  }, [filtroNome, unidades]);
 
   const handleSalvarUnidade = async () => {
     if (!nomeUnidade.trim()) {
@@ -106,14 +120,10 @@ const Unidades = () => {
         if (response.status === 200) {
           // Atualiza o estado local das unidades com a unidade editada
           setUnidades((prevUnidades) => {
-            // Aqui, estamos garantindo que a unidade com o id correspondente seja atualizada
             return prevUnidades.map((unidade) =>
               unidade.id === unidadeEditada.id ? { ...unidade, nome: unidadeEditada.nome } : unidade
             );
           });
-  
-          // Feedback para o usuário
-          
         }
       } catch (error) {
         console.error("Erro ao editar a unidade:", error);
@@ -121,8 +131,6 @@ const Unidades = () => {
       }
     }
   };
-  
-  
 
   const handleEditUnidade = (unidade) => {
     setUnidadeEditada({ ...unidade }); // Clona a unidade para edição
@@ -147,10 +155,6 @@ const Unidades = () => {
       CustomToast({ type: "error", message: "Erro ao excluir a unidade!" });
     }
   };
-  
-  useEffect(() => {
-    carregarUnidades();
-  }, []);
 
   return (
     <div className="flex w-full ">
@@ -178,6 +182,8 @@ const Unidades = () => {
                 size="small"
                 label="Buscar unidade"
                 autoComplete="off"
+                value={filtroNome} // Adiciona o valor do filtro
+                onChange={(e) => setFiltroNome(e.target.value)} // Atualiza o estado ao digitar
                 sx={{ width: { xs: "90%", sm: "50%", md: "40%", lg: "40%" } }}
                 InputProps={{
                   startAdornment: (
@@ -187,12 +193,7 @@ const Unidades = () => {
                   ),
                 }}
               />
-              <ButtonComponent
-                startIcon={<SearchIcon fontSize="small" />}
-                title={"Pesquisar"}
-                subtitle={"Pesquisar"}
-                buttonSize="large"
-              />
+             
               <ButtonComponent
                 startIcon={<AddCircleOutlineIcon fontSize="small" />}
                 title={"Cadastrar"}
@@ -205,7 +206,7 @@ const Unidades = () => {
             <TableComponent
               headers={headerUnidade}
               actionsLabel={"Ações"}
-              rows={unidades}
+              rows={unidadesFiltradas} // Usa a lista filtrada
               actionCalls={{
                 edit: handleEditUnidade,
                 delete: handleDeleteUnidade,
