@@ -25,8 +25,10 @@ import Caixa from '../../../assets/icones/caixa.png';
 import HeaderCadastro from '../../../components/navbars/cadastro/index.js';
 import api from '../../../services/api.js';
 import { useUnidade } from '../../../components/unidade-context/index.js';
+import { useNavigate } from 'react-router-dom';
 
 const Produtos = () => {
+    const navigate = useNavigate();
     const { unidadeId } = useUnidade();
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
     const [filtro, setFiltro] = useState(false);
@@ -47,6 +49,8 @@ const Produtos = () => {
     const [produtoEditado, setProdutoEditado] = useState(null);
     const [valorReajuste, setValorReajuste] = useState('');
     const [dataReajuste, setDataReajuste] = useState('');
+    const [produtosOriginais, setProdutosOriginais] = useState([]);
+    const [produtosFiltrados, setProdutosFiltrados] = useState([]);
     const userOptionsUnidade = [
         { value: 1, label: 'Kilograma' },
         { value: 2, label: 'Grama' },
@@ -77,37 +81,37 @@ const Produtos = () => {
     const handleFiltro = () => setFiltro(true);
     const handleCloseFiltro = () => setFiltro(false);
 
-    const handleCadastrarProduto = async () => {
-        const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
-        const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0; // Mude para 0 se não houver preço
-        const rendimentoNumerico = parseFloat(rendimento) || 0;
-        const qtdMinNumerica = parseFloat(qtdMin) || 0;
+const handleCadastrarProduto = async () => {
+    const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
+    const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0; // Mude para 0 se não houver preço
+    const rendimentoNumerico = parseFloat(rendimento) || 0;
+    const qtdMinNumerica = parseFloat(qtdMin) || 0;
 
-        const novoProduto = {
-            nome,
-            qtdMin: qtdMinNumerica,
-            quantidade: quantidadeNumerica,
-            rendimento: rendimentoNumerico,
-            valor: precoNumerico, // Aqui, o valor nunca será null
-            unidadeMedida: selectedUnidade,
-            unidadeId,
-            categoriaId: selectedCategoria,
-        };
-
-        try {
-            const response = await api.post('/produto', novoProduto);
-            console.log('Produto cadastrado com sucesso:', response.data);
-
-            // Recarregar produtos após o cadastro
-            await carregaProdutos();
-
-            handleCloseCadastroProdutos();
-            CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
-        } catch (error) {
-            console.error('Erro ao cadastrar produto:', error);
-            CustomToast({ type: "error", message: "Erro ao cadastrar produto!" });
-        }
+    const novoProduto = {
+        nome,
+        qtdMin: qtdMinNumerica,
+        quantidade: quantidadeNumerica,
+        rendimento: rendimentoNumerico,
+        valor: precoNumerico, // Aqui, o valor nunca será null
+        unidadeMedida: selectedUnidade,
+        unidadeId,
+        categoriaId: selectedCategoria, // Certifique-se de que isso está correto
     };
+
+    try {
+        const response = await api.post('/produto', novoProduto);
+        console.log('Produto cadastrado com sucesso:', response.data);
+
+        // Recarregar produtos após o cadastro
+        await carregaProdutos();
+
+        handleCloseCadastroProdutos();
+        CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
+    } catch (error) {
+        console.error('Erro ao cadastrar produto:', error);
+        CustomToast({ type: "error", message: "Erro ao cadastrar produto!" });
+    }
+};
 
     const carregaProdutos = async () => {
         setLoading(true);
@@ -116,60 +120,66 @@ const Produtos = () => {
             console.log(response.data);
             if (Array.isArray(response.data.data)) {
                 const mappedProdutos = response.data.data.map(produto => {
-                    const categoriaNome = categorias.find(cat => cat.id === produto.categoriaId)?.nome || 'N/A';
+                   
                     const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
                     const valorFormatado = formatValor(produto.valorReajuste || produto.valor); // Valor formatado
-    
+                
                     return {
                         id: produto.id,
                         nome: produto.nome,
                         rendimento: produto.rendimento,
                         unidadeMedida: unidade ? unidade.label : 'N/A',
-                        categoria: categoriaNome,
+                        categoria: produto.categoriaNome, // Aqui você pode usar a categoriaNome
                         valorPorcao: formatValor(produto.valorPorcao),
                         valor: formatValor(produto.valorReajuste || produto.valor), // Mantém para uso na tabela
                         valorFormatado: valorFormatado, // Novo campo com valor formatado
                         qtdMin: produto.qtdMin,
                         categoriaId: produto.categoriaId,
                         createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'),
+                        categoriaNome: produto.categoriaNome // Adicione esta linha
                     };
                 });
                 setProdutos(mappedProdutos);
+                setProdutosOriginais(mappedProdutos); // Armazena a lista original
             } else {
                 console.error("A resposta da API não é um array:", response.data.data);
                 setProdutos([]);
+                setProdutosOriginais([]); // Limpa a lista original se não for um array
             }
         } catch (error) {
             console.error('Erro ao buscar produtos:', error);
-            CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
+            
+            // Verifica se o erro é devido a um token expirado
+            if (error.response && error.response.data.message === "Credenciais inválidas" && error.response.data.data === "Token de acesso inválido") {
+                CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
+                navigate("/login"); // Redireciona para a página de login
+            } else {
+                CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
+            }
         } finally {
             setLoading(false);
         }
     };
 
+const handlePesquisar = () => {
+    const produtosFiltrados = produtosOriginais.filter(produto => {
+        const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
+        const dataInicialMatch = filtroDataInicial ? new Date(produto.createdAt) >= new Date(filtroDataInicial) : true;
+        const dataFinalMatch = filtroDataFinal ? new Date(produto.createdAt) <= new Date(filtroDataFinal) : true;
+        const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
 
+        return nomeMatch && dataInicialMatch && dataFinalMatch && categoriaMatch;
+    });
 
+    setProdutosFiltrados(produtosFiltrados);
+    handleCloseFiltro(); // Fecha a modal de filtro
 
-
-    const handlePesquisar = () => {
-        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-
-        const produtosFiltrados = produtosSalvos.filter(produto => {
-            const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
-            const dataMatch = (!filtroDataInicial || new Date(produto.dataCriacao) >= new Date(filtroDataInicial)) &&
-                (!filtroDataFinal || new Date(produto.dataCriacao) <= new Date(filtroDataFinal));
-            const categoriaMatch = !selectedCategoria || produto.categoriaId === parseInt(selectedCategoria);
-
-
-            return nomeMatch && dataMatch && categoriaMatch;
-        });
-
-        setProdutos(produtosFiltrados);
-        handleCloseFiltro();
+    if (produtosFiltrados.length === 0) {
+        CustomToast({ type: "error", message: "Nenhum produto encontrado com os critérios de pesquisa." });
+    } else {
         CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
-    };
-
-
+    }
+};
     const handleDeleteProduto = async (produtoId) => {
         try {
             // Chama a API para deletar o produto
@@ -291,7 +301,15 @@ const Produtos = () => {
         carregarDados();
     }, []);
 
+    useEffect(() => {
+        // Filtra os produtos com base no nome
+        const produtosFiltrados = produtosOriginais.filter(produto =>
+            produto.nome.toLowerCase().includes(filtroNome.toLowerCase())
+        );
 
+        // Atualiza o estado com os produtos filtrados
+        setProdutosFiltrados(produtosFiltrados);
+    }, [filtroNome, produtosOriginais]);
 
     return (
         <div className="flex w-full ">
@@ -323,6 +341,9 @@ const Produtos = () => {
                                     variant="outlined"
                                     size="small"
                                     label="Buscar Produto"
+                                    sx={{ width: { xs: '90%', sm: '50%', md: '40%', lg: '40%' }, }}
+                                    value={filtroNome} // Vincula o valor ao estado
+                                    onChange={(e) => setFiltroNome(e.target.value)} // Atualiza o estado ao digitar
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -331,13 +352,6 @@ const Produtos = () => {
                                         ),
                                     }}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '30%' } }}
-                                />
-                                <ButtonComponent
-                                    startIcon={<SearchIcon fontSize='small' />}
-                                    title={'Pesquisar'}
-                                    subtitle={'Pesquisar'}
-                                    buttonSize="large"
                                 />
                                 <ButtonComponent
                                     startIcon={<AddCircleOutline fontSize='small' />}
@@ -370,11 +384,11 @@ const Produtos = () => {
                                 ) : (
                                     <TableComponent
                                         headers={headerProdutos}
-                                        rows={produtos}
+                                        rows={produtosFiltrados.length > 0 ? produtosFiltrados : produtos} // Usa a lista filtrada ou a original
                                         actionsLabel={"Ações"}
                                         actionCalls={{
                                             edit: (produto) => handleEditProduto(produto),
-                                            delete: (produto) => handleDeleteProduto(produto.id), // Chama a função de deletar
+                                            delete: (produto) => handleDeleteProduto(produto.id),
                                         }}
                                     />
                                 )}

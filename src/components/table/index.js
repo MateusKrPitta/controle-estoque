@@ -187,11 +187,11 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                                         <TableCell key={key} style={{
                                             backgroundColor: row.tipo === 'entrada' ? '#006b33' :
                                                 row.tipo === 'saida' ? '#ff0000' :
-                                                    row.tipo === 'desperdicio' ? '#000000' : // Nova condição para desperdício
-                                                        'transparent', // Cor padrão se não for nenhum dos tipos
+                                                row.tipo === 'desperdicio' ? '#000000' : // Nova condição para desperdício
+                                                'transparent', // Cor padrão se não for nenhum dos tipos
                                             color: '#fff' // Para garantir que o texto seja legível
                                         }}>
-                                            {row[key]}
+                                            {row.tipo === "3" ? "Desperdício" : row[key]} 
                                         </TableCell>
                                     ) : key === "entradas" || key === "estoqueInicial" || key === "estoqueFinal" ? (
                                         <TableCell key={key}>

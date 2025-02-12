@@ -12,17 +12,13 @@ import EditIcon from "@mui/icons-material/Edit";
 import { LocationOnOutlined, Save } from "@mui/icons-material";
 import ModalLateral from "../../../components/modal-lateral";
 import MenuMobile from "../../../components/menu-mobile";
-import estadosJSON from "../../../utils/json/estados.json";
 import { headerUnidade } from "../../../entities/headers/header-unidades";
 import CustomToast from "../../../components/toast";
-import axios from "axios";
 import api from "../../../services/api";
 import { useNavigate } from "react-router-dom";
 
 const Unidades = () => {
   const [cadastrarUnidade, setCadastrarUnidade] = useState(false);
-  const [modalEditar, setModalEditar] = useState(false);
-  const [estadosList, setEstadosList] = useState([]);
   const [unidades, setUnidades] = useState([]);
   const navigate = useNavigate();
   const [unidadeEditando, setUnidadeEditando] = useState(null);

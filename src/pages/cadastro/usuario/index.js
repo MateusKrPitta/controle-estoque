@@ -16,7 +16,6 @@ import NotesIcon from '@mui/icons-material/Notes';
 import { LocationOnOutlined, Password } from "@mui/icons-material";
 import MenuMobile from "../../../components/menu-mobile";
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import TableLoading from "../../../components/loading/loading-table/loading";
 import { headerUsuario } from "../../../entities/headers/header-usuarios";
 import ModalLateral from "../../../components/modal-lateral";
 import { Edit } from '@mui/icons-material';
@@ -451,11 +450,7 @@ const Usuario = () => {
               />
             </div>
             <div className="w-[97%] ml-0 sm:ml-0 ">
-              {loading ? (
-                <div className='flex items-center justify-center h-96'>
-                  <TableLoading />
-                </div>
-              ) : (
+              
                 <TableComponent
                   headers={headerUsuario}
                   rows={rows}
@@ -465,7 +460,6 @@ const Usuario = () => {
                     delete: (user) => handleDeleteUser(user), // Chama a função de exclusão
                   }}
                 />
-              )}
             </div>
 
             <CentralModal
