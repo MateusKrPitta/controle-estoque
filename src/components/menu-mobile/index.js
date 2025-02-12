@@ -64,9 +64,7 @@ const MenuMobile = ({ user }) => {
                 <MenuItem onClick={() => handleNavigate("/cmv")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
                     <AddToQueueIcon style={{ color: '#BCDA72' }} fontSize='small' />CMV
                 </MenuItem>
-                <MenuItem onClick={() => handleNavigate("/produtos")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
-                    <ProductionQuantityLimitsTwoTone style={{ color: '#BCDA72' }} fontSize='small' />Produtos
-                </MenuItem>
+
                 <MenuItem onClick={() => handleNavigate("/ficha-tecnica")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
                     <ContentPasteSearchIcon style={{ color: '#BCDA72' }} fontSize='small' />Ficha Técnica
                 </MenuItem>

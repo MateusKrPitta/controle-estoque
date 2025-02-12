@@ -238,8 +238,8 @@ const Dashboard = () => {
                     Dashboard
                 </h1>
 
-                <div className={`w-full mt-8 flex-col p-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
-                    <div className='w-full flex gap-6 md:flex-wrap items-center justify-center'>
+                <div className={`w-full mt-8 flex-wrap p-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
+                    <div className='w-full flex gap-6 flex-wrap items-center justify-center'>
                         {/* Cards de informações */}
                         <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[18%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Total de Produtos</label>
@@ -278,8 +278,8 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    <div className='flex w-full items-end h-[70%] justify-center flex-wrap'>
-                        <div className="mt-8 w-[30%] h-64">
+                    <div className='flex w-full  items-end h-[70%] justify-center flex-wrap'>
+                        <div className="mt-8 w-[100%] md:w-[30%] h-64">
                             <h2 className="text-lg text-center font-bold text-primary mb-7">Estoque por Categoria</h2>
                             <ResponsiveContainer>
                                 <PieChart>
@@ -302,8 +302,8 @@ const Dashboard = () => {
                             </ResponsiveContainer>
 
                         </div>
-                        <div className="mt-8 w-[50%] h-64">
-                            <h2 className="text-lg text-center font-bold text-primary mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
+                        <div className="mt-8 w-[100%] md:w-[30%] h-64">
+                            <h2 className="text-lg text-center w-full font-bold text-primary mt-12 md:mt-0 mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
                             <ResponsiveContainer width="100%" height={300}>
                                 <BarChart data={dataGrafico}>
                                     <XAxis dataKey="nome" />
