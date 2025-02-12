@@ -145,6 +145,8 @@ const EntradaSaida = () => {
       const response = await api.get('/movimentacao');
       const movimentacoes = response.data.data;
   
+      console.log('Movimentações recebidas:', movimentacoes); // Adicione este log
+  
       const formattedMovimentacoes = await Promise.all(movimentacoes.map(async (mov) => {
         const valorTotal = mov.precoPorcao * mov.quantidade;
   
@@ -162,7 +164,7 @@ const EntradaSaida = () => {
       }));
   
       setEntradasSaidas(formattedMovimentacoes);
-      setEntradasSaidasOriginais(formattedMovimentacoes); // Armazena os dados originais
+      setEntradasSaidasOriginais(formattedMovimentacoes);
     } catch (error) {
       console.error('Erro ao buscar movimentações:', error);
       CustomToast({ type: "error", message: "Erro ao carregar movimentações!" });

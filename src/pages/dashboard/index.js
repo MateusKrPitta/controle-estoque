@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'; // Importando componentes do Recharts
-import { BarChart, Bar, XAxis, YAxis } from 'recharts'; // Importando componentes do Recharts
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis } from 'recharts';
 import Navbar from '../../components/navbars/header';
 import HeaderPerfil from '../../components/navbars/perfil';
 import MenuMobile from '../../components/menu-mobile';
@@ -10,6 +10,8 @@ import Dinheiro from '../../assets/png/dinheiro.png';
 import Dados from '../../assets/png/dados.png';
 import Compra from '../../assets/png/compra.png';
 import CustomTooltip from '../../components/grafico';
+import CustomToast from '../../components/toast';
+import api from '../../services/api';
 
 const Dashboard = () => {
     const [totalProdutos, setTotalProdutos] = useState(0);
@@ -17,26 +19,16 @@ const Dashboard = () => {
     const [valorTotal, setValorTotal] = useState(0);
     const [cmv, setCmv] = useState(0);
     const [produtosAbaixoMinimo, setProdutosAbaixoMinimo] = useState(0);
-    const [chartData, setChartData] = useState([]);
-    const [categoryData, setCategoryData] = useState([]);
-    const [isVisible, setIsVisible] = useState(false);
     const [estoquePorCategoria, setEstoquePorCategoria] = useState([]);
     const [produtos, setProdutos] = useState([]);
     const [entradasSaidas, setEntradasSaidas] = useState([]);
     const [dataGrafico, setDataGrafico] = useState([]);
+    const [isVisible, setIsVisible] = useState(false);
 
     const getColor = (index) => {
         const colors = [
-            '#BCDA72', // Verde claro
-            '#FF8042', // Laranja
-            '#006b33', // Azul
-            '#FFBB28', // Amarelo
-            '#FF4444', // Vermelho
-            '#8A2BE2', // Azul Violeta
-            '#00CED1', // Turquesa
-            '#FFD700', // Dourado
-            '#ADFF2F', // Verde Amarelo
-            '#FF69B4'  // Rosa
+            '#BCDA72', '#FF8042', '#006b33', '#FFBB28', '#FF4444',
+            '#8A2BE2', '#00CED1', '#FFD700', '#ADFF2F', '#FF69B4'
         ];
         return colors[index % colors.length];
     };
@@ -49,77 +41,27 @@ const Dashboard = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    useEffect(() => {
-        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-        const entradasSaidasSalvas = JSON.parse(localStorage.getItem('entradasSaidas')) || [];
-        setProdutos(produtosSalvos);
-        setEntradasSaidas(entradasSaidasSalvas);
 
-        // Calcular total de produtos
-        const total = produtosSalvos.length;
-        setTotalProdutos(total);
 
-        // Calcular itens em estoque
-        const totalEntradas = entradasSaidasSalvas.filter(item => item.tipo === 'entrada').reduce((acc, item) => acc + parseInt(item.quantidade), 0);
-        const totalSaidas = entradasSaidasSalvas.filter(item => item.tipo === 'saida').reduce((acc, item) => acc + parseInt(item.quantidade), 0);
-        setItensEmEstoque(totalEntradas - totalSaidas);
-
-        // Calcular valor total
-        const valor = produtosSalvos.reduce((acc, produto) => {
-            const entradas = entradasSaidasSalvas.filter(item => item.produto === produto.nome && item.tipo === 'entrada').reduce((sum, item) => sum + (parseFloat(produto.preco) * parseInt(item.quantidade)), 0);
-            const saidas = entradasSaidasSalvas.filter(item => item.produto === produto.nome && item.tipo === 'saida').reduce((sum, item) => sum + (parseFloat(produto.preco) * parseInt(item.quantidade)), 0);
-            return acc + (entradas - saidas);
-        }, 0);
-        setValorTotal(valor);
-        // Calcular produtos abaixo do estoque mínimo
-        const produtosAbaixoMinimoCount = produtosSalvos.filter(produto => {
-            const entradas = entradasSaidasSalvas.filter(registro => registro.produto === produto.nome && registro.tipo === 'entrada');
-            const saídas = entradasSaidasSalvas.filter(registro => registro.produto === produto.nome && registro.tipo === 'saida');
-
-            const totalEntradas = entradas.reduce((total, registro) => total + parseInt(registro.quantidade, 10), 0);
-            const totalSaidas = saídas.reduce((total, registro) => total + parseInt(registro.quantidade, 10), 0);
-
-            const estoqueAtual = totalEntradas - totalSaidas;
-            return estoqueAtual < produto.quantidadeMinima;
-        }).length;
-
-        setProdutosAbaixoMinimo(produtosAbaixoMinimoCount);
-
-        // Processar dados para o gráfico de entradas e saídas
-        const dataByDate = {};
-        entradasSaidasSalvas.forEach(item => {
-            const date = new Date(item.data).toLocaleDateString(); // Formatar a data
-            if (!dataByDate[date]) {
-                dataByDate[date] = { entrada: 0, saida: 0 };
-            }
-            if (item.tipo === 'entrada') {
-                dataByDate[date].entrada += parseInt(item.quantidade);
+    const fetchDashboardData = async () => {
+        try {
+            const response = await api.post('/dashboard');
+            if (response.data.status) {
+                setTotalProdutos(response.data.data.totalProduto);
+                setItensEmEstoque(response.data.data.totalItens);
+                setValorTotal(response.data.data.valorTotalItens);
+                setProdutosAbaixoMinimo(response.data.data.produtosQtdMin);
+                setProdutos(response.data.data.produtos || []);
+                setEntradasSaidas(response.data.data.entradasSaidas || []);
             } else {
-                dataByDate[date].saida += parseInt(item.quantidade);
+                // Exibir mensagem de erro retornada pela API
+                CustomToast({ type: "error", message: response.data.message || "Erro ao carregar os dados!" });
             }
-        });
-
-        const chartData = Object.keys(dataByDate).map(date => ({
-            date,
-            entrada: dataByDate[date].entrada,
-            saida: dataByDate[date].saida,
-        }));
-
-        setChartData(chartData);
-
-        // Processar dados para o gráfico de categorias
-        const categoryCount = produtosSalvos.reduce((acc, produto) => {
-            acc[produto.categoria] = (acc[produto.categoria] || 0) + 1;
-            return acc;
-        }, {});
-
-        const categoryData = Object.keys(categoryCount).map(categoria => ({
-            name: categoria,
-            quantidade: categoryCount[categoria],
-        }));
-
-        setCategoryData(categoryData);
-    }, []);
+        } catch (error) {
+            console.error('Erro ao buscar dados do dashboard:', error);
+            CustomToast({ type: "error", message: "Erro ao carregar os dados!" });
+        }
+    };
 
     const calcularEstoqueAtual = (produtoNome) => {
         const entradas = entradasSaidas.filter(registro => registro.produto === produtoNome && registro.tipo === 'entrada');
@@ -153,13 +95,6 @@ const Dashboard = () => {
     }, [produtos, entradasSaidas]);
 
     useEffect(() => {
-        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-        const entradasSaidasSalvas = JSON.parse(localStorage.getItem('entradasSaidas')) || [];
-        setProdutos(produtosSalvos);
-        setEntradasSaidas(entradasSaidasSalvas);
-    }, []);
-
-    useEffect(() => {
         const data = produtos.map(produto => {
             const entradas = entradasSaidas.filter(item => item.produto === produto.nome && item.tipo === 'entrada').reduce((acc, item) => acc + parseInt(item.quantidade), 0);
             const saidas = entradasSaidas.filter(item => item.produto === produto.nome && item.tipo === 'saida').reduce((acc, item) => acc + parseInt(item.quantidade), 0);
@@ -176,6 +111,9 @@ const Dashboard = () => {
         setDataGrafico(data);
     }, [produtos, entradasSaidas]);
 
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
 
     return (
         <div className="md:flex w-[100%] h-[100%]">
@@ -229,7 +167,7 @@ const Dashboard = () => {
 
                     <div className='flex w-full items-end h-[70%] justify-center flex-wrap'>
                         <div className="mt-8 w-[30%] h-64">
-                            <h2 className="text-lg text-center font-bold  text-primary mb-7">Estoque por Categoria</h2>
+                            <h2 className="text-lg text-center font-bold text-primary mb-7">Estoque por Categoria</h2>
                             <ResponsiveContainer>
                                 <PieChart>
                                     <Pie
@@ -251,7 +189,7 @@ const Dashboard = () => {
                             </ResponsiveContainer>
                         </div>
                         <div className="mt-8 w-[50%] h-64">
-                        <h2 className="text-lg text-center font-bold  text-primary mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
+                            <h2 className="text-lg text-center font-bold text-primary mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
                             <ResponsiveContainer width="100%" height={300}>
                                 <BarChart data={dataGrafico}>
                                     <XAxis dataKey="nome" />
