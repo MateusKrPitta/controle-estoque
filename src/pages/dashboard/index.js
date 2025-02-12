@@ -43,9 +43,9 @@ const Dashboard = () => {
 
 
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = async (unidade = 1) => {
         try {
-            const response = await api.post('/dashboard');
+            const response = await api.post(`/dashboard?unidade=${unidade}`);
             if (response.data.status) {
                 setTotalProdutos(response.data.data.totalProduto);
                 setItensEmEstoque(response.data.data.totalItens);
@@ -54,7 +54,6 @@ const Dashboard = () => {
                 setProdutos(response.data.data.produtos || []);
                 setEntradasSaidas(response.data.data.entradasSaidas || []);
             } else {
-                // Exibir mensagem de erro retornada pela API
                 CustomToast({ type: "error", message: response.data.message || "Erro ao carregar os dados!" });
             }
         } catch (error) {
@@ -62,6 +61,7 @@ const Dashboard = () => {
             CustomToast({ type: "error", message: "Erro ao carregar os dados!" });
         }
     };
+    
 
     const calcularEstoqueAtual = (produtoNome) => {
         const entradas = entradasSaidas.filter(registro => registro.produto === produtoNome && registro.tipo === 'entrada');
