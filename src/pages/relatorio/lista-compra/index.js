@@ -13,12 +13,13 @@ import { AddCircleOutline } from '@mui/icons-material';
 import SelectTextFields from '../../../components/select';
 import ArticleIcon from '@mui/icons-material/Article';
 import Logo from '../../../assets/png/logo_preta.png';
+import api from '../../../services/api'; // Importa a API
 
 const ListaCompra = () => {
     const [produtos, setProdutos] = useState([]);
     const [entradasSaidas, setEntradasSaidas] = useState([]);
-    const [produtosSelecionados, setProdutosSelecionados] = useState([]); // Estado para armazenar produtos selecionados
-    const tableRef = useRef(null); // Ref para a tabela
+    const [produtosSelecionados, setProdutosSelecionados] = useState([]);
+    const tableRef = useRef(null);
     const [isVisible, setIsVisible] = useState(false);
     const [produtoSelecionado, setProdutoSelecionado] = useState(null);
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
@@ -26,22 +27,32 @@ const ListaCompra = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsVisible(true);
-        }, 300); // Delay para a transição
+        }, 300);
 
         return () => clearTimeout(timer);
     }, []);
 
-    useEffect(() => {
-        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-        setProdutos(produtosSalvos);
+    // Função para buscar produtos e movimentações
+    const fetchData = async () => {
+        try {
+            const produtosResponse = await api.get('/produto');
+            const entradasSaidasResponse = await api.get('/movimentacao');
+            setProdutos(produtosResponse.data.data);
+            setEntradasSaidas(entradasSaidasResponse.data.data);
+            console.log('Produtos:', produtosResponse.data.data); // Verifique os produtos
+            console.log('Entradas e Saídas:', entradasSaidasResponse.data.data); // Verifique as movimentações
+        } catch (error) {
+            console.error('Erro ao buscar dados:', error);
+        }
+    };
 
-        const entradasSaidasSalvas = JSON.parse(localStorage.getItem('entradasSaidas')) || [];
-        setEntradasSaidas(entradasSaidasSalvas);
+    useEffect(() => {
+        fetchData();
     }, []);
 
     const calcularEstoqueAtual = (produtoNome) => {
-        const entradas = entradasSaidas.filter(registro => registro.produto === produtoNome && registro.tipo === 'entrada');
-        const saídas = entradasSaidas.filter(registro => registro.produto === produtoNome && registro.tipo === 'saida');
+        const entradas = entradasSaidas.filter(registro => registro.produtoNome === produtoNome && registro.tipo === 'entrada');
+        const saídas = entradasSaidas.filter(registro => registro.produtoNome === produtoNome && registro.tipo === 'saida');
 
         const totalEntradas = entradas.reduce((total, registro) => total + parseInt(registro.quantidade, 10), 0);
         const totalSaidas = saídas.reduce((total, registro) => total + parseInt(registro.quantidade, 10), 0);
@@ -49,42 +60,25 @@ const ListaCompra = () => {
         return totalEntradas - totalSaidas;
     };
 
-    const calcularQuantidadeParaComprar = (produto) => {
-        const estoqueAtual = calcularEstoqueAtual(produto.nome);
-        return produto.quantidadeMinima - estoqueAtual > 0 ? produto.quantidadeMinima - estoqueAtual : 0;
-    };
-
     const produtosAbaixoMinimo = produtos.filter(produto => {
         const estoqueAtual = calcularEstoqueAtual(produto.nome);
-        return estoqueAtual < produto.quantidadeMinima;
+        console.log(`Produto: ${produto.nome}, Estoque Atual: ${estoqueAtual}, Quantidade Mínima: ${produto.qtdMin}`); // Verifique os valores
+        return estoqueAtual < produto.qtdMin; // Acessando a propriedade correta
     });
 
     const rows = produtosAbaixoMinimo.map(produto => {
         const estoqueAtual = calcularEstoqueAtual(produto.nome);
-        const quantidadeParaComprar = calcularQuantidadeParaComprar(produto); // Calcula a quantidade para comprar
         return {
             produto: produto.nome,
-            categoria: produto.categoria,
-            unidade: produto.unidade,
-            quantidadeMinima: produto.quantidadeMinima,
+            categoria: produto.categoriaNome, // Acessando o nome da categoria corretamente
+            unidade: produto.unidadeMedida, // Acessando a unidade de medida corretamente
+            quantidadeMinima: produto.qtdMin,
             estoqueAtual,
-            precoUnitario: formatValor(produto.preco),
-            valorTotal: formatValor((produto.preco * estoqueAtual)),
-            comprar: quantidadeParaComprar, // Incluindo a quantidade para comprar
+            precoUnitario: formatValor(produto.valor),
+            valorTotal: formatValor((produto.valor * estoqueAtual)),
+            comprar: produto.qtdMin - estoqueAtual > 0 ? produto.qtdMin - estoqueAtual : 0,
         };
     });
-    
-    // Adiciona os produtos selecionados à tabela
-    const rowsCompletas = [...rows, ...produtosSelecionados.map(produto => ({
-        produto: produto.nome,
-        categoria: produto.categoria,
-        unidade: produto.unidade,
-        quantidadeMinima: produto.quantidadeMinima,
-        estoqueAtual: calcularEstoqueAtual(produto.nome),
-        precoUnitario: formatValor(produto.preco),
-        valorTotal: formatValor(produto.preco * calcularEstoqueAtual(produto.nome)),
-        comprar: calcularQuantidadeParaComprar(produto), // Incluindo a quantidade para comprar
-    }))];
 
     const headers = [
         { label: 'Produto', key: 'produto' },
@@ -93,7 +87,7 @@ const ListaCompra = () => {
         { label: 'Quantidade Mínima', key: 'quantidadeMinima' },
         { label: 'Estoque Atual', key: 'estoqueAtual' },
         { label: 'Preço Unitário', key: 'precoUnitario' },
-        { label: 'Comprar', key: 'comprar' }, // Novo cabeçalho para a coluna "Comprar"
+        { label: 'Comprar', key: 'comprar' },
     ];
 
     const handlePrint = () => {
@@ -127,7 +121,7 @@ const ListaCompra = () => {
                             height: auto; 
                             display: block;
                             margin: 0 auto;
-                            background-color: black; /* Fundo preto na impressão */
+                            background-color: black; 
                         }
                     </style>
                 </head>
@@ -144,7 +138,7 @@ const ListaCompra = () => {
             printWindow.print();
         }, 500);
     };
-    
+
     const handleCadastroProdutos = () => setCadastroAdicionais(true);
     const handleCloseCadastroProdutos = () => setCadastroAdicionais(false);
 
@@ -154,8 +148,8 @@ const ListaCompra = () => {
             if (produto) {
                 setProdutosSelecionados([...produtosSelecionados, produto]);
             }
-            setProdutoSelecionado(null); // Limpa a seleção após adicionar
-            handleCloseCadastroProdutos(); // Fecha o modal
+            setProdutoSelecionado(null);
+            handleCloseCadastroProdutos();
         }
     };
 
@@ -180,19 +174,19 @@ const ListaCompra = () => {
                                     title="Imprimir"
                                     subtitle="Imprimir"
                                     startIcon={<Print />}
-                                    onClick={handlePrint} // Chama a função de impressão
+                                    onClick={handlePrint}
                                 />
                                 <ButtonComponent
                                     title="Adicionar"
                                     subtitle="Adicionar"
                                     startIcon={<AddCircleOutline />}
-                                    onClick={handleCadastroProdutos} // Chama a função de cadastro
+                                    onClick={handleCadastroProdutos}
                                 />
                             </div>
                             <div className='w-[90%] flex flex-col' ref={tableRef}>
                                 <TableComponent
                                     headers={headers}
-                                    rows={rowsCompletas} // Adiciona produtos selecionados à tabela
+                                    rows={rows}
                                     actionsLabel={"Ações"}
                                     actionCalls={{}}
                                 />
@@ -220,9 +214,9 @@ const ListaCompra = () => {
                                 backgroundColor={"#D9D9D9"}
                                 name={"produto"}
                                 fontWeight={500}
-                                options={produtos.map(produto => ({ label: produto.nome, value: produto.nome }))} // Preenche as opções com produtos cadastrados
-                                onChange={(e) => setProdutoSelecionado(e.target.value)} // Atualiza o estado com o produto selecionado
-                                value={produtoSelecionado} // Reflete o estado atual no componente
+                                options={produtos.map(produto => ({ label: produto.nome, value: produto.nome }))}
+                                onChange={(e) => setProdutoSelecionado(e.target.value)}
+                                value={produtoSelecionado}
                             />
                         </div>
                         <div className='w-[95%] mt-2 flex items-end justify-end'>
@@ -230,7 +224,7 @@ const ListaCompra = () => {
                                 title={'Cadastrar'}
                                 subtitle={'Cadastrar'}
                                 startIcon={<Save />}
-                                onClick={handleAddProduto} // Chama a função para adicionar o produto
+                                onClick={handleAddProduto}
                             />
                         </div>
                     </div>
