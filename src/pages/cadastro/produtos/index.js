@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 const Produtos = () => {
     const navigate = useNavigate();
     const { unidadeId } = useUnidade();
+    console.log("unidadeId:", unidadeId);
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
     const [filtro, setFiltro] = useState(false);
     const [editandoCategoria, setEditandoCategoria] = useState(false);
@@ -48,6 +49,7 @@ const Produtos = () => {
     const [filtroDataFinal, setFiltroDataFinal] = useState('');
     const [produtoEditado, setProdutoEditado] = useState(null);
     const [valorReajuste, setValorReajuste] = useState('');
+    const [categoriasFiltradas, setCategoriasFiltradas] = useState([]);
     const [dataReajuste, setDataReajuste] = useState('');
     const [produtosOriginais, setProdutosOriginais] = useState([]);
     const [produtosFiltrados, setProdutosFiltrados] = useState([]);
@@ -105,28 +107,25 @@ const Produtos = () => {
 
     const handleCadastrarProduto = async () => {
         const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
-        const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0; // Mude para 0 se não houver preço
+        const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0;
         const rendimentoNumerico = parseFloat(rendimento) || 0;
         const qtdMinNumerica = parseFloat(qtdMin) || 0;
-
+    
         const novoProduto = {
             nome,
             qtdMin: qtdMinNumerica,
             quantidade: quantidadeNumerica,
             rendimento: rendimentoNumerico,
-            valor: precoNumerico, // Aqui, o valor nunca será null
+            valor: precoNumerico,
             unidadeMedida: selectedUnidade,
-            unidadeId,
-            categoriaId: selectedCategoria, // Certifique-se de que isso está correto
+            unidadeId, // Certifique-se de que a unidadeId está sendo enviada
+            categoriaId: selectedCategoria,
         };
-
+    
         try {
             const response = await api.post('/produto', novoProduto);
             console.log('Produto cadastrado com sucesso:', response.data);
-
-            // Recarregar produtos após o cadastro
-            await carregaProdutos();
-
+            await carregaProdutos(unidadeId); // Recarrega os produtos com a unidadeId correta
             handleCloseCadastroProdutos();
             CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
         } catch (error) {
@@ -135,53 +134,52 @@ const Produtos = () => {
         }
     };
 
-    const carregaProdutos = async () => {
-        setLoading(true);
-        try {
-            const response = await api.get('/produto');
-            console.log(response.data);
-            if (Array.isArray(response.data.data)) {
-                const mappedProdutos = response.data.data.map(produto => {
-                    const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
-                    const valorFormatado = formatValor(produto.valorReajuste || produto.valor); // Valor formatado
+useEffect(() => {
+    if (unidadeId) {
+        carregaProdutos(unidadeId); // Carrega produtos com a unidadeId
+    }
+}, [unidadeId]);
 
-                    return {
-                        id: produto.id,
-                        nome: produto.nome,
-                        rendimento: produto.rendimento,
-                        unidadeMedida: unidade ? unidade.label : 'N/A',
-                        categoria: produto.categoriaNome, // Aqui você pode usar a categoriaNome
-                        valorPorcao: formatValor(produto.valorPorcao),
-                        valor: formatValor(produto.valorReajuste || produto.valor), // Mantém para uso na tabela
-                        valorFormatado: valorFormatado, // Novo campo com valor formatado
-                        qtdMin: produto.qtdMin,
-                        categoriaId: produto.categoriaId,
-                        createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'),
-                        categoriaNome: produto.categoriaNome // Adicione esta linha
-                    };
-                });
-                setProdutos(mappedProdutos);
-                setProdutosOriginais(mappedProdutos); // Armazena a lista original
-            } else {
-                console.error("A resposta da API não é um array:", response.data.data);
-                setProdutos([]);
-                setProdutosOriginais([]); // Limpa a lista original se não for um array
-            }
-        } catch (error) {
-            console.error('Erro ao buscar produtos:', error);
+const carregaProdutos = async (unidadeId) => {
+    console.log("Carregando produtos para unidadeId:", unidadeId);
+    setLoading(true);
+    try {
+        const response = await api.get(`/produto?unidadeId=${unidadeId}`);
+        if (Array.isArray(response.data.data)) {
+            const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
+            const mappedProdutos = produtosFiltrados.map(produto => {
+                const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
+                const valorFormatado = formatValor(produto.valorReajuste || produto.valor);
 
-            // Verifica se o erro é devido a um token expirado
-            if (error.response && error.response.data.message === "Credenciais inválidas" && error.response.data.data === "Token de acesso inválido") {
-                CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-                navigate("/login"); // Redireciona para a página de login
-            } else {
-                CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
-            }
-        } finally {
-            setLoading(false);
+                return {
+                    id: produto.id,
+                    nome: produto.nome,
+                    rendimento: produto.rendimento,
+                    unidadeMedida: unidade ? unidade.label : 'N/A',
+                    categoria: produto.categoriaNome,
+                    valorPorcao: formatValor(produto.valorPorcao),
+                    valor: formatValor(produto.valorReajuste || produto.valor),
+                    valorFormatado: valorFormatado,
+                    qtdMin: produto.qtdMin,
+                    categoriaId: produto.categoriaId,
+                    createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'),
+                    categoriaNome: produto.categoriaNome
+                };
+            });
+            setProdutos(mappedProdutos);
+            setProdutosOriginais(mappedProdutos);
+        } else {
+            console.error("A resposta da API não é um array:", response.data.data);
+            setProdutos([]);
+            setProdutosOriginais([]);
         }
-    };
-
+    } catch (error) {
+        console.error('Erro ao buscar produtos:', error);
+        // Trate o erro conforme necessário
+    } finally {
+        setLoading(false);
+    }
+};
     const handlePesquisar = () => {
         const produtosFiltrados = produtosOriginais.filter(produto => {
             const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
@@ -237,59 +235,50 @@ const Produtos = () => {
     };
 
     const handleSalvarProduto = async () => {
-        // Verifica se o preço está definido e é uma string válida
         if (!preco || typeof preco !== 'string') {
             CustomToast({ type: "error", message: "Preço inválido!" });
             return;
         }
-
-        // Converte o preço formatado em número
+    
         let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", "."));
         if (isNaN(precoNumerico)) {
-            precoNumerico = 0; // Define como 0 se não for um número válido
+            precoNumerico = 0;
         }
-
-        // Formata a data de reajuste
+    
         const dataReajusteFormatada = dataReajuste ? new Date(dataReajuste).toISOString().split('T')[0] : '';
-
-        // Verifica se a data de reajuste é válida
+    
         if (!dataReajusteFormatada) {
             CustomToast({ type: "error", message: "Data de reajuste é inválida!" });
             return;
         }
-
-        // Converte o valor de reajuste formatado em número
+    
         let valorReajusteNumerico = 0;
         if (valorReajuste) {
             valorReajusteNumerico = parseFloat(valorReajuste.replace("R$ ", "").replace(/\./g, "").replace(",", "."));
             if (isNaN(valorReajusteNumerico)) {
-                valorReajusteNumerico = 0; // Define como 0 se não for um número válido
+                valorReajusteNumerico = 0;
             }
         }
-
-        // Cria o objeto com os dados atualizados do produto
+    
         const produtoAtualizado = {
             nome,
             qtdMin: parseFloat(qtdMin) || 0,
             quantidade: parseFloat(quantidadeTotal) || 0,
             rendimento: parseFloat(rendimento) || 0,
-            valor: precoNumerico, // Usa o preço numérico
+            valor: precoNumerico,
             dataReajuste: dataReajusteFormatada,
             valorReajuste: valorReajusteNumerico,
             unidadeMedida: selectedUnidade,
-            unidadeId,
+            unidadeId, // Mantém a unidadeId
             categoriaId: selectedCategoria,
         };
-
-        // Adiciona logs para depuração
-        console.log('Dados a serem enviados:', produtoAtualizado);
-
+    
         try {
             const response = await api.put(`/produto/${produtoEditado.id}`, produtoAtualizado);
             console.log('Produto atualizado com sucesso:', response.data);
-            await carregaProdutos();
+            await carregaProdutos(unidadeId); // Recarrega os produtos com a unidadeId correta
             setEditandoCategoria(false);
-            clearEditFields(); // Limpa os campos ao fechar a modal de edição
+            clearEditFields();
             CustomToast({ type: "success", message: "Produto atualizado com sucesso!" });
         } catch (error) {
             console.error('Erro ao atualizar produto:', error);
@@ -297,13 +286,18 @@ const Produtos = () => {
         }
     };
 
-    const carregaCategorias = async () => {
+    const carregaCategorias = async (unidadeId) => {
+        if (!unidadeId) {
+            console.error('unidadeId não está definido');
+            return; // Não faz nada se unidadeId não estiver definido
+        }
+    
         try {
-            const response = await api.get('/categoria');
-            console.log('Categorias recebidas:', response.data);
-
+            const response = await api.get(`/categoria?unidadeId=${unidadeId}`); // Carrega categorias pela unidadeId
             if (Array.isArray(response.data.data)) {
-                setCategorias(response.data.data);
+                // Filtra as categorias pela unidadeId
+                const categoriasFiltradas = response.data.data.filter(categoria => categoria.unidadeId === unidadeId);
+                setCategorias(categoriasFiltradas);
             } else {
                 console.error('A resposta não contém um array de categorias:', response.data);
                 CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
@@ -316,23 +310,25 @@ const Produtos = () => {
 
     const quantidadeProdutosCadastrados = produtos.length;
 
-    useEffect(() => {
-        const carregarDados = async () => {
-            await carregaCategorias();  // Aguarda o carregamento das categorias
-            await carregaProdutos();    // Só então carrega os produtos
-        };
-        carregarDados();
-    }, []);
+
 
     useEffect(() => {
-        // Filtra os produtos com base no nome
         const produtosFiltrados = produtosOriginais.filter(produto =>
             produto.nome.toLowerCase().includes(filtroNome.toLowerCase())
         );
-
-        // Atualiza o estado com os produtos filtrados
         setProdutosFiltrados(produtosFiltrados);
     }, [filtroNome, produtosOriginais]);
+
+
+    useEffect(() => {
+        const carregarDados = async () => {
+            if (unidadeId) {
+                await carregaCategorias(unidadeId); // Passa a unidadeId para a função
+                await carregaProdutos(unidadeId);
+            }
+        };
+        carregarDados();
+    }, [unidadeId]);
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -405,14 +401,14 @@ const Produtos = () => {
                                     </div>
                                 ) : (
                                     <TableComponent
-                                        headers={headerProdutos}
-                                        rows={produtosFiltrados.length > 0 ? produtosFiltrados : produtos} // Usa a lista filtrada ou a original
-                                        actionsLabel={"Ações"}
-                                        actionCalls={{
-                                            edit: (produto) => handleEditProduto(produto),
-                                            delete: (produto) => handleDeleteProduto(produto.id),
-                                        }}
-                                    />
+    headers={headerProdutos}
+    rows={produtosFiltrados.length > 0 ? produtosFiltrados : produtos}
+    actionsLabel={"Ações"}
+    actionCalls={{
+        edit: (produto) => handleEditProduto(produto),
+        delete: (produto) => handleDeleteProduto(produto.id),
+    }}
+/>
                                 )}
                             </div>
 
@@ -509,16 +505,16 @@ const Produtos = () => {
                                             }}
                                         />
                                         <SelectTextFields
-                                            width={'150px'}
-                                            icon={<CategoryIcon fontSize="small" />}
-                                            label={'Categoria'}
-                                            backgroundColor={"#D9D9D9"}
-                                            name={"categoria"}
-                                            fontWeight={500}
-                                            options={Array.isArray(categorias) ? categorias.map(categoria => ({ label: categoria.nome, value: categoria.id })) : []}
-                                            onChange={(e) => setSelectedCategoria(e.target.value)}
-                                            value={selectedCategoria}
-                                        />
+    width={'150px'}
+    icon={<CategoryIcon fontSize="small" />}
+    label={'Categoria'}
+    backgroundColor={"#D9D9D9"}
+    name={"categoria"}
+    fontWeight={500}
+    options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))} // Mapeia para o formato esperado
+    onChange={(e) => setSelectedCategoria(e.target.value)}
+    value={selectedCategoria}
+/>
 
                                         <SelectTextFields
                                             width={'140px'}

@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import ArticleIcon from '@mui/icons-material/Article';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import { PetsOutlined } from '@mui/icons-material';
+
 const HeaderNovoContrato = ({ activeSection, disabledSections, handleNavigation }) => {
     const navigate = useNavigate();
 

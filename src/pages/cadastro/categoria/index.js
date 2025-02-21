@@ -6,9 +6,8 @@ import HeaderCadastro from '../../../components/navbars/cadastro';
 import CategoryIcon from '@mui/icons-material/Category';
 import { InputAdornment, TextField } from '@mui/material';
 import ButtonComponent from '../../../components/button';
-import SearchIcon from '@mui/icons-material/Search';
 import CentralModal from '../../../components/modal-central';
-import { Edit, LocationOnOutlined, Save } from "@mui/icons-material";
+import { Edit, Save } from "@mui/icons-material";
 import TableComponent from '../../../components/table';
 import { headerCategoria } from '../../../entities/headers/header-categoria';
 import ModalLateral from '../../../components/modal-lateral';
@@ -19,9 +18,11 @@ import TableLoading from '../../../components/loading/loading-table/loading';
 import AddCircleOutline from "@mui/icons-material/AddCircleOutline";
 import ArticleIcon from '@mui/icons-material/Article';
 import { useNavigate } from 'react-router-dom';
+import { useUnidade } from '../../../components/unidade-context';
 
 const Categoria = () => {
     const navigate = useNavigate();
+    const { unidadeId } = useUnidade(); // Obtendo a unidadeId do contexto
     const [cadastroCategoria, setCadastroCategoria] = useState(false);
     const [loading, setLoading] = useState(false);
     const [categorias, setCategorias] = useState([]);
@@ -42,9 +43,14 @@ const Categoria = () => {
     }, []);
 
     useEffect(() => {
-        carregarCategorias();
         carregarUnidades();
     }, []);
+
+    useEffect(() => {
+        if (unidadeId) {
+            carregarCategorias(unidadeId); // Carrega categorias com a unidadeId
+        }
+    }, [unidadeId]); // Adicione unidadeId como dependência
 
     useEffect(() => {
         // Filtra as categorias sempre que filtroNome mudar
@@ -54,10 +60,11 @@ const Categoria = () => {
         setProdutosFiltrados(categoriasFiltradas);
     }, [filtroNome, categorias]);
 
-    const carregarCategorias = async () => {
+    const carregarCategorias = async (unidadeId) => {
+        console.log("Carregando categorias para unidadeId:", unidadeId); // Verifique o ID da unidade
         setLoading(true);
         try {
-            const response = await api.get('/categoria');
+            const response = await api.get(`/categoria?unidade=${unidadeId}`); // Certifique-se de que a query string está correta
             if (Array.isArray(response.data.data)) {
                 setCategorias(response.data.data);
             } else {
@@ -66,16 +73,6 @@ const Categoria = () => {
             }
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
-            if (
-                error.response &&
-                error.response.data.message === "Credenciais inválidas" &&
-                error.response.data.data === "Token de acesso inválido"
-            ) {
-                CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-                navigate("/login");
-            } else {
-                CustomToast({ type: "error", message: "Erro ao carregar as unidades!" });
-            }
         } finally {
             setLoading(false);
         }
@@ -93,10 +90,10 @@ const Categoria = () => {
         try {
             const novaCategoria = {
                 nome: categoria.nome,
-                unidadeId: categoria.unidadeId
+                unidadeId: unidadeId // Use a unidadeId do contexto
             };
             await api.post('/categoria', novaCategoria);
-            await carregarCategorias();
+            await carregarCategorias(unidadeId); // Carrega categorias após cadastrar
             setCategoria({ nome: '', unidadeId: '' });
             handleCloseCadastroCategoria();
             CustomToast({ type: "success", message: "Categoria cadastrada com sucesso!" });
@@ -115,7 +112,7 @@ const Categoria = () => {
         if (categoriaEditada) {
             try {
                 await api.put(`/categoria/${categoriaEditada.id}`, categoriaEditada);
-                await carregarCategorias();
+                await carregarCategorias(unidadeId); // Carrega categorias após editar
                 setEditandoCategoria(false);
                 setCategoriaEditada(null);
                 CustomToast({ type: "success", message: "Categoria editada com sucesso!" });
@@ -129,7 +126,7 @@ const Categoria = () => {
     const handleDeleteCategoria = async (categoria) => {
         try {
             await api.delete(`/categoria/${categoria.id}`);
-            await carregarCategorias();
+            await carregarCategorias(unidadeId); // Carrega categorias após deletar
             CustomToast({ type: "success", message: "Categoria deletada com sucesso!" });
         } catch (error) {
             console.error("Erro ao deletar categoria:", error);
@@ -149,6 +146,13 @@ const Categoria = () => {
             console.error("Erro ao carregar as unidades:", error);
         }
     };
+
+    useEffect(() => {
+        if (unidadeId) {
+            console.log("Unidade ID selecionada:", unidadeId); // Verifique o ID da unidade
+            carregarCategorias(unidadeId); // Carrega categorias com a unidadeId
+        }
+    }, [unidadeId]); // Adicione unidadeId como dependência
 
     return (
         <div className="flex w-full ">
@@ -241,16 +245,16 @@ const Categoria = () => {
                                 ),
                             }}
                         />
-                        <SelectTextFields
+                        {/* <SelectTextFields
                             width={'150px'}
                             icon={<CategoryIcon fontSize="small" />}
                             label={'Unidade'}
                             backgroundColor={"#D9D9D9"}
                             name={"unidade"}
                             fontWeight={500}
-                            options={userOptionsUnidade}
+                            options={userOptionsUnidade.filter(option => option.value === unidadeId)} // Filtra para mostrar apenas a unidade selecionada
                             onChange={(e) => setCategoria({ ...categoria, unidadeId: e.target.value })}
-                        />
+                        /> */}
                     </div>
                     <div className='w-[95%] mt-2 flex items-end justify-end'>
                         <ButtonComponent

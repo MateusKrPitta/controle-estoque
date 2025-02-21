@@ -1,3 +1,4 @@
+// LoginPage.js
 import React, { useState } from 'react';
 import { VisibilityOffOutlined, VisibilityOutlined } from '@mui/icons-material';
 import logoPaxVerde from '../../assets/png/logo.png';
@@ -6,18 +7,17 @@ import { useNavigate } from 'react-router-dom';
 import packageJson from '../../../package.json';
 import CustomToast from '../../components/toast';
 import { formatCPF } from '../../utils/formatCPF';
-import './login.css'
+import './login.css';
 import api from '../../services/api';
 import { useUnidade } from '../../components/unidade-context';
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    const { setUnidadeId, setUnidadeNome } = useUnidade();  // Acessa as funções do contexto
+    const { setUnidadeId, setUnidadeNome, atualizarUnidades } = useUnidade();
     const [cpf, setCpf] = useState('');
     const [senha, setSenha] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [showTutorial, setShowTutorial] = useState(false);
 
     const handleCPFChange = (e) => {
         const { value } = e.target;
@@ -50,31 +50,30 @@ const LoginPage = () => {
             CustomToast({ type: 'warning', message: 'Informe sua senha!' });
             return;
         }
-    
+
         setLoading(true);
-    
+
         try {
             const response = await api.post('/login', { cpf, senha });
-            console.log('Resposta da API:', response.data);  // Log para verificar a resposta da API
-    
-            const { token, nome, unidade } = response.data.data;  // Verifique se realmente está em response.data.data
-    
+            console.log('Resposta da API:', response.data);
+
+            const { token, nome, unidade } = response.data.data;
+
             if (token) {
                 localStorage.setItem('token', token);
                 localStorage.setItem('userName', nome);
-    
+
                 if (unidade && unidade.length > 0) {
                     const unidadeSelecionada = unidade[0];
                     setUnidadeId(unidadeSelecionada.id);
                     setUnidadeNome(unidadeSelecionada.nome);
-    
-                    // Salva unidadeId e unidadeNome no localStorage
+                    // Aqui você pode adicionar a lógica para atualizar o selectedUnidade
                     localStorage.setItem('unidadeId', unidadeSelecionada.id);
                     localStorage.setItem('unidadeNome', unidadeSelecionada.nome);
                 }
-    
+                atualizarUnidades(unidade);
                 CustomToast({ type: 'success', message: `Bem-vindo(a), ${nome}` });
-                console.log('Navegando para o dashboard');  // Log para verificar se o navigate está sendo chamado
+                console.log('Navegando para o dashboard');
                 setTimeout(() => {
                     setCpf('');
                     setSenha('');
@@ -87,7 +86,7 @@ const LoginPage = () => {
             }
         } catch (error) {
             setLoading(false);
-            console.error('Erro ao fazer login:', error);  // Log detalhado do erro
+            console.error('Erro ao fazer login:', error);
             if (error.response && error.response.data.message) {
                 CustomToast({ type: 'warning', message: error.response.data.message });
             } else {
@@ -95,8 +94,6 @@ const LoginPage = () => {
             }
         }
     };
-    
-      
 
     return (
         <div className="login-container flex h-screen items-center justify-center ">
@@ -131,22 +128,13 @@ const LoginPage = () => {
                 </div>
                 <button
                     onClick={logar}
-                    style={{backgroundColor:'#9EBB51'}}
+                    style={{ backgroundColor: '#9EBB51' }}
                     className="login-button w-full text-white p-2 rounded-md bg-custom-green"
                 >
                     {loading ? <LoadingLogin /> : 'Entrar'}
                 </button>
-
-                <div className="tutorial text-center mt-3" style={{color:'#9EBB51'}}>
-                    <p>Precisa de ajuda?
-                        <a href="#" onClick={(e) => {
-                            e.preventDefault();
-                            setShowTutorial(true);
-                        }}
-                            style={{ textDecoration: 'underline', color: '#9EBB51', cursor: 'pointer' }}
-                        >Iniciar tutorial
-                        </a>
-                    </p>
+                <div className="tutorial text-center mt-3" style={{ color: '#9EBB51' }}>
+                   
                 </div>
                 <div className="versao-app text-center mt-10">
                     <p> Versão {packageJson.version}</p>

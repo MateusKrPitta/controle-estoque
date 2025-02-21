@@ -1,3 +1,4 @@
+// HeaderPerfil.js
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
@@ -8,8 +9,8 @@ import ButtonComponent from "../../button";
 import SelectTextFields from "../../select";
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LogoutIcon from '@mui/icons-material/Logout';
-import CategoryIcon from '@mui/icons-material/Category';
 import api from '../../../services/api';
+import { useUnidade } from "../../unidade-context";
 
 const style = {
   position: "absolute",
@@ -24,15 +25,12 @@ const style = {
 };
 
 const HeaderPerfil = () => {
+  const { unidades, setUnidadeId, setUnidadeNome, unidadeId } = useUnidade();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [openLogoutConfirm, setOpenLogoutConfirm] = useState(false);
-  const [categorias, setCategorias] = useState([]);
-  const [selectedCategoria, setSelectedCategoria] = useState('');
-  const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
-  const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
-  const [selectedUnidade, setSelectedUnidade] = useState('');
   const [userName, setUserName] = useState('');
+  const [selectedUnidade, setSelectedUnidade] = useState('');
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -47,44 +45,27 @@ const HeaderPerfil = () => {
 
   const confirmLogout = async () => {
     handleCloseLogoutConfirm();
-    // Aqui você pode adicionar a lógica para logout, se necessário
-    // Exemplo: await api.post('/logout');
-    localStorage.clear(); // Limpa o localStorage
-    navigate("/login"); // Redireciona para a página de login
+    localStorage.clear();
+    navigate("/login");
   };
 
   const handleUnidadeChange = (event) => {
     const selectedValue = event.target.value;
-    const unidadeObj = userOptionsUnidade.find(option => option.value === selectedValue);
+    const unidadeObj = unidades.find(option => option.id === selectedValue);
+    
     if (unidadeObj) {
-      setSelectedUnidade(unidadeObj.value);
-    }
-  };
-
-  const carregarUnidades = async () => {
-    try {
-      const response = await api.get("/unidade");
-      const unidadesOptions = response.data.data.map(unidade => ({
-        value: unidade.id,
-        label: unidade.nome
-      }));
-      setUserOptionsUnidade(unidadesOptions);
-    } catch (error) {
-      console.error("Erro ao carregar as unidades:", error);
+        setUnidadeId(unidadeObj.id);
+        setUnidadeNome(unidadeObj.nome);
+        localStorage.setItem('unidadeId', unidadeObj.id);
+        localStorage.setItem('unidadeNome', unidadeObj.nome);
     }
   };
 
   useEffect(() => {
-    const categoriasSalvas = JSON.parse(localStorage.getItem('unidades')) || [];
-    const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
-      .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
-
-    setCategorias(categoriasUnicas);
-    setUniqueCategoriesCount(categoriasUnicas.length);
-  }, []);
+    setSelectedUnidade(unidadeId); // Atualiza o selectedUnidade quando unidadeId muda
+  }, [unidadeId]);
 
   useEffect(() => {
-    carregarUnidades();
     const storedUserName = localStorage.getItem('userName');
     if (storedUserName) {
       setUserName(storedUserName);
@@ -106,7 +87,7 @@ const HeaderPerfil = () => {
               backgroundColor={"#D9D9D9"}
               name={"Unidades"}
               fontWeight={500}
-              options={userOptionsUnidade}
+              options={unidades.map(unidade => ({ value: unidade.id, label: unidade.nome }))}
               value={selectedUnidade}
               onChange={handleUnidadeChange}
             />

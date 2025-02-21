@@ -21,8 +21,10 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import Logo from '../../../assets/png/logo_preta.png';
 import api from '../../../services/api';
 import CustomToast from '../../../components/toast';
+import { useUnidade } from '../../../components/unidade-context';
 
 const EstoqueReal = () => {
+    const { unidadeId } = useUnidade();
     const [produtos, setProdutos] = useState([]);
     const [entradasSaidas, setEntradasSaidas] = useState([]);
     const [dataInicio, setDataInicio] = useState('');
@@ -40,15 +42,20 @@ const EstoqueReal = () => {
 
         return () => clearTimeout(timer);
     }, []);
-
     const fetchEntradasSaidas = async () => {
         try {
             const response = await api.get('/movimentacao');
             const movimentacoes = response.data.data;
-
-            const formattedMovimentacoes = await Promise.all(movimentacoes.map(async (mov) => {
+    
+            // Filtra as movimentações para incluir apenas aquelas relacionadas aos produtos da unidadeId
+            const movimentacoesFiltradas = movimentacoes.filter(mov => {
+                const produto = produtos.find(prod => prod.nome === mov.produtoNome);
+                return produto && produto.unidadeId === unidadeId;
+            });
+    
+            const formattedMovimentacoes = await Promise.all(movimentacoesFiltradas.map(async (mov) => {
                 const valorTotal = mov.precoPorcao * mov.quantidade;
-
+    
                 return {
                     tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === '2' ? 'saida' : 'desperdicio',
                     produtoNome: mov.produtoNome,
@@ -61,7 +68,7 @@ const EstoqueReal = () => {
                     id: mov.id
                 };
             }));
-
+    
             setEntradasSaidas(formattedMovimentacoes);
             setEntradasSaidasOriginais(formattedMovimentacoes); // Armazena os dados originais
         } catch (error) {
@@ -72,8 +79,8 @@ const EstoqueReal = () => {
 
     const fetchProdutos = async () => {
         try {
-            const response = await api.get('/produto');
-            const produtosCadastrados = response.data.data;
+            const response = await api.get(`/produto?unidadeId=${unidadeId}`);
+            const produtosCadastrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
             setProdutos(produtosCadastrados);
         } catch (error) {
             console.error('Erro ao buscar produtos:', error);
@@ -106,6 +113,19 @@ const EstoqueReal = () => {
         return estoque;
     };
 
+    const fetchCategorias = async () => {
+        try {
+            const response = await api.get(`/categoria?unidadeId=${unidadeId}`);
+            const categoriasFiltradas = response.data.data.filter(categoria => categoria.unidadeId === unidadeId);
+            setCategorias(categoriasFiltradas);
+        } catch (error) {
+            console.error('Erro ao buscar categorias:', error);
+            CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
+        }
+    };
+    
+
+
     const rows = produtos.map(produto => {
         const estoqueAtualData = calcularEstoqueAtual();
         const estoqueAtual = (estoqueAtualData[produto.nome]?.totalEntradas || 0) - (estoqueAtualData[produto.nome]?.totalSaidas || 0);
@@ -135,6 +155,31 @@ const EstoqueReal = () => {
         { label: 'Preço Unitário', key: 'precoUnitario' },
         { label: 'Valor Total', key: 'valorTotal' },
     ];
+
+    const handlePesquisar = () => {
+        const produtosFiltrados = produtos.filter(produto => {
+            const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
+            return categoriaMatch;
+        });
+    
+        setProdutos(produtosFiltrados);
+        handleCloseFiltro(); // Fecha o modal de filtro
+    
+        if (produtosFiltrados.length === 0) {
+            CustomToast({ type: "error", message: "Nenhum produto encontrado com os critérios de pesquisa." });
+        } else {
+            CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
+        }
+    };
+
+    useEffect(() => {
+        if (unidadeId) {
+            fetchProdutos();
+            fetchEntradasSaidas();
+            fetchCategorias();
+        }
+    }, [unidadeId]); 
+
 
     const handlePrint = () => {
         const printWindow = window.open('', '_blank');
@@ -230,42 +275,7 @@ const EstoqueReal = () => {
                             </div>
                         </div>
                         <div className="flex gap-2 flex-wrap w-full justify-center md:justify-start">
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                size="small"
-                                type='date'
-                                label="Data Início"
-                                value={dataInicio}
-                                onChange={(e) => setDataInicio(e.target.value)}
-                                autoComplete="off"
-                                sx={{ width: { xs: '40%', sm: '50%', md: '40%', lg: '20%' } }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <DateRange />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                size="small"
-                                label="Data Final"
-                                type='date'
-                                value={dataFim}
-                                onChange={(e) => setDataFim(e.target.value)}
-                                autoComplete="off"
-                                sx={{ width: { xs: '40%', sm: '50%', md: '40%', lg: '20%' } }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <DateRange />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
+                            
                             <ButtonComponent
                                 title="Imprimir"
                                 subtitle="Imprimir"
@@ -300,73 +310,74 @@ const EstoqueReal = () => {
                 </div>
             </div>
             <CentralModal
-                tamanhoTitulo={'81%'}
-                maxHeight={'100vh'}
-                top={'20%'}
-                left={'28%'}
-                width={'400px'}
-                icon={<FilterAltIcon fontSize="small" />}
-                open={filtro}
-                onClose={handleCloseFiltro}
-                title="Filtro"
-            >
-                <div>
-                    <div className='mt-4 flex gap-3 flex-wrap'>
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            size="small"
-                            label="Data Inicial"
-                            value={dataInicio}
-                            type='date'
-                            autoComplete="off"
-                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <DateRange />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            size="small"
-                            label="Data Final"
-                            type='date'
-                            value={dataFim}
-                            autoComplete="off"
-                            sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <DateRange />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
-                        <SelectTextFields
-                            width={'175px'}
-                            icon={<CategoryIcon fontSize="small" />}
-                            label={'Categoria'}
-                            backgroundColor={"#D9D9D9"}
-                            name={"categoria"}
-                            fontWeight={500}
-                            options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
-                            onChange={(e) => setSelectedCategoria(e.target.value)}
-                            value={selectedCategoria}
-                        />
-                    </div>
-                    <div className='w-[95%] mt-2 flex items-end justify-end'>
-                        <ButtonComponent
-                            title={'Pesquisar'}
-                            subtitle={'Pesquisar'}
-                            startIcon={<SearchIcon />}
-                        />
-                    </div>
-                </div>
-            </CentralModal>
+    tamanhoTitulo={'81%'}
+    maxHeight={'100vh'}
+    top={'20%'}
+    left={'28%'}
+    width={'400px'}
+    icon={<FilterAltIcon fontSize="small" />}
+    open={filtro}
+    onClose={handleCloseFiltro}
+    title="Filtro"
+>
+    <div>
+        <div className='mt-4 flex gap-3 flex-wrap'>
+            <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Data Inicial"
+                value={dataInicio}
+                type='date'
+                autoComplete="off"
+                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <DateRange />
+                        </InputAdornment>
+                    ),
+                }}
+            />
+            <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Data Final"
+                type='date'
+                value={dataFim}
+                autoComplete="off"
+                sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <DateRange />
+                        </InputAdornment>
+                    ),
+                }}
+            />
+            <SelectTextFields
+                width={'175px'}
+                icon={<CategoryIcon fontSize="small" />}
+                label={'Categoria'}
+                backgroundColor={"#D9D9D9"}
+                name={"categoria"}
+                fontWeight={500}
+                options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+                onChange={(e) => setSelectedCategoria(e.target.value)}
+                value={selectedCategoria}
+            />
+        </div>
+        <div className='w-[95%] mt-2 flex items-end justify-end'>
+            <ButtonComponent
+                title={'Pesquisar'}
+                subtitle={'Pesquisar'}
+                startIcon={<SearchIcon />}
+                onClick={handlePesquisar}
+            />
+        </div>
+    </div>
+</CentralModal>
         </div>
     );
 }

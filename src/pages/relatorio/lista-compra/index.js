@@ -14,8 +14,10 @@ import SelectTextFields from '../../../components/select';
 import ArticleIcon from '@mui/icons-material/Article';
 import Logo from '../../../assets/png/logo_preta.png';
 import api from '../../../services/api'; // Importa a API
+import { useUnidade } from '../../../components/unidade-context';
 
 const ListaCompra = () => {
+    const { unidadeId } = useUnidade();
     const [produtos, setProdutos] = useState([]);
     const [entradasSaidas, setEntradasSaidas] = useState([]);
     const [produtosSelecionados, setProdutosSelecionados] = useState([]);
@@ -35,12 +37,22 @@ const ListaCompra = () => {
     // Função para buscar produtos e movimentações
     const fetchData = async () => {
         try {
-            const produtosResponse = await api.get('/produto');
+            const produtosResponse = await api.get(`/produto?unidadeId=${unidadeId}`);
             const entradasSaidasResponse = await api.get('/movimentacao');
-            setProdutos(produtosResponse.data.data);
-            setEntradasSaidas(entradasSaidasResponse.data.data);
-            console.log('Produtos:', produtosResponse.data.data); // Verifique os produtos
-            console.log('Entradas e Saídas:', entradasSaidasResponse.data.data); // Verifique as movimentações
+            
+            // Filtra os produtos pela unidadeId
+            const produtosFiltrados = produtosResponse.data.data.filter(produto => produto.unidadeId === unidadeId);
+            setProdutos(produtosFiltrados);
+    
+            // Filtra as movimentações para incluir apenas aquelas relacionadas aos produtos da unidadeId
+            const movimentacoesFiltradas = entradasSaidasResponse.data.data.filter(mov => {
+                const produto = produtosFiltrados.find(prod => prod.nome === mov.produtoNome);
+                return produto && produto.unidadeId === unidadeId;
+            });
+    
+            setEntradasSaidas(movimentacoesFiltradas);
+            console.log('Produtos:', produtosFiltrados); // Verifique os produtos
+            console.log('Entradas e Saídas:', movimentacoesFiltradas); // Verifique as movimentações
         } catch (error) {
             console.error('Erro ao buscar dados:', error);
         }
@@ -153,6 +165,11 @@ const ListaCompra = () => {
         }
     };
 
+    useEffect(() => {
+        if (unidadeId) {
+            fetchData();
+        }
+    }, [unidadeId]); 
     return (
         <div className="flex w-full ">
             <Navbar />

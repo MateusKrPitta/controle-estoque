@@ -24,8 +24,10 @@ import CategoryIcon from '@mui/icons-material/Category';
 import SearchIcon from '@mui/icons-material/Search';
 import api from '../../services/api.js';
 import { useNavigate } from 'react-router-dom';
+import { useUnidade } from '../../components/unidade-context/index.js';
 
 const EntradaSaida = () => {
+  const { unidadeId } = useUnidade();
   const [cadastro, setCadastro] = useState(false);
   const [categorias, setCategorias] = useState([]);
   const navigate = useNavigate();
@@ -132,17 +134,22 @@ const EntradaSaida = () => {
     return acc + (registro.tipo === 'entrada' ? valorRegistro : -valorRegistro);
   }, 0);
 
+
+
   const fetchProdutos = async () => {
     try {
-      const response = await api.get('/produto');
-      const produtosCadastrados = response.data.data;
-      setProdutos(produtosCadastrados);
+      const response = await api.get(`/produto?unidadeId=${unidadeId}`);
+      console.log('Produtos recebidos:', response.data); // Verifique os dados recebidos
+  
+      // Filtra os produtos pela unidadeId no frontend (se necessário)
+      const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
+  
+      setProdutos(produtosFiltrados);
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
       CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
     }
   };
-
   const fetchEntradasSaidas = async () => {
     try {
       const response = await api.get('/movimentacao');
@@ -206,7 +213,6 @@ const EntradaSaida = () => {
   }, []);
 
   useEffect(() => {
-    fetchProdutos();
     fetchEntradasSaidas();
   }, []);
 
@@ -225,11 +231,14 @@ const EntradaSaida = () => {
     handleCloseFiltro(); // Fecha a modal de filtro
   };
   useEffect(() => {
-    fetchProdutos();
     fetchEntradasSaidas();
     fetchCategorias(); // Certifique-se de que esta linha está presente
   }, []);
-
+  useEffect(() => {
+    if (unidadeId) {
+      fetchProdutos();
+    }
+  }, [unidadeId]);
   return (
     <div className="flex w-full ">
       <Navbar />
@@ -342,20 +351,20 @@ const EntradaSaida = () => {
         >
           <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
             <div className='mt-4 flex gap-3 flex-wrap'>
-              <SelectTextFields
-                width={'285px'}
-                icon={<ArticleIcon fontSize="small" />}
-                label={'Produto'}
-                backgroundColor={"#D9D9D9"}
-                name={"produto"}
-                fontWeight={500}
-                options={produtos.map(produto => ({
-                  value: produto.nome, // O valor que será armazenado
-                  label: `${produto.nome} - ${formatValor(produto.valorPorcao)}` // Exibe o nome e o preço por porção formatado
-                }))}
-                value={produto} // Preenche o campo com o produto atual
-                onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
-              />
+            <SelectTextFields
+  width={'285px'}
+  icon={<ArticleIcon fontSize="small" />}
+  label={'Produto'}
+  backgroundColor={"#D9D9D9"}
+  name={"produto"}
+  fontWeight={500}
+  options={produtos.map(produto => ({
+    value: produto.nome, // O valor que será armazenado
+    label: `${produto.nome} - ${formatValor(produto.valorPorcao)}` // Exibe o nome e o preço por porção formatado
+  }))}
+  value={produto} // Preenche o campo com o produto atual
+  onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
+/>
               <TextField
                 fullWidth
                 variant="outlined"
