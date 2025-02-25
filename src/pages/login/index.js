@@ -55,7 +55,6 @@ const LoginPage = () => {
 
         try {
             const response = await api.post('/login', { cpf, senha });
-            console.log('Resposta da API:', response.data);
 
             const { token, nome, unidade } = response.data.data;
 
@@ -73,7 +72,6 @@ const LoginPage = () => {
                 }
                 atualizarUnidades(unidade);
                 CustomToast({ type: 'success', message: `Bem-vindo(a), ${nome}` });
-                console.log('Navegando para o dashboard');
                 setTimeout(() => {
                     setCpf('');
                     setSenha('');
@@ -86,7 +84,6 @@ const LoginPage = () => {
             }
         } catch (error) {
             setLoading(false);
-            console.error('Erro ao fazer login:', error);
             if (error.response && error.response.data.message) {
                 CustomToast({ type: 'warning', message: error.response.data.message });
             } else {

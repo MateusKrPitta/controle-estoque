@@ -72,7 +72,6 @@ const EstoqueReal = () => {
             setEntradasSaidas(formattedMovimentacoes);
             setEntradasSaidasOriginais(formattedMovimentacoes); // Armazena os dados originais
         } catch (error) {
-            console.error('Erro ao buscar movimentações:', error);
             CustomToast({ type: "error", message: "Erro ao carregar movimentações!" });
         }
     };
@@ -83,7 +82,6 @@ const EstoqueReal = () => {
             const produtosCadastrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
             setProdutos(produtosCadastrados);
         } catch (error) {
-            console.error('Erro ao buscar produtos:', error);
             CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
         }
     };
@@ -119,7 +117,6 @@ const EstoqueReal = () => {
             const categoriasFiltradas = response.data.data.filter(categoria => categoria.unidadeId === unidadeId);
             setCategorias(categoriasFiltradas);
         } catch (error) {
-            console.error('Erro ao buscar categorias:', error);
             CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
         }
     };

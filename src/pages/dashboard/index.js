@@ -97,7 +97,7 @@ const Dashboard = () => {
     
             if (error.response && error.response.data.message === "Credenciais inválidas" && error.response.data.data === "Token de acesso inválido") {
                 CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-                navigate("/login");
+                navigate("/");
             } else {
                 CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
             }
@@ -125,7 +125,7 @@ const Dashboard = () => {
             if (err.response) {
                 if (err.response.data.message === "Credenciais inválidas" && err.response.data.data === "Token de acesso inválido") {
                     CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-                    navigate("/login");
+                    navigate("/");
                 } else {
                     CustomToast({ type: "error", message: err.response.data.message || "Erro ao carregar as unidades!" });
                 }

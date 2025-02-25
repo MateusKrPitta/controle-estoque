@@ -19,10 +19,9 @@ import PrivateRoute from './private-routes.js';
 const AppRoutes = () => {
     return (
         <Routes>
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={<LoginPage />} />
             <Route element={<PrivateRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/login" element={<LoginPage />} />
                 <Route path="/entrada-saida" element={<EntradaSaida />} />
                 <Route path="/cmv" element={<CMV />} />
                 <Route path="/relatorios" element={<Relatorio />} />

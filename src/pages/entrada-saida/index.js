@@ -120,7 +120,6 @@ const EntradaSaida = () => {
       // Recarregar os dados da tabela
       fetchEntradasSaidas(); // Chame a função para buscar os dados novamente
     } catch (error) {
-      console.error('Erro ao cadastrar registro:', error);
       CustomToast({ type: "error", message: "Erro ao cadastrar registro!" });
     }
   };
@@ -158,28 +157,24 @@ const valorTotalSaidas = entradasSaidas
   const fetchProdutos = async () => {
     try {
       const response = await api.get(`/produto?unidadeId=${unidadeId}`);
-      console.log('Produtos recebidos:', response.data); // Verifique os dados recebidos
 
       // Filtra os produtos pela unidadeId no frontend (se necessário)
       const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
 
       setProdutos(produtosFiltrados);
     } catch (error) {
-      console.error('Erro ao buscar produtos:', error);
       CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
     }
   };
   const fetchCategorias = async () => {
     try {
       const response = await api.get('/categoria'); // Busca todas as categorias
-      console.log('Categorias recebidas:', response.data); // Verifique os dados recebidos
 
       // Filtra as categorias com base na unidadeId no frontend
       const categoriasFiltradas = response.data.data.filter(categoria => categoria.unidadeId === unidadeId);
 
       setCategorias(categoriasFiltradas);
     } catch (error) {
-      console.error('Erro ao buscar categorias:', error);
       CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
     }
   };
@@ -189,7 +184,6 @@ const valorTotalSaidas = entradasSaidas
       const response = await api.get(`/movimentacao?unidadeId=${unidadeId}`);
       const movimentacoes = response.data.data;
 
-      console.log('Movimentações recebidas:', movimentacoes); // Adicione este log
 
       const formattedMovimentacoes = await Promise.all(movimentacoes.map(async (mov) => {
         const valorTotal = mov.precoPorcao * mov.quantidade;
@@ -197,7 +191,6 @@ const valorTotalSaidas = entradasSaidas
         // Encontre a categoria correspondente
         const categoria = categorias.find(cat => cat.id === mov.categoria_id);
 
-        console.log('Categoria encontrada:', categoria); // Adicione este log
 
         return {
           tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === '2' ? 'saida' : 'desperdicio',
@@ -215,14 +208,13 @@ const valorTotalSaidas = entradasSaidas
       setEntradasSaidas(formattedMovimentacoes);
       setEntradasSaidasOriginais(formattedMovimentacoes);
     } catch (error) {
-      console.error('Erro ao buscar movimentações:', error);
       if (
         error.response &&
         error.response.data.message === "Credenciais inválidas" &&
         error.response.data.data === "Token de acesso inválido"
       ) {
         CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-        navigate("/login");
+        navigate("/");
       } else {
         CustomToast({ type: "error", message: "Erro ao carregar as movimentações!" });
       }

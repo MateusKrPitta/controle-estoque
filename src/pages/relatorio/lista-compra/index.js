@@ -50,9 +50,7 @@ const ListaCompra = () => {
                 return produto && produto.unidadeId === unidadeId;
             });
     
-            setEntradasSaidas(movimentacoesFiltradas);
-            console.log('Produtos:', produtosFiltrados); // Verifique os produtos
-            console.log('Entradas e Saídas:', movimentacoesFiltradas); // Verifique as movimentações
+            setEntradasSaidas(movimentacoesFiltradas);// Verifique os produtos
         } catch (error) {
             console.error('Erro ao buscar dados:', error);
         }
@@ -74,7 +72,7 @@ const ListaCompra = () => {
 
     const produtosAbaixoMinimo = produtos.filter(produto => {
         const estoqueAtual = calcularEstoqueAtual(produto.nome);
-        console.log(`Produto: ${produto.nome}, Estoque Atual: ${estoqueAtual}, Quantidade Mínima: ${produto.qtdMin}`); // Verifique os valores
+       
         return estoqueAtual < produto.qtdMin; // Acessando a propriedade correta
     });
 

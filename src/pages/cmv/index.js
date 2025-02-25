@@ -40,7 +40,6 @@ const CMV = () => {
 
   useEffect(() => {
     const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-    console.log("Produtos carregados do localStorage:", produtosSalvos);
     setProdutos(calculateUtilizado(produtosSalvos));
     calculateTotals(produtosSalvos);
   }, []);
@@ -81,7 +80,6 @@ const CMV = () => {
     // Calcular totalUtilizado
     newTotals.totalUtilizado = newTotals.estoqueInicial + newTotals.totalEntradas - newTotals.estoqueFinal;
 
-    console.log("Total Entradas:", newTotals.totalEntradas);
     setTotals(newTotals);
   };
   const formatCurrency = (value) => {

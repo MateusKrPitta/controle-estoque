@@ -165,7 +165,6 @@ const Produtos = () => {
                 setProdutos(mappedProdutos);
                 setProdutosOriginais(mappedProdutos);
             } else {
-                console.error("A resposta da API não é um array:", response.data.data);
                 setProdutos([]);
                 setProdutosOriginais([]);
             }
@@ -207,13 +206,11 @@ const Produtos = () => {
 
             CustomToast({ type: "success", message: "Produto deletado com sucesso!" });
         } catch (error) {
-            console.error('Erro ao deletar produto:', error);
             CustomToast({ type: "error", message: "Erro ao deletar produto!" });
         }
     };
 
     const handleEditProduto = (produto) => {
-        console.log(produto); // Verifique se qtdMin está presente
         setProdutoEditado(produto);
         setNome(produto.nome);
         setQtdMin(produto.qtdMin); // Certifique-se de que isso está correto
@@ -271,13 +268,11 @@ const Produtos = () => {
 
         try {
             const response = await api.put(`/produto/${produtoEditado.id}`, produtoAtualizado);
-            console.log('Produto atualizado com sucesso:', response.data);
             await carregaProdutos(unidadeId); // Recarrega os produtos com a unidadeId correta
             setEditandoCategoria(false);
             clearEditFields();
             CustomToast({ type: "success", message: "Produto atualizado com sucesso!" });
         } catch (error) {
-            console.error('Erro ao atualizar produto:', error);
             CustomToast({ type: "error", message: "Erro ao atualizar produto!" });
         }
     };
@@ -295,11 +290,9 @@ const Produtos = () => {
                 const categoriasFiltradas = response.data.data.filter(categoria => categoria.unidadeId === unidadeId);
                 setCategorias(categoriasFiltradas);
             } else {
-                console.error('A resposta não contém um array de categorias:', response.data);
                 CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
             }
         } catch (error) {
-            console.error('Erro ao buscar categorias:', error);
             CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
         }
     };

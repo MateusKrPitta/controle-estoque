@@ -53,7 +53,6 @@ const Unidades = () => {
       setUnidades(response.data.data);
       setUnidadesFiltradas(response.data.data); // Inicializa as unidades filtradas
     } catch (error) {
-      console.error("Erro ao carregar as unidades:", error);
   
       if (
         error.response &&
@@ -61,7 +60,7 @@ const Unidades = () => {
         error.response.data.data === "Token de acesso inválido"
       ) {
         CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-        navigate("/login");
+        navigate("/");
       } else {
         CustomToast({ type: "error", message: "Erro ao carregar as unidades!" });
       }
@@ -126,7 +125,6 @@ const Unidades = () => {
           });
         }
       } catch (error) {
-        console.error("Erro ao editar a unidade:", error);
         CustomToast({ type: "error", message: "Erro ao editar a unidade!" });
       }
     }
@@ -151,7 +149,6 @@ const Unidades = () => {
         CustomToast({ type: "error", message: "Erro ao excluir a unidade!" });
       }
     } catch (error) {
-      console.error("Erro ao excluir a unidade:", error);
       CustomToast({ type: "error", message: "Erro ao excluir a unidade!" });
     }
   };

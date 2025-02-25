@@ -191,7 +191,6 @@ const Usuario = () => {
       setSelectedUnidades([]);
       CustomToast({ type: "success", message: "Usuário cadastrado com sucesso!" });
     } catch (error) {
-      console.error("Erro ao cadastrar usuário:", error);
 
       // Verifica se o erro é devido a um token expirado
       if (
@@ -200,7 +199,7 @@ const Usuario = () => {
         error.response.data.data === "Token de acesso inválido"
       ) {
         CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-        navigate("/login"); // Redireciona para a tela de login
+        navigate("/"); // Redireciona para a tela de login
       } else {
         CustomToast({ type: "error", message: "Erro ao cadastrar usuário!" });
       }
@@ -311,7 +310,6 @@ const Usuario = () => {
         setEditandoUsuario(false)
       }
     } catch (error) {
-      console.error("Erro ao atualizar usuário:", error);
       CustomToast({ type: "success", message: "Usuário atualizado com sucesso!" });
     }
   };
@@ -324,11 +322,9 @@ const Usuario = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get('/usuario'); // Chame a rota correta para buscar usuários
-      console.log(response.data); // Inspecione a resposta aqui
+      const response = await api.get('/usuario');
       setUsers(response.data.data || []); // Ajuste conforme a estrutura da resposta
-    } catch (error) {
-      console.error("Erro ao buscar usuários:", error);
+    } catch (error) {;
 
       // Verifica se o erro é devido a um token expirado
       if (
@@ -337,7 +333,7 @@ const Usuario = () => {
         error.response.data.data === "Token de acesso inválido"
       ) {
         CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-        navigate("/login"); // Redireciona para a tela de login
+        navigate("/"); // Redireciona para a tela de login
       } else {
         CustomToast({ type: "error", message: "Erro ao buscar usuários!" });
       }
@@ -368,7 +364,6 @@ const Usuario = () => {
         CustomToast({ type: "success", message: "Usuário excluído com sucesso!" });
       }
     } catch (error) {
-      console.error("Erro ao excluir usuário:", error);
       CustomToast({ type: "error", message: "Erro ao excluir usuário!" });
     }
   };
@@ -376,7 +371,6 @@ const Usuario = () => {
   const carregarUnidades = async () => {
     try {
       const response = await api.get("/unidade");
-      console.log(response.data); // Inspecione a resposta aqui
       const unidadesOptions = response.data.data.map(unidade => ({
         value: unidade.id, // ID da unidade
         label: unidade.nome // Nome da unidade

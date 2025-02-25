@@ -46,7 +46,7 @@ const HeaderPerfil = () => {
   const confirmLogout = async () => {
     handleCloseLogoutConfirm();
     localStorage.clear();
-    navigate("/login");
+    navigate("/");
   };
 
   const handleUnidadeChange = (event) => {
