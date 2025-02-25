@@ -14,25 +14,29 @@ import Usuario from '../pages/cadastro/usuario/index.js';
 import Unidades from '../pages/cadastro/unidades/index.js';
 import ListaCompra from '../pages/relatorio/lista-compra/index.js';
 import Desperdicio from '../pages/relatorio/desperdico/index.js';
+import PrivateRoute from './private-routes.js';
 
 const AppRoutes = () => {
     return (
         <Routes>
-            <Route path="/" element={<LoginPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/login" element={<LoginPage /> }/>
-            <Route path="/entrada-saida" element={<EntradaSaida /> }/>
-            <Route path="/cmv" element={<CMV /> }/>
-            <Route path="/relatorios" element={<Relatorio /> }/>
-            <Route path="/relatorios/estoque-real" element={<EstoqueReal /> }/>
-            <Route path="/relatorios/lista-compra" element={<ListaCompra /> }/>
-            <Route path="/relatorios/desperdicio" element={<Desperdicio /> }/>
-            <Route path="/ficha-tecnica" element={<FichaTecnica /> }/>
-            <Route path="/cadastro" element={<Cadastro /> }/>
-           <Route path="/cadastro/categoria" element={<Categoria /> }/>
-           <Route path="/cadastro/usuarios" element={<Usuario /> }/>
-           <Route path="/cadastro/produtos" element={<Produtos />} />
-           <Route path="/cadastro/unidades" element={<Unidades /> }/>
+            <Route path="/login" element={<LoginPage />} />
+            <Route element={<PrivateRoute />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/entrada-saida" element={<EntradaSaida />} />
+                <Route path="/cmv" element={<CMV />} />
+                <Route path="/relatorios" element={<Relatorio />} />
+                <Route path="/relatorios/estoque-real" element={<EstoqueReal />} />
+                <Route path="/relatorios/lista-compra" element={<ListaCompra />} />
+                <Route path="/relatorios/desperdicio" element={<Desperdicio />} />
+                <Route path="/ficha-tecnica" element={<FichaTecnica />} />
+                <Route path="/cadastro" element={<Cadastro />} />
+                <Route path="/cadastro/categoria" element={<Categoria />} />
+                <Route path="/cadastro/usuarios" element={<Usuario />} />
+                <Route path="/cadastro/produtos" element={<Produtos />} />
+                <Route path="/cadastro/unidades" element={<Unidades />} />
+            </Route>
+
         </Routes>
     );
 };

@@ -30,7 +30,6 @@ import { useNavigate } from 'react-router-dom';
 const Produtos = () => {
     const navigate = useNavigate();
     const { unidadeId } = useUnidade();
-    console.log("unidadeId:", unidadeId);
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
     const [filtro, setFiltro] = useState(false);
     const [editandoCategoria, setEditandoCategoria] = useState(false);
@@ -110,7 +109,7 @@ const Produtos = () => {
         const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0;
         const rendimentoNumerico = parseFloat(rendimento) || 0;
         const qtdMinNumerica = parseFloat(qtdMin) || 0;
-    
+
         const novoProduto = {
             nome,
             qtdMin: qtdMinNumerica,
@@ -121,65 +120,62 @@ const Produtos = () => {
             unidadeId, // Certifique-se de que a unidadeId está sendo enviada
             categoriaId: selectedCategoria,
         };
-    
+
         try {
             const response = await api.post('/produto', novoProduto);
-            console.log('Produto cadastrado com sucesso:', response.data);
             await carregaProdutos(unidadeId); // Recarrega os produtos com a unidadeId correta
             handleCloseCadastroProdutos();
             CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
         } catch (error) {
-            console.error('Erro ao cadastrar produto:', error);
             CustomToast({ type: "error", message: "Erro ao cadastrar produto!" });
         }
     };
 
-useEffect(() => {
-    if (unidadeId) {
-        carregaProdutos(unidadeId); // Carrega produtos com a unidadeId
-    }
-}, [unidadeId]);
-
-const carregaProdutos = async (unidadeId) => {
-    console.log("Carregando produtos para unidadeId:", unidadeId);
-    setLoading(true);
-    try {
-        const response = await api.get(`/produto?unidadeId=${unidadeId}`);
-        if (Array.isArray(response.data.data)) {
-            const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
-            const mappedProdutos = produtosFiltrados.map(produto => {
-                const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
-                const valorFormatado = formatValor(produto.valorReajuste || produto.valor);
-
-                return {
-                    id: produto.id,
-                    nome: produto.nome,
-                    rendimento: produto.rendimento,
-                    unidadeMedida: unidade ? unidade.label : 'N/A',
-                    categoria: produto.categoriaNome,
-                    valorPorcao: formatValor(produto.valorPorcao),
-                    valor: formatValor(produto.valorReajuste || produto.valor),
-                    valorFormatado: valorFormatado,
-                    qtdMin: produto.qtdMin,
-                    categoriaId: produto.categoriaId,
-                    createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'),
-                    categoriaNome: produto.categoriaNome
-                };
-            });
-            setProdutos(mappedProdutos);
-            setProdutosOriginais(mappedProdutos);
-        } else {
-            console.error("A resposta da API não é um array:", response.data.data);
-            setProdutos([]);
-            setProdutosOriginais([]);
+    useEffect(() => {
+        if (unidadeId) {
+            carregaProdutos(unidadeId); // Carrega produtos com a unidadeId
         }
-    } catch (error) {
-        console.error('Erro ao buscar produtos:', error);
-        // Trate o erro conforme necessário
-    } finally {
-        setLoading(false);
-    }
-};
+    }, [unidadeId]);
+
+    const carregaProdutos = async (unidadeId) => {
+        setLoading(true);
+        try {
+            const response = await api.get(`/produto?unidadeId=${unidadeId}`);
+            if (Array.isArray(response.data.data)) {
+                const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
+                const mappedProdutos = produtosFiltrados.map(produto => {
+                    const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
+                    const valorFormatado = formatValor(produto.valorReajuste || produto.valor);
+
+                    return {
+                        id: produto.id,
+                        nome: produto.nome,
+                        rendimento: produto.rendimento,
+                        unidadeMedida: unidade ? unidade.label : 'N/A',
+                        categoria: produto.categoriaNome,
+                        valorPorcao: formatValor(produto.valorPorcao),
+                        valor: formatValor(produto.valorReajuste || produto.valor),
+                        valorFormatado: valorFormatado,
+                        qtdMin: produto.qtdMin,
+                        categoriaId: produto.categoriaId,
+                        createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'),
+                        categoriaNome: produto.categoriaNome
+                    };
+                });
+                setProdutos(mappedProdutos);
+                setProdutosOriginais(mappedProdutos);
+            } else {
+                console.error("A resposta da API não é um array:", response.data.data);
+                setProdutos([]);
+                setProdutosOriginais([]);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar produtos:', error);
+            // Trate o erro conforme necessário
+        } finally {
+            setLoading(false);
+        }
+    };
     const handlePesquisar = () => {
         const produtosFiltrados = produtosOriginais.filter(produto => {
             const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
@@ -239,19 +235,19 @@ const carregaProdutos = async (unidadeId) => {
             CustomToast({ type: "error", message: "Preço inválido!" });
             return;
         }
-    
+
         let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", "."));
         if (isNaN(precoNumerico)) {
             precoNumerico = 0;
         }
-    
+
         const dataReajusteFormatada = dataReajuste ? new Date(dataReajuste).toISOString().split('T')[0] : '';
-    
+
         if (!dataReajusteFormatada) {
             CustomToast({ type: "error", message: "Data de reajuste é inválida!" });
             return;
         }
-    
+
         let valorReajusteNumerico = 0;
         if (valorReajuste) {
             valorReajusteNumerico = parseFloat(valorReajuste.replace("R$ ", "").replace(/\./g, "").replace(",", "."));
@@ -259,7 +255,7 @@ const carregaProdutos = async (unidadeId) => {
                 valorReajusteNumerico = 0;
             }
         }
-    
+
         const produtoAtualizado = {
             nome,
             qtdMin: parseFloat(qtdMin) || 0,
@@ -272,7 +268,7 @@ const carregaProdutos = async (unidadeId) => {
             unidadeId, // Mantém a unidadeId
             categoriaId: selectedCategoria,
         };
-    
+
         try {
             const response = await api.put(`/produto/${produtoEditado.id}`, produtoAtualizado);
             console.log('Produto atualizado com sucesso:', response.data);
@@ -291,7 +287,7 @@ const carregaProdutos = async (unidadeId) => {
             console.error('unidadeId não está definido');
             return; // Não faz nada se unidadeId não estiver definido
         }
-    
+
         try {
             const response = await api.get(`/categoria?unidadeId=${unidadeId}`); // Carrega categorias pela unidadeId
             if (Array.isArray(response.data.data)) {
@@ -401,14 +397,14 @@ const carregaProdutos = async (unidadeId) => {
                                     </div>
                                 ) : (
                                     <TableComponent
-    headers={headerProdutos}
-    rows={produtosFiltrados.length > 0 ? produtosFiltrados : produtos}
-    actionsLabel={"Ações"}
-    actionCalls={{
-        edit: (produto) => handleEditProduto(produto),
-        delete: (produto) => handleDeleteProduto(produto.id),
-    }}
-/>
+                                        headers={headerProdutos}
+                                        rows={produtosFiltrados.length > 0 ? produtosFiltrados : produtos}
+                                        actionsLabel={"Ações"}
+                                        actionCalls={{
+                                            edit: (produto) => handleEditProduto(produto),
+                                            delete: (produto) => handleDeleteProduto(produto.id),
+                                        }}
+                                    />
                                 )}
                             </div>
 
@@ -418,7 +414,7 @@ const carregaProdutos = async (unidadeId) => {
                                 top={'20%'}
                                 left={'28%'}
                                 width={'620px'}
-                                icon={<AddCircleOutline fontSize ="small" />}
+                                icon={<AddCircleOutline fontSize="small" />}
                                 open={cadastroAdicionais}
                                 onClose={handleCloseCadastroProdutos}
                                 title="Cadastrar Produtos"
@@ -505,16 +501,16 @@ const carregaProdutos = async (unidadeId) => {
                                             }}
                                         />
                                         <SelectTextFields
-    width={'150px'}
-    icon={<CategoryIcon fontSize="small" />}
-    label={'Categoria'}
-    backgroundColor={"#D9D9D9"}
-    name={"categoria"}
-    fontWeight={500}
-    options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))} // Mapeia para o formato esperado
-    onChange={(e) => setSelectedCategoria(e.target.value)}
-    value={selectedCategoria}
-/>
+                                            width={'150px'}
+                                            icon={<CategoryIcon fontSize="small" />}
+                                            label={'Categoria'}
+                                            backgroundColor={"#D9D9D9"}
+                                            name={"categoria"}
+                                            fontWeight={500}
+                                            options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))} // Mapeia para o formato esperado
+                                            onChange={(e) => setSelectedCategoria(e.target.value)}
+                                            value={selectedCategoria}
+                                        />
 
                                         <SelectTextFields
                                             width={'140px'}
@@ -547,27 +543,11 @@ const carregaProdutos = async (unidadeId) => {
                                 tamanhoTitulo="75%"
                                 conteudo={
                                     <div className="flex gap-2 flex-wrap items-end justify-end w-full mt-2">
+                                       
                                         <TextField
                                             fullWidth
                                             variant="outlined"
                                             size="small"
-                                            label="Nome do Produto"
-                                            name="nome"
-                                            value={nome} // Certifique-se de que está usando o estado correto
-                                            onChange={(e) => setNome(e.target.value)}
-                                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <ArticleIcon />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                        />
-                                        <TextField
-                                            fullWidth
-                                            variant="outlined"
- size="small"
                                             label="Quantidade Mínima"
                                             name="quantidadeMinima"
                                             value={qtdMin} // Certifique-se de que está usando o estado correto
@@ -706,7 +686,7 @@ const carregaProdutos = async (unidadeId) => {
                                 title="Filtro"
                             >
                                 <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
- <div className='mt-4 flex gap-3 flex-wrap'>
+                                    <div className='mt-4 flex gap-3 flex-wrap'>
                                         <TextField
                                             fullWidth
                                             variant="outlined"

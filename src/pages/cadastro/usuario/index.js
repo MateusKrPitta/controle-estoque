@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navbar from '../../../components/navbars/header';
 import HeaderPerfil from '../../../components/navbars/perfil';
-import { InputAdornment, TextField } from '@mui/material';
+import { IconButton, InputAdornment, TextField } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import ButtonComponent from '../../../components/button';
 import SearchIcon from '@mui/icons-material/Search';
@@ -23,7 +23,7 @@ import { formatCPF } from "../../../utils/functions";
 import CustomToast from "../../../components/toast";
 import api from "../../../services/api";
 import { useNavigate } from "react-router-dom";
-
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 
 const Usuario = () => {
@@ -37,6 +37,7 @@ const Usuario = () => {
   const [editandoUsuario, setEditandoUsuario] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [users, setUsers] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [newUser, setNewUser] = useState({
     nome: '',
@@ -82,11 +83,14 @@ const Usuario = () => {
   };
 
 
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
 
   const handleCadastroUsuario = () => setCadastroUsuario(true);
   const handleCloseCadastroUsuario = () => {
     setCadastroUsuario(false);
-    setNewUser ({
+    setNewUser({
       nome: '',
       cpf: '',
       senha: '',
@@ -100,10 +104,10 @@ const Usuario = () => {
     setSelectedUnidades([]); // Limpa as unidades selecionadas
   };
 
-  const handleCloseEditUser  = () => {
+  const handleCloseEditUser = () => {
     setEditandoUsuario(false);
-    setEditUser (null);
-    setNewUser ({
+    setEditUser(null);
+    setNewUser({
       nome: '',
       cpf: '',
       senha: '',
@@ -450,16 +454,16 @@ const Usuario = () => {
               />
             </div>
             <div className="w-[97%] ml-0 sm:ml-0 ">
-              
-                <TableComponent
-                  headers={headerUsuario}
-                  rows={rows}
-                  actionsLabel={"Ações"}
-                  actionCalls={{
-                    edit: (user) => handleEditUser(user), // Chama a função de edição
-                    delete: (user) => handleDeleteUser(user), // Chama a função de exclusão
-                  }}
-                />
+
+              <TableComponent
+                headers={headerUsuario}
+                rows={rows}
+                actionsLabel={"Ações"}
+                actionCalls={{
+                  edit: (user) => handleEditUser(user), // Chama a função de edição
+                  delete: (user) => handleDeleteUser(user), // Chama a função de exclusão
+                }}
+              />
             </div>
 
             <CentralModal
@@ -520,15 +524,26 @@ const Usuario = () => {
                     size="small"
                     label="Senha"
                     name="senha"
-                    type="password"
-                    value={newUser.senha} // Certifique-se de que está preenchendo corretamente
+                    type={showPassword ? "text" : "password"} // Alterna entre "text" e "password"
+                    value={newUser.senha}
                     onChange={handleInputChange}
                     autoComplete="off"
                     sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '47%' } }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <NotesIcon />
+                          <Password />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label="toggle password visibility"
+                            onClick={handleClickShowPassword}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
                         </InputAdornment>
                       ),
                     }}
@@ -592,7 +607,7 @@ const Usuario = () => {
 
             <ModalLateral
               open={editandoUsuario}
-              handleClose={handleCloseEditUser }
+              handleClose={handleCloseEditUser}
               tituloModal="Editar Usuário"
               icon={<Edit />}
               tamanhoTitulo="75%"
@@ -644,8 +659,8 @@ const Usuario = () => {
                       size="small"
                       label="Senha"
                       name="senha"
-                      type="password"
-                      value={newUser.senha} // Use newUser  para edição
+                      type={showPassword ? "text" : "password"} // Alterna entre "text" e "password"
+                      value={newUser.senha}
                       onChange={handleInputChange}
                       autoComplete="off"
                       sx={{ width: { xs: '47%', sm: '50%', md: '40%', lg: '47%' } }}
@@ -653,6 +668,17 @@ const Usuario = () => {
                         startAdornment: (
                           <InputAdornment position="start">
                             <Password />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={handleClickShowPassword}
+                              edge="end"
+                            >
+                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
                           </InputAdornment>
                         ),
                       }}

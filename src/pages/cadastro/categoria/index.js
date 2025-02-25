@@ -60,15 +60,13 @@ const Categoria = () => {
         setProdutosFiltrados(categoriasFiltradas);
     }, [filtroNome, categorias]);
 
-    const carregarCategorias = async (unidadeId) => {
-        console.log("Carregando categorias para unidadeId:", unidadeId); // Verifique o ID da unidade
+    const carregarCategorias = async (unidadeId) => {// Verifique o ID da unidade
         setLoading(true);
         try {
             const response = await api.get(`/categoria?unidade=${unidadeId}`); // Certifique-se de que a query string está correta
             if (Array.isArray(response.data.data)) {
                 setCategorias(response.data.data);
             } else {
-                console.error("A resposta da API não é um array:", response.data.data);
                 setCategorias([]);
             }
         } catch (error) {
@@ -98,7 +96,6 @@ const Categoria = () => {
             handleCloseCadastroCategoria();
             CustomToast({ type: "success", message: "Categoria cadastrada com sucesso!" });
         } catch (error) {
-            console.error("Erro ao cadastrar categoria:", error);
             CustomToast({ type: "error", message: "Erro ao cadastrar categoria." });
         }
     };
@@ -117,7 +114,6 @@ const Categoria = () => {
                 setCategoriaEditada(null);
                 CustomToast({ type: "success", message: "Categoria editada com sucesso!" });
             } catch (error) {
-                console.error("Erro ao editar categoria:", error);
                 CustomToast({ type: "error", message: "Erro ao editar categoria." });
             }
         }
@@ -129,7 +125,6 @@ const Categoria = () => {
             await carregarCategorias(unidadeId); // Carrega categorias após deletar
             CustomToast({ type: "success", message: "Categoria deletada com sucesso!" });
         } catch (error) {
-            console.error("Erro ao deletar categoria:", error);
             CustomToast({ type: "error", message: "Erro ao deletar categoria." });
         }
     };
@@ -149,7 +144,6 @@ const Categoria = () => {
 
     useEffect(() => {
         if (unidadeId) {
-            console.log("Unidade ID selecionada:", unidadeId); // Verifique o ID da unidade
             carregarCategorias(unidadeId); // Carrega categorias com a unidadeId
         }
     }, [unidadeId]); // Adicione unidadeId como dependência

@@ -15,9 +15,9 @@ const HeaderRelatorio = () => {
             case 'lista-compra': // Aqui estava 'usuario', mas o botão chama 'usuarios'
                 navigate('/relatorios/lista-compra');
                 break;
-            case 'desperdicio': // Aqui estava 'usuario', mas o botão chama 'usuarios'
-                navigate('/relatorios/desperdicio');
-                break;
+            // case 'desperdicio': // Aqui estava 'usuario', mas o botão chama 'usuarios'
+            //     navigate('/relatorios/desperdicio');
+            //     break;
             default:
                 console.warn(`Seção desconhecida: ${section}`);
                 break;
@@ -43,14 +43,14 @@ const HeaderRelatorio = () => {
                 className="w-[40%] sm:w-[50%] md:w-[100%]"
 
             />
-            <ButtonComponent
+            {/* <ButtonComponent
                 startIcon={<DeleteForeverIcon fontSize="small" />}
                 title="Desperdício"
                 buttonSize="large"
                 onClick={() => handleNavigation('desperdicio')}
                 className="w-[40%] sm:w-[50%] md:w-[100%]"
 
-            />
+            /> */}
 
 
         </div>

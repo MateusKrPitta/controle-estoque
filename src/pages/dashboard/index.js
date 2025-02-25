@@ -14,9 +14,11 @@ import CustomToast from '../../components/toast';
 import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import { formatValor } from '../../utils/functions';
+import { useUnidade } from '../../components/unidade-context';
 
 const Dashboard = () => {
     const navigate = useNavigate();
+    const { unidadeId } = useUnidade();
     const [totalProdutos, setTotalProdutos] = useState(0);
     const [itensEmEstoque, setItensEmEstoque] = useState(0);
     const [valorTotal, setValorTotal] = useState(0);
@@ -58,42 +60,44 @@ const Dashboard = () => {
     const carregaProdutos = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/produto');
-            console.log(response.data);
-            if (Array.isArray(response.data.data)) {
-                const mappedProdutos = response.data.data.map(produto => {
-                    const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
-                    const valorFormatado = formatValor(produto.valorReajuste || produto.valor); // Valor formatado
+            const response = await api.get(`/produto?unidadeId=${unidadeId}`);
 
+    
+            if (Array.isArray(response.data.data)) {
+                // Filtra os produtos com base na unidadeId
+                const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
+    
+                const mappedProdutos = produtosFiltrados.map(produto => {
+                    const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
+                    const valorFormatado = formatValor(produto.valorReajuste || produto.valor);
+    
                     return {
                         id: produto.id,
                         nome: produto.nome,
                         rendimento: produto.rendimento,
                         unidadeMedida: unidade ? unidade.label : 'N/A',
-                        categoria: produto.categoriaNome, // Aqui você pode usar a categoriaNome
+                        categoria: produto.categoriaNome,
                         valorPorcao: formatValor(produto.valorPorcao),
-                        valor: formatValor(produto.valorReajuste || produto.valor), // Mantém para uso na tabela
-                        valorFormatado: valorFormatado, // Novo campo com valor formatado
+                        valor: formatValor(produto.valorReajuste || produto.valor),
+                        valorFormatado: valorFormatado,
                         qtdMin: produto.qtdMin,
                         categoriaId: produto.categoriaId,
                         createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'),
-                        categoriaNome: produto.categoriaNome // Adicione esta linha
+                        categoriaNome: produto.categoriaNome
                     };
                 });
+    
                 setProdutos(mappedProdutos);
-                setProdutosOriginais(mappedProdutos); // Armazena a lista original
+                setProdutosOriginais(mappedProdutos);
             } else {
-                console.error("A resposta da API não é um array:", response.data.data);
                 setProdutos([]);
-                setProdutosOriginais([]); // Limpa a lista original se não for um array
+                setProdutosOriginais([]);
             }
         } catch (error) {
-            console.error('Erro ao buscar produtos:', error);
-
-            // Verifica se o erro é devido a um token expirado
+    
             if (error.response && error.response.data.message === "Credenciais inválidas" && error.response.data.data === "Token de acesso inválido") {
                 CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-                navigate("/login"); // Redireciona para a página de login
+                navigate("/login");
             } else {
                 CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
             }
@@ -103,9 +107,9 @@ const Dashboard = () => {
     };
 
 
-    const fetchDashboardData = async (unidade = 1) => {
+    const fetchDashboardData = async () => {
         try {
-            const response = await api.post(`/dashboard?unidade=${unidade}`);
+            const response = await api.post(`/dashboard?unidade=${unidadeId}`);
             if (response.data.status) {
                 setTotalProdutos(response.data.data.totalProduto);
                 setItensEmEstoque(response.data.data.totalItens);
@@ -117,7 +121,6 @@ const Dashboard = () => {
                 CustomToast({ type: "error", message: response.data.message || "Erro ao carregar os dados!" });
             }
         } catch (err) {
-            console.error('Erro ao buscar dados do dashboard:', err);
             CustomToast({ type: "error", message: "Erro ao carregar os dados!" });
             if (err.response) {
                 if (err.response.data.message === "Credenciais inválidas" && err.response.data.data === "Token de acesso inválido") {
@@ -132,7 +135,7 @@ const Dashboard = () => {
 
     const fetchEntradasSaidas = async () => {
         try {
-            const response = await api.get('/movimentacao');
+            const response = await api.get(`/movimentacao?unidadeId=${unidadeId}`);
             const movimentacoes = response.data.data;
 
             // Agrupar movimentações por produtoNome e calcular entradas, saídas e desperdícios
@@ -151,7 +154,6 @@ const Dashboard = () => {
             setDataGrafico(data);
             setEntradasSaidas(movimentacoes); // Armazenar movimentações completas, se precisar usar
         } catch (error) {
-            console.error('Erro ao buscar movimentações:', error);
             CustomToast({ type: "error", message: "Erro ao carregar movimentações!" });
         }
     };
@@ -197,36 +199,43 @@ const Dashboard = () => {
     }, [produtos]);
 
     useEffect(() => {
-    const data = produtos.map(produto => {
-        const entradas = entradasSaidas
-            .filter(item => item.produtoNome === produto.nome && item.tipo === '1') // Tipo 1 = entrada
-            .reduce((acc, item) => acc + parseInt(item.quantidade), 0);
-        
-        const saidas = entradasSaidas
-            .filter(item => item.produtoNome === produto.nome && item.tipo === '2') // Tipo 2 = saída
-            .reduce((acc, item) => acc + parseInt(item.quantidade), 0);
-        
-        const desperdicio = entradasSaidas
-            .filter(item => item.produtoNome === produto.nome && item.tipo === '3') // Tipo 3 = desperdício
-            .reduce((acc, item) => acc + parseInt(item.quantidade), 0);
+        const data = produtos.map(produto => {
+            const entradas = entradasSaidas
+                .filter(item => item.produtoNome === produto.nome && item.tipo === '1') // Tipo 1 = entrada
+                .reduce((acc, item) => acc + parseInt(item.quantidade), 0);
 
-        return {
-            nome: produto.nome,
-            entradas,
-            saidas,
-            desperdicio
-        };
-    });
+            const saidas = entradasSaidas
+                .filter(item => item.produtoNome === produto.nome && item.tipo === '2') // Tipo 2 = saída
+                .reduce((acc, item) => acc + parseInt(item.quantidade), 0);
 
-    setDataGrafico(data);
-}, [produtos, entradasSaidas]);
+            const desperdicio = entradasSaidas
+                .filter(item => item.produtoNome === produto.nome && item.tipo === '3') // Tipo 3 = desperdício
+                .reduce((acc, item) => acc + parseInt(item.quantidade), 0);
+
+            return {
+                nome: produto.nome,
+                entradas,
+                saidas,
+                desperdicio
+            };
+        });
+
+        setDataGrafico(data);
+    }, [produtos, entradasSaidas]);
 
 
     useEffect(() => {
-        fetchDashboardData();
+
         carregaProdutos();
         fetchEntradasSaidas();
     }, []);
+
+    useEffect(() => {
+        if (unidadeId) {
+            fetchDashboardData();
+            carregaProdutos();
+        }
+    }, [unidadeId]);
 
     return (
         <div className="lg:flex w-[100%] h-[100%]">

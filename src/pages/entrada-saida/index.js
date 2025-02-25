@@ -18,6 +18,7 @@ import { formatValor } from '../../utils/functions.js';
 import CustomToast from '../../components/toast/index.js';
 import Entrada from '../../assets/icones/entradas-saidas.png';
 import Saida from '../../assets/icones/saida.png';
+import Desperdicio from '../../assets/icones/desperdicio.png';
 import Entradas from '../../assets/icones/entradas.png';
 import Valor from '../../assets/icones/valor.png';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -43,7 +44,7 @@ const EntradaSaida = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [observacao, setObservacao] = useState('');
   const [selectedTipo, setSelectedTipo] = useState('');
-  
+
   // Estados para o registro atual
   const [produto, setProduto] = useState('');
   const [quantidade, setQuantidade] = useState('');
@@ -51,6 +52,11 @@ const EntradaSaida = () => {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [registroEditado, setRegistroEditado] = useState(null); // Novo estado para o registro a ser editado
   const [entradasSaidasOriginais, setEntradasSaidasOriginais] = useState([]);
+
+  const totalDesperdicio = entradasSaidas
+    .filter(registro => registro.tipo === 'desperdicio')
+    .reduce((acc, registro) => acc + Number(registro.quantidade), 0);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
@@ -97,8 +103,7 @@ const EntradaSaida = () => {
 
     try {
       // Envie os dados para a API
-      const response = await api.post('/movimentacao', novoRegistro); // Altere a rota conforme necessário
-      console.log('Registro cadastrado com sucesso:', response.data);
+      const response = await api.post('/movimentacao', novoRegistro);
 
       // Atualize o estado local
       const updatedEntradasSaidas = [...entradasSaidas, { ...novoRegistro, valorTotal }];
@@ -120,6 +125,20 @@ const EntradaSaida = () => {
     }
   };
 
+  // Calcular o valor total de entradas
+const valorTotalEntradas = entradasSaidas
+.filter(registro => registro.tipo === 'entrada')
+.reduce((acc, registro) => acc + Number(registro.valorTotal), 0);
+
+  const valorTotalDesperdicio = entradasSaidas
+  .filter(registro => registro.tipo === 'desperdicio')
+  .reduce((acc, registro) => acc + Number(registro.valorTotal), 0);
+
+// Calcular o valor total de saídas
+const valorTotalSaidas = entradasSaidas
+  .filter(registro => registro.tipo === 'saida')
+  .reduce((acc, registro) => acc + Number(registro.valorTotal), 0);
+
   const totalMovimentacoes = entradasSaidas.length;
   const totalEntradas = entradasSaidas
     .filter(registro => registro.tipo === 'entrada')
@@ -140,31 +159,51 @@ const EntradaSaida = () => {
     try {
       const response = await api.get(`/produto?unidadeId=${unidadeId}`);
       console.log('Produtos recebidos:', response.data); // Verifique os dados recebidos
-  
+
       // Filtra os produtos pela unidadeId no frontend (se necessário)
       const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
-  
+
       setProdutos(produtosFiltrados);
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
       CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
     }
   };
+  const fetchCategorias = async () => {
+    try {
+      const response = await api.get('/categoria'); // Busca todas as categorias
+      console.log('Categorias recebidas:', response.data); // Verifique os dados recebidos
+
+      // Filtra as categorias com base na unidadeId no frontend
+      const categoriasFiltradas = response.data.data.filter(categoria => categoria.unidadeId === unidadeId);
+
+      setCategorias(categoriasFiltradas);
+    } catch (error) {
+      console.error('Erro ao buscar categorias:', error);
+      CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
+    }
+  };
+
   const fetchEntradasSaidas = async () => {
     try {
-      const response = await api.get('/movimentacao');
+      const response = await api.get(`/movimentacao?unidadeId=${unidadeId}`);
       const movimentacoes = response.data.data;
-  
+
       console.log('Movimentações recebidas:', movimentacoes); // Adicione este log
-  
+
       const formattedMovimentacoes = await Promise.all(movimentacoes.map(async (mov) => {
         const valorTotal = mov.precoPorcao * mov.quantidade;
-  
+
+        // Encontre a categoria correspondente
+        const categoria = categorias.find(cat => cat.id === mov.categoria_id);
+
+        console.log('Categoria encontrada:', categoria); // Adicione este log
+
         return {
           tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === '2' ? 'saida' : 'desperdicio',
           produtoNome: mov.produtoNome,
           quantidade: mov.quantidade,
-          categoria: categorias.find(cat => cat.id === mov.categoria_id)?.nome || 'Desconhecida',
+          categoria: mov.categoriaNome, // Use o nome da categoria encontrada
           precoPorcao: mov.precoPorcao,
           valorTotal: valorTotal,
           observacao: mov.observacao,
@@ -172,7 +211,7 @@ const EntradaSaida = () => {
           id: mov.id
         };
       }));
-  
+
       setEntradasSaidas(formattedMovimentacoes);
       setEntradasSaidasOriginais(formattedMovimentacoes);
     } catch (error) {
@@ -187,20 +226,9 @@ const EntradaSaida = () => {
       } else {
         CustomToast({ type: "error", message: "Erro ao carregar as movimentações!" });
       }
-      CustomToast({ type: "error", message: "Erro ao carregar movimentações!" });
     }
   };
-  const fetchCategorias = async () => {
-    try {
-      const response = await api.get('/categoria'); // Altere a rota conforme necessário
-      console.log('Categorias recebidas:', response.data); // Adicione este log
-      const categoriasCadastradas = response.data.data; // Supondo que a resposta tenha a estrutura { data: [...] }
-      setCategorias(categoriasCadastradas);
-    } catch (error) {
-      console.error('Erro ao buscar categorias:', error);
-      CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
-    }
-  };
+
   useEffect(() => {
     const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
     const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
@@ -212,33 +240,39 @@ const EntradaSaida = () => {
     // Atualiza o estado com o número de categorias únicas
   }, []);
 
-  useEffect(() => {
-    fetchEntradasSaidas();
-  }, []);
-
   const handlePesquisar = () => {
     const filteredEntradasSaidas = entradasSaidasOriginais.filter(registro => {
       const dataRegistro = new Date(registro.dataCadastro);
       const dataInicialValida = dataInicial ? dataRegistro >= new Date(dataInicial) : true;
       const dataFinalValida = dataFinal ? dataRegistro <= new Date(dataFinal) : true;
       const categoriaValida = selectedCategoria ? registro.categoria === categorias.find(cat => cat.id === selectedCategoria)?.nome : true;
-      const tipoValido = selectedTipo ? registro.tipo === selectedTipo : true; // Novo filtro para tipo
-  
+      const tipoValido = selectedTipo ? registro.tipo === selectedTipo : true;
+
       return dataInicialValida && dataFinalValida && categoriaValida && tipoValido;
     });
-  
+
     setEntradasSaidas(filteredEntradasSaidas); // Atualiza a tabela com os resultados filtrados
     handleCloseFiltro(); // Fecha a modal de filtro
   };
-  useEffect(() => {
-    fetchEntradasSaidas();
-    fetchCategorias(); // Certifique-se de que esta linha está presente
-  }, []);
+
+
+
   useEffect(() => {
     if (unidadeId) {
       fetchProdutos();
+      fetchCategorias();
     }
   }, [unidadeId]);
+
+
+
+  useEffect(() => {
+    if (unidadeId) {
+      fetchCategorias();
+      fetchEntradasSaidas();
+    }
+  }, [unidadeId]);
+
   return (
     <div className="flex w-full ">
       <Navbar />
@@ -249,35 +283,42 @@ const EntradaSaida = () => {
           <AddchartIcon /> Entrada e Saída
         </h1>
         <div className={`w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
-          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
-            <label className='text-xs font-bold'>Total de Movimentações</label>
-            <div className='flex items-center justify-center gap-5'>
-              <img src={Entrada} alt="Total Movimentações" />
-              <label>{totalMovimentacoes}</label>
-            </div>
-          </div>
-          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
-            <label className='text-xs font-bold'>Entradas</label>
-            <div className='flex items-center justify-center gap-5'>
-              <img src={Entradas} alt="Entradas" />
-              <label>{totalEntradas}</label>
-            </div>
-          </div>
-          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
-            <label className='text-xs font-bold'>Saídas</label>
-            <div className='flex items-center justify-center gap-5'>
-              <img src={Saida} alt="Saídas" />
-              <label>{totalSaidas}</label>
-            </div>
-          </div>
-          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
-            <label className='text-xs font-bold'>Valor total em estoque</label>
-            <div className='flex items-center justify-center gap-5'>
-              <img src={Valor} alt="Valor Total em Estoque" />
-              <label>{formatValor(valorTotalEstoque)}</label> {/* Formata o valor total */}
-            </div>
-          </div>
-        </div>
+  {/* Card Entradas */}
+  <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+    <label className='text-xs font-bold'>Entradas</label>
+    <div className='flex items-center justify-center gap-5'>
+      <img src={Entradas} alt="Entradas" />
+      <label>{formatValor(valorTotalEntradas)}</label>
+    </div>
+  </div>
+
+  {/* Card Saídas */}
+  <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+    <label className='text-xs font-bold'>Saídas</label>
+    <div className='flex items-center justify-center gap-5'>
+      <img src={Saida} alt="Saídas" />
+      <label>{formatValor(valorTotalSaidas)}</label> {/* Exibe o valor total das saídas */}
+    </div>
+  </div>
+
+  {/* Card Desperdício */}
+  <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+    <label className='text-xs font-bold'>Desperdício</label>
+    <div className='flex items-center justify-center gap-5'>
+      <img src={Desperdicio} alt="Desperdício" />
+      <label>{formatValor(valorTotalDesperdicio)}</label> {/* Exibe o valor total do desperdício */}
+    </div>
+  </div>
+
+  {/* Card Valor Total em Estoque */}
+  <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+    <label className='text-xs font-bold'>Valor total em estoque</label>
+    <div className='flex items-center justify-center gap-5'>
+      <img src={Valor} alt="Valor Total em Estoque" />
+      <label>{formatValor(valorTotalEstoque)}</label>
+    </div>
+  </div>
+</div>
         <div className={`ml-0 flex flex-col w-[98%] md:ml-2 mr-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
           <div className='flex gap-2 justify-center flex-wrap md:justify-start items-center md:items-start'>
             <TextField
@@ -351,20 +392,20 @@ const EntradaSaida = () => {
         >
           <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
             <div className='mt-4 flex gap-3 flex-wrap'>
-            <SelectTextFields
-  width={'285px'}
-  icon={<ArticleIcon fontSize="small" />}
-  label={'Produto'}
-  backgroundColor={"#D9D9D9"}
-  name={"produto"}
-  fontWeight={500}
-  options={produtos.map(produto => ({
-    value: produto.nome, // O valor que será armazenado
-    label: `${produto.nome} - ${formatValor(produto.valorPorcao)}` // Exibe o nome e o preço por porção formatado
-  }))}
-  value={produto} // Preenche o campo com o produto atual
-  onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
-/>
+              <SelectTextFields
+                width={'285px'}
+                icon={<ArticleIcon fontSize="small" />}
+                label={'Produto'}
+                backgroundColor={"#D9D9D9"}
+                name={"produto"}
+                fontWeight={500}
+                options={produtos.map(produto => ({
+                  value: produto.nome, // O valor que será armazenado
+                  label: `${produto.nome} - ${formatValor(produto.valorPorcao)}` // Exibe o nome e o preço por porção formatado
+                }))}
+                value={produto} // Preenche o campo com o produto atual
+                onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
+              />
               <TextField
                 fullWidth
                 variant="outlined"
@@ -476,32 +517,32 @@ const EntradaSaida = () => {
                 }}
               />
               <SelectTextFields
-  width={'175px'}
-  icon={<CategoryIcon fontSize="small" />}
-  label={'Categoria'}
-  backgroundColor={"#D9D9D9"}
-  name={"categoria"}
-  fontWeight={500}
-  options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))} // Certifique-se de que a estrutura está correta
-  onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
-  value={selectedCategoria} // Reflete o estado atual no componente
-/>
-<SelectTextFields
-  width={'175px'}
-  icon={<AddchartIcon fontSize="small" />}
-  label={'Tipo'}
-  backgroundColor={"#D9D9D9"}
-  name={"tipo"}
-  fontWeight={500}
-  options={[
-    { value: '', label: 'Todos' }, // Opção para mostrar todos
-    { value: 'entrada', label: 'Entrada' },
-    { value: 'saida', label: 'Saída' },
-    { value: 'desperdicio', label: 'Desperdício' },
-  ]}
-  onChange={(e) => setSelectedTipo(e.target.value)} // Atualiza o estado
-  value={selectedTipo} // Reflete o estado atual no componente
-/>
+                width={'170px'}
+                icon={<CategoryIcon fontSize="small" />}
+                label={'Categorias'}
+                backgroundColor={"#D9D9D9"}
+                name={"categoria"}
+                fontWeight={500}
+                options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))} // Certifique-se de que a estrutura está correta
+                onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
+                value={selectedCategoria} // Reflete o estado atual no componente
+              />
+              <SelectTextFields
+                width={'155px'}
+                icon={<AddchartIcon fontSize="small" />}
+                label={'Tipo'}
+                backgroundColor={"#D9D9D9"}
+                name={"tipo"}
+                fontWeight={500}
+                options={[
+                  { value: '', label: 'Todos' }, // Opção para mostrar todos
+                  { value: 'entrada', label: 'Entrada' },
+                  { value: 'saida', label: 'Saída' },
+                  { value: 'desperdicio', label: 'Desperdício' },
+                ]}
+                onChange={(e) => setSelectedTipo(e.target.value)} // Atualiza o estado
+                value={selectedTipo} // Reflete o estado atual no componente
+              />
             </div>
             <div className='w-[95%] mt-2 flex items-end justify-end'>
               <ButtonComponent

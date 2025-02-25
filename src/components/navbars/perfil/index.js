@@ -58,6 +58,9 @@ const HeaderPerfil = () => {
         setUnidadeNome(unidadeObj.nome);
         localStorage.setItem('unidadeId', unidadeObj.id);
         localStorage.setItem('unidadeNome', unidadeObj.nome);
+        
+        // Recarrega a página após a seleção da unidade
+        window.location.reload();
     }
   };
 
@@ -85,6 +88,7 @@ const HeaderPerfil = () => {
               icon={<LocationOnIcon fontSize="small" />}
               label={'Unidades'}
               backgroundColor={"#D9D9D9"}
+              borderRadius={'5px'}
               name={"Unidades"}
               fontWeight={500}
               options={unidades.map(unidade => ({ value: unidade.id, label: unidade.nome }))}
@@ -127,7 +131,7 @@ const HeaderPerfil = () => {
                 conteudo={"Confirmação de Logout"}
                 fontSize={"18px"}
                 fontWeight={"700"}
-                color={"#006b33"}
+                color={"black"}
               />
             </Typography>
             <button className='text-red' title="Fechar" onClick={handleCloseLogoutConfirm}><ClearIcon /></button>

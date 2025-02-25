@@ -13,6 +13,7 @@ export default function SelectTextFields({
   width,
   icon,
   disabled = false,
+  borderRadius,
   options = [], // Tamanho da fonte do TextField
   optionFontSize = '0.875rem',
   placeholder,
@@ -31,11 +32,13 @@ export default function SelectTextFields({
         size={size}
         label={label}
         fullWidth={fullWidth}
+       
         placeholder={placeholder || 'Selecione'}
         value={value}
         onChange={onChange}
         disabled={disabled}
         style={{
+          borderRadius: borderRadius,
           width: fullWidth ? '100%' : width,
           backgroundColor: 'white',
           margin: '0px',
