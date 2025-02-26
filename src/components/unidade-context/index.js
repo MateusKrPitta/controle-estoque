@@ -5,13 +5,16 @@ const UnidadeContext = createContext();
 
 export const UnidadeProvider = ({ children }) => {
     const [unidadeId, setUnidadeId] = useState(() => {
-        return localStorage.getItem('unidadeId') ? JSON.parse(localStorage.getItem('unidadeId')) : null;
+        const storedUnidadeId = localStorage.getItem('unidadeId');
+        return storedUnidadeId && storedUnidadeId !== 'undefined' ? JSON.parse(storedUnidadeId) : null;
     });
     const [unidadeNome, setUnidadeNome] = useState(() => {
-        return localStorage.getItem('unidadeNome') || '';
+        const storedUnidadeNome = localStorage.getItem('unidadeNome');
+        return storedUnidadeNome && storedUnidadeNome !== 'undefined' ? storedUnidadeNome : '';
     });
     const [unidades, setUnidades] = useState(() => {
-        return localStorage.getItem('unidades') ? JSON.parse(localStorage.getItem('unidades')) : [];
+        const storedUnidades = localStorage.getItem('unidades');
+        return storedUnidades && storedUnidades !== 'undefined' ? JSON.parse(storedUnidades) : [];
     });
 
     const atualizarUnidade = (id, nome) => {
