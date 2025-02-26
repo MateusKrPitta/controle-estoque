@@ -26,6 +26,7 @@ import { useUnidade } from '../../../components/unidade-context';
 const EstoqueReal = () => {
     const { unidadeId } = useUnidade();
     const [produtos, setProdutos] = useState([]);
+    const [produtosFiltrados, setProdutosFiltrados] = useState([]);
     const [entradasSaidas, setEntradasSaidas] = useState([]);
     const [dataInicio, setDataInicio] = useState('');
     const [dataFim, setDataFim] = useState('');
@@ -34,6 +35,7 @@ const EstoqueReal = () => {
     const [selectedCategoria, setSelectedCategoria] = useState('');
     const [isVisible, setIsVisible] = useState(false);
     const [entradasSaidasOriginais, setEntradasSaidasOriginais] = useState([]);
+    const [logoLoaded, setLogoLoaded] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -42,20 +44,20 @@ const EstoqueReal = () => {
 
         return () => clearTimeout(timer);
     }, []);
+
     const fetchEntradasSaidas = async () => {
         try {
             const response = await api.get('/movimentacao');
             const movimentacoes = response.data.data;
-    
-            // Filtra as movimentações para incluir apenas aquelas relacionadas aos produtos da unidadeId
+
             const movimentacoesFiltradas = movimentacoes.filter(mov => {
                 const produto = produtos.find(prod => prod.nome === mov.produtoNome);
                 return produto && produto.unidadeId === unidadeId;
             });
-    
+
             const formattedMovimentacoes = await Promise.all(movimentacoesFiltradas.map(async (mov) => {
                 const valorTotal = mov.precoPorcao * mov.quantidade;
-    
+
                 return {
                     tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === '2' ? 'saida' : 'desperdicio',
                     produtoNome: mov.produtoNome,
@@ -68,9 +70,9 @@ const EstoqueReal = () => {
                     id: mov.id
                 };
             }));
-    
+
             setEntradasSaidas(formattedMovimentacoes);
-            setEntradasSaidasOriginais(formattedMovimentacoes); // Armazena os dados originais
+            setEntradasSaidasOriginais(formattedMovimentacoes);
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao carregar movimentações!" });
         }
@@ -81,6 +83,7 @@ const EstoqueReal = () => {
             const response = await api.get(`/produto?unidadeId=${unidadeId}`);
             const produtosCadastrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
             setProdutos(produtosCadastrados);
+            setProdutosFiltrados(produtosCadastrados); // Inicialmente, os produtos filtrados são todos os produtos
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
         }
@@ -94,18 +97,29 @@ const EstoqueReal = () => {
     const calcularEstoqueAtual = () => {
         const estoque = {};
 
+        produtos.forEach(produto => {
+            estoque[produto.nome] = {
+                totalEntradas: 0,
+                totalSaidas: 0,
+                quantidadeInicial: produto.quantidade
+            };
+        });
+
         entradasSaidas.forEach(registro => {
             const { produtoNome, quantidade, tipo } = registro;
 
-            if (!estoque[produtoNome]) {
-                estoque[produtoNome] = { totalEntradas: 0, totalSaidas: 0 };
+            if (estoque[produtoNome]) {
+                if (tipo === 'entrada') {
+                    estoque[produtoNome].totalEntradas += quantidade;
+                } else if (tipo === 'saida' || tipo === 'desperdicio') {
+                    estoque[produtoNome].totalSaidas += quantidade;
+                }
             }
+        });
 
-            if (tipo === 'entrada') {
-                estoque[produtoNome].totalEntradas += quantidade;
-            } else if (tipo === 'saida' || tipo === 'desperdicio') {
-                estoque[produtoNome].totalSaidas += quantidade;
-            }
+        Object.keys(estoque).forEach(produtoNome => {
+            const { totalEntradas, totalSaidas, quantidadeInicial } = estoque[produtoNome];
+            estoque[produtoNome].estoqueAtual = quantidadeInicial + totalEntradas - totalSaidas;
         });
 
         return estoque;
@@ -120,12 +134,18 @@ const EstoqueReal = () => {
             CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
         }
     };
-    
 
+    const unidades = {
+        1: 'Kilograma',
+        2: 'Grama',
+        3: 'Litro',
+        4: 'Mililitro',
+        5: 'Unidade',
+    };
 
-    const rows = produtos.map(produto => {
+    const rows = produtosFiltrados.map(produto => {
         const estoqueAtualData = calcularEstoqueAtual();
-        const estoqueAtual = (estoqueAtualData[produto.nome]?.totalEntradas || 0) - (estoqueAtualData[produto.nome]?.totalSaidas || 0);
+        const estoqueAtual = estoqueAtualData[produto.nome]?.estoqueAtual || 0;
         const isBelowMin = estoqueAtual < produto.qtdMin;
 
         const precoUnitario = produto.valorPorcao;
@@ -134,7 +154,7 @@ const EstoqueReal = () => {
         return {
             categoria: produto.categoriaNome || 'Sem Categoria',
             produto: produto.nome,
-            unidade: produto.unidadeMedida,
+            unidade: unidades[produto.unidadeMedida] || 'Desconhecida',
             quantidadeMinima: produto.qtdMin,
             estoqueAtual,
             precoUnitario: formatValor(precoUnitario),
@@ -144,8 +164,8 @@ const EstoqueReal = () => {
     });
 
     const headers = [
-        { label: 'Categoria', key: 'categoria' },
         { label: 'Produto', key: 'produto' },
+        { label: 'Categoria', key: 'categoria' },
         { label: 'Unidade', key: 'unidade' },
         { label: 'Quantidade Mínima', key: 'quantidadeMinima' },
         { label: 'Estoque Atual', key: 'estoqueAtual' },
@@ -153,14 +173,31 @@ const EstoqueReal = () => {
         { label: 'Valor Total', key: 'valorTotal' },
     ];
 
+
     const handlePesquisar = () => {
         const produtosFiltrados = produtos.filter(produto => {
             const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
-            return categoriaMatch;
+    
+            // Verifica se a data de criação do produto está dentro do intervalo selecionado
+            const dataCriacaoProduto = new Date(produto.createdAt); // Usar `createdAt`
+            const dataInicioFiltro = new Date(dataInicio);
+            const dataFimFiltro = new Date(dataFim);
+    
+            // Ajuste para incluir o dia inteiro da data final
+            dataFimFiltro.setHours(23, 59, 59, 999);
+    
+            console.log("Data Início Filtro:", dataInicioFiltro);
+            console.log("Data Fim Filtro:", dataFimFiltro);
+            console.log("Data Criação Produto:", dataCriacaoProduto);
+    
+            const dataMatch = dataInicio && dataFim ?
+                dataCriacaoProduto >= dataInicioFiltro && dataCriacaoProduto <= dataFimFiltro : true;
+    
+            return categoriaMatch && dataMatch;
         });
     
-        setProdutos(produtosFiltrados);
-        handleCloseFiltro(); // Fecha o modal de filtro
+        setProdutosFiltrados(produtosFiltrados);
+        handleCloseFiltro();
     
         if (produtosFiltrados.length === 0) {
             CustomToast({ type: "error", message: "Nenhum produto encontrado com os critérios de pesquisa." });
@@ -175,10 +212,14 @@ const EstoqueReal = () => {
             fetchEntradasSaidas();
             fetchCategorias();
         }
-    }, [unidadeId]); 
-
+    }, [unidadeId]);
 
     const handlePrint = () => {
+        if (!logoLoaded) {
+            CustomToast({ type: "info", message: "Aguarde o carregamento da logo antes de imprimir." });
+            return;
+        }
+
         const printWindow = window.open('', '_blank');
         const tableHTML = `
             <html>
@@ -204,17 +245,10 @@ const EstoqueReal = () => {
                         th { 
                             background-color: #f2f2f2;
                         }
-                        img { 
-                            width: 100px; 
-                            height: auto; 
-                            display: block;
-                            margin: 0 auto;
-                            background-color: black; 
-                        }
                     </style>
                 </head>
                 <body>
-                <img src="${Logo}" alt="Logo" />
+                    <img src="${Logo}" alt="Logo" />
                     <h1>Relatório de Estoque</h1>
                     <table>
                         <thead>
@@ -272,7 +306,6 @@ const EstoqueReal = () => {
                             </div>
                         </div>
                         <div className="flex gap-2 flex-wrap w-full justify-center md:justify-start">
-                            
                             <ButtonComponent
                                 title="Imprimir"
                                 subtitle="Imprimir"
@@ -307,74 +340,77 @@ const EstoqueReal = () => {
                 </div>
             </div>
             <CentralModal
-    tamanhoTitulo={'81%'}
-    maxHeight={'100vh'}
-    top={'20%'}
-    left={'28%'}
-    width={'400px'}
-    icon={<FilterAltIcon fontSize="small" />}
-    open={filtro}
-    onClose={handleCloseFiltro}
-    title="Filtro"
->
-    <div>
-        <div className='mt-4 flex gap-3 flex-wrap'>
-            <TextField
-                fullWidth
-                variant="outlined"
-                size="small"
-                label="Data Inicial"
-                value={dataInicio}
-                type='date'
-                autoComplete="off"
-                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <DateRange />
-                        </InputAdornment>
-                    ),
-                }}
-            />
-            <TextField
-                fullWidth
-                variant="outlined"
-                size="small"
-                label="Data Final"
-                type='date'
-                value={dataFim}
-                autoComplete="off"
-                sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <DateRange />
-                        </InputAdornment>
-                    ),
-                }}
-            />
-            <SelectTextFields
-                width={'175px'}
-                icon={<CategoryIcon fontSize="small" />}
-                label={'Categoria'}
-                backgroundColor={"#D9D9D9"}
-                name={"categoria"}
-                fontWeight={500}
-                options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
-                onChange={(e) => setSelectedCategoria(e.target.value)}
-                value={selectedCategoria}
-            />
-        </div>
-        <div className='w-[95%] mt-2 flex items-end justify-end'>
-            <ButtonComponent
-                title={'Pesquisar'}
-                subtitle={'Pesquisar'}
-                startIcon={<SearchIcon />}
-                onClick={handlePesquisar}
-            />
-        </div>
-    </div>
-</CentralModal>
+                tamanhoTitulo={'81%'}
+                maxHeight={'100vh'}
+                top={'20%'}
+                left={'28%'}
+                width={'400px'}
+                icon={<FilterAltIcon fontSize="small" />}
+                open={filtro}
+                onClose={handleCloseFiltro}
+                title="Filtro"
+            >
+                <div>
+                    <div className='mt-4 flex gap-3 flex-wrap'>
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            size="small"
+                            label="Data Inicial"
+                            value={dataInicio}
+                            type='date'
+                            autoComplete="off"
+                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <DateRange />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            onChange={(e) => setDataInicio(e.target.value)}
+                        />
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            size="small"
+                            label="Data Final"
+                            type='date'
+                            value={dataFim}
+                            autoComplete="off"
+                            sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <DateRange />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            onChange={(e) => setDataFim(e.target.value)}
+                        />
+                        <SelectTextFields
+                            width={'175px'}
+                            icon={<CategoryIcon fontSize="small" />}
+                            label={'Categoria'}
+                            backgroundColor={"#D9D9D9"}
+                            name={"categoria"}
+                            fontWeight={500}
+                            options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+                            onChange={(e) => setSelectedCategoria(e.target.value)}
+                            value={selectedCategoria}
+                        />
+                    </div>
+                    <div className='w-[95%] mt-2 flex items-end justify-end'>
+                        <ButtonComponent
+                            title={'Pesquisar'}
+                            subtitle={'Pesquisar'}
+                            startIcon={<SearchIcon />}
+                            onClick={handlePesquisar}
+                        />
+                    </div>
+                </div>
+            </CentralModal>
+            <img src={Logo} alt="Logo" onLoad={() => setLogoLoaded(true)} style={{ display: 'none' }} />
         </div>
     );
 }

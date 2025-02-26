@@ -314,15 +314,23 @@ const Dashboard = () => {
                         <div className="mt-8 w-[100%] md:w-[30%] h-64">
                             <h2 className="text-lg text-center w-full font-bold text-primary mt-12 md:mt-0 mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
                             <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={dataGrafico}>
-                                    <XAxis dataKey="nome" />
-                                    <YAxis />
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Bar dataKey="entradas" fill="#BCDA72" />
-                                    <Bar dataKey="saidas" fill="#FF0000" />
-                                    <Bar dataKey="desperdicio" fill="#000000" />
-                                </BarChart>
-                            </ResponsiveContainer>
+    <BarChart data={dataGrafico}>
+        <XAxis 
+            dataKey="nome" 
+            tick={{ fontSize: 10 }} // Diminui o tamanho da fonte do eixo X
+        />
+        <YAxis 
+            tick={{ fontSize: 10 }} // Diminui o tamanho da fonte do eixo Y
+        />
+        <Tooltip 
+            content={<CustomTooltip />} 
+            contentStyle={{ fontSize: 12 }} // Diminui o tamanho da fonte do Tooltip
+        />
+        <Bar dataKey="entradas" fill="#BCDA72" />
+        <Bar dataKey="saidas" fill="#FF0000" />
+        <Bar dataKey="desperdicio" fill="#000000" />
+    </BarChart>
+</ResponsiveContainer>
 
                         </div>
                     </div>

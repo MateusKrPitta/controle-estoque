@@ -78,36 +78,36 @@ const HeaderPerfil = () => {
   return (
     <>
       <div className="hidden lg:flex justify-end w-full h-8">
-        <div
-          className="flex items-center justify-between pl-3 pr-4 w-[35%] h-20 bg-cover bg-no-repeat rounded-bl-lg"
-          style={{ backgroundColor: '#BCDA72' }}
-        >
-          <div className="w-[80%] items-star flex flex-wrap gap-2">
-            <SelectTextFields
-              width={'150px'}
-              icon={<LocationOnIcon fontSize="small" />}
-              label={'Unidades'}
-              backgroundColor={"#D9D9D9"}
-              borderRadius={'5px'}
-              name={"Unidades"}
-              fontWeight={500}
-              options={unidades.map(unidade => ({ value: unidade.id, label: unidade.nome }))}
-              value={selectedUnidade}
-              onChange={handleUnidadeChange}
-            />
-            <div className="flex items-center justify-start text-black">
-              <a className="cursor-pointer p-1">
-                <AccountCircleIcon />
-              </a>
-              <span className="text-xs text-black font-bold">{userName || "Usuário"}</span>
-            </div>
-          </div>
-          <div className="w-[10%] flex justify-center items-center" style={{ backgroundColor: 'white', borderRadius: '50px', padding: '5px' }}>
-            <a onClick={handleMenuOpen} className="cursor-pointer p-1">
-              <LogoutIcon />
-            </a>
-          </div>
-        </div>
+      <div
+  className="flex items-center justify-between pl-3 pr-4 w-[35%] h-20 bg-cover bg-no-repeat rounded-bl-lg"
+  style={{ backgroundColor: '#BCDA72' }}
+>
+  <div className="w-[80%] items-star flex flex-wrap gap-4"> {/* Aumentei o gap para 16px */}
+    <SelectTextFields
+      width={'150px'}
+      icon={<LocationOnIcon fontSize="small" />}
+      label={'Unidades'}
+      backgroundColor={"#D9D9D9"}
+      borderRadius={'5px'}
+      name={"Unidades"}
+      fontWeight={500}
+      options={unidades.map(unidade => ({ value: unidade.id, label: unidade.nome }))}
+      value={selectedUnidade}
+      onChange={handleUnidadeChange}
+    />
+    <div className="flex items-center justify-start text-black gap-2"> {/* Adicionei gap-2 para espaçamento */}
+      <a className="cursor-pointer p-1">
+        <AccountCircleIcon />
+      </a>
+      <span className="text-xs text-black font-bold">{userName || "Usuário"}</span>
+    </div>
+  </div>
+  <div className="w-[10%] flex justify-center items-center" style={{ backgroundColor: 'white', borderRadius: '50px', padding: '8px', marginLeft: '16px' }}> {/* Adicionei marginLeft para espaçamento */}
+    <a onClick={handleMenuOpen} className="cursor-pointer p-1">
+      <LogoutIcon />
+    </a>
+  </div>
+</div>
       </div>
       <Menu
         anchorEl={anchorEl}

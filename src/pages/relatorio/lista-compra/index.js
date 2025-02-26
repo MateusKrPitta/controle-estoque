@@ -15,6 +15,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 import Logo from '../../../assets/png/logo_preta.png';
 import api from '../../../services/api'; // Importa a API
 import { useUnidade } from '../../../components/unidade-context';
+import CustomToast from '../../../components/toast';
 
 const ListaCompra = () => {
     const { unidadeId } = useUnidade();
@@ -34,56 +35,52 @@ const ListaCompra = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    // Função para buscar produtos e movimentações
-    const fetchData = async () => {
-        try {
-            const produtosResponse = await api.get(`/produto?unidadeId=${unidadeId}`);
-            const entradasSaidasResponse = await api.get('/movimentacao');
-            
-            // Filtra os produtos pela unidadeId
-            const produtosFiltrados = produtosResponse.data.data.filter(produto => produto.unidadeId === unidadeId);
-            setProdutos(produtosFiltrados);
-    
-            // Filtra as movimentações para incluir apenas aquelas relacionadas aos produtos da unidadeId
-            const movimentacoesFiltradas = entradasSaidasResponse.data.data.filter(mov => {
-                const produto = produtosFiltrados.find(prod => prod.nome === mov.produtoNome);
-                return produto && produto.unidadeId === unidadeId;
-            });
-    
-            setEntradasSaidas(movimentacoesFiltradas);// Verifique os produtos
-        } catch (error) {
-            console.error('Erro ao buscar dados:', error);
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, []);
-
     const calcularEstoqueAtual = (produtoNome) => {
-        const entradas = entradasSaidas.filter(registro => registro.produtoNome === produtoNome && registro.tipo === 'entrada');
-        const saídas = entradasSaidas.filter(registro => registro.produtoNome === produtoNome && registro.tipo === 'saida');
-
-        const totalEntradas = entradas.reduce((total, registro) => total + parseInt(registro.quantidade, 10), 0);
-        const totalSaidas = saídas.reduce((total, registro) => total + parseInt(registro.quantidade, 10), 0);
-
-        return totalEntradas - totalSaidas;
+        const estoque = {
+            totalEntradas: 0,
+            totalSaidas: 0,
+            quantidadeInicial: 0
+        };
+    
+        const produto = produtos.find(p => p.nome === produtoNome);
+        if (produto) {
+            estoque.quantidadeInicial = produto.quantidade;
+        }
+    
+        entradasSaidas.forEach(registro => {
+            if (registro.produtoNome === produtoNome) {
+                if (registro.tipo === 'entrada') {
+                    estoque.totalEntradas += registro.quantidade;
+                } else if (registro.tipo === 'saida' || registro.tipo === 'desperdicio') {
+                    estoque.totalSaidas += registro.quantidade;
+                }
+            }
+        });
+    
+        return estoque.quantidadeInicial + estoque.totalEntradas - estoque.totalSaidas;
     };
 
     const produtosAbaixoMinimo = produtos.filter(produto => {
         const estoqueAtual = calcularEstoqueAtual(produto.nome);
-       
-        return estoqueAtual < produto.qtdMin; // Acessando a propriedade correta
+        return estoqueAtual < produto.qtdMin; // Filtra produtos com estoque atual abaixo da quantidade mínima
     });
+    
+    const unidades = {
+        1: 'Kilograma',
+        2: 'Grama',
+        3: 'Litro',
+        4: 'Mililitro',
+        5: 'Unidade',
+    };
 
     const rows = produtosAbaixoMinimo.map(produto => {
         const estoqueAtual = calcularEstoqueAtual(produto.nome);
         return {
             produto: produto.nome,
-            categoria: produto.categoriaNome, // Acessando o nome da categoria corretamente
-            unidade: produto.unidadeMedida, // Acessando a unidade de medida corretamente
+            categoria: produto.categoriaNome,
+             unidade: unidades[produto.unidadeMedida] || 'Desconhecida',
             quantidadeMinima: produto.qtdMin,
-            estoqueAtual,
+            quantidade: produto.quantidade,
             precoUnitario: formatValor(produto.valor),
             valorTotal: formatValor((produto.valor * estoqueAtual)),
             comprar: produto.qtdMin - estoqueAtual > 0 ? produto.qtdMin - estoqueAtual : 0,
@@ -95,7 +92,7 @@ const ListaCompra = () => {
         { label: 'Categoria', key: 'categoria' },
         { label: 'Unidade', key: 'unidade' },
         { label: 'Quantidade Mínima', key: 'quantidadeMinima' },
-        { label: 'Estoque Atual', key: 'estoqueAtual' },
+        { label: 'Estoque Atual', key: 'quantidade' },
         { label: 'Preço Unitário', key: 'precoUnitario' },
         { label: 'Comprar', key: 'comprar' },
     ];
@@ -143,11 +140,12 @@ const ListaCompra = () => {
             </html>
         `);
         printWindow.document.close();
-    
+
         setTimeout(() => {
             printWindow.print();
         }, 500);
     };
+
 
     const handleCadastroProdutos = () => setCadastroAdicionais(true);
     const handleCloseCadastroProdutos = () => setCadastroAdicionais(false);
@@ -163,11 +161,22 @@ const ListaCompra = () => {
         }
     };
 
+    const fetchProdutos = async () => {
+        try {
+            const response = await api.get(`/produto?unidadeId=${unidadeId}`);
+            const produtosCadastrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
+            setProdutos(produtosCadastrados);
+        } catch (error) {
+            CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
+        }
+    };
+
     useEffect(() => {
         if (unidadeId) {
-            fetchData();
-        }
-    }, [unidadeId]); 
+            fetchProdutos();        }
+    }, [unidadeId]);
+
+
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -198,7 +207,7 @@ const ListaCompra = () => {
                                     onClick={handleCadastroProdutos}
                                 />
                             </div>
-                            <div className='w-[90%] flex flex-col' ref={tableRef}>
+                            <div className='w-[95%] flex flex-col' ref={tableRef}>
                                 <TableComponent
                                     headers={headers}
                                     rows={rows}
