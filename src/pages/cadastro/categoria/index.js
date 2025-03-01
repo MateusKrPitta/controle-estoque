@@ -4,7 +4,7 @@ import MenuMobile from '../../../components/menu-mobile';
 import HeaderPerfil from '../../../components/navbars/perfil';
 import HeaderCadastro from '../../../components/navbars/cadastro';
 import CategoryIcon from '@mui/icons-material/Category';
-import { InputAdornment, TextField } from '@mui/material';
+import { InputAdornment, TextField, Typography } from '@mui/material'; // Importando Typography
 import ButtonComponent from '../../../components/button';
 import CentralModal from '../../../components/modal-central';
 import { Edit, Save } from "@mui/icons-material";
@@ -33,6 +33,7 @@ const Categoria = () => {
     const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
     const [filtroNome, setFiltroNome] = useState('');
     const [produtosFiltrados, setProdutosFiltrados] = useState([]);
+    const [mensagemErro, setMensagemErro] = useState(''); // Estado para mensagem de erro
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -58,14 +59,22 @@ const Categoria = () => {
             categoria.nome.toLowerCase().includes(filtroNome.toLowerCase())
         );
         setProdutosFiltrados(categoriasFiltradas);
+
+        // Atualiza a mensagem de erro se não houver categorias filtradas
+        if (categoriasFiltradas.length === 0 && filtroNome) {
+            setMensagemErro('Nenhuma categoria encontrada com esse nome.');
+        } else {
+            setMensagemErro(''); // Limpa a mensagem de erro se houver categorias
+        }
     }, [filtroNome, categorias]);
 
-    const carregarCategorias = async (unidadeId) => {// Verifique o ID da unidade
+    const carregarCategorias = async (unidadeId) => {
         setLoading(true);
         try {
-            const response = await api.get(`/categoria?unidade=${unidadeId}`); // Certifique-se de que a query string está correta
+            const response = await api.get(`/categoria?unidade=${unidadeId}`);
             if (Array.isArray(response.data.data)) {
                 setCategorias(response.data.data);
+                console.log(response.data.data); // Verifique as categorias carregadas
             } else {
                 setCategorias([]);
             }
@@ -79,6 +88,7 @@ const Categoria = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setCategoria({ ...categoria, [name]: value });
+        console.log(value); // Verifique o valor que está sendo digitado
     };
 
     const handleCadastroCategoria = () => setCadastroCategoria(true);
@@ -188,21 +198,31 @@ const Categoria = () => {
                                 onClick={handleCadastroCategoria}
                             />
                         </div>
+
                         <div className="tamanho-tabela">
                             {loading ? (
                                 <div className='flex items-center justify-center h-96'>
                                     <TableLoading />
                                 </div>
                             ) : (
-                                <TableComponent
-                                    headers={headerCategoria}
-                                    rows={produtosFiltrados.length > 0 ? produtosFiltrados : categorias} // Usa a lista filtrada ou a original
-                                    actionsLabel={"Ações"}
-                                    actionCalls={{
-                                        edit: handleEditCategoria,
-                                        delete: handleDeleteCategoria,
-                                    }}
-                                />
+                                <>
+                                    {produtosFiltrados.length === 0 ? ( // Verifica se não há produtos filtrados
+                                        <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
+                                            <TableLoading />
+                                           <label>{mensagemErro}</label> 
+                                        </div>
+                                    ) : (
+                                        <TableComponent
+                                            headers={headerCategoria}
+                                            rows={produtosFiltrados} // Usa a lista filtrada
+                                            actionsLabel={"Ações"}
+                                            actionCalls={{
+                                                edit: handleEditCategoria,
+                                                delete: handleDeleteCategoria,
+                                            }}
+                                        />
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
@@ -239,16 +259,6 @@ const Categoria = () => {
                                 ),
                             }}
                         />
-                        {/* <SelectTextFields
-                            width={'150px'}
-                            icon={<CategoryIcon fontSize="small" />}
-                            label={'Unidade'}
-                            backgroundColor={"#D9D9D9"}
-                            name={"unidade"}
-                            fontWeight={500}
-                            options={userOptionsUnidade.filter(option => option.value === unidadeId)} // Filtra para mostrar apenas a unidade selecionada
-                            onChange={(e) => setCategoria({ ...categoria, unidadeId: e.target.value })}
-                        /> */}
                     </div>
                     <div className='w-[95%] mt-2 flex items-end justify-end'>
                         <ButtonComponent

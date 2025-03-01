@@ -16,6 +16,8 @@ import TabelaProdutos from '../../components/table-expanded';
 import CustomToast from '../../components/toast';
 import CentralModal from '../../components/modal-central';
 import { formatCmvReal } from '../../utils/functions';
+import { useUnidade } from '../../components/unidade-context';
+import api from '../../services/api';
 
 // Função de formatação
 export const formatValor = (valor) => {
@@ -26,7 +28,17 @@ export const formatValor = (valor) => {
     }).format(parsedValor);
 };
 
+const unidadeMedidaMap = {
+    1: 'Kilograma',
+    2: 'Grama',
+    3: 'Litro',
+    4: 'Mililitro',
+    5: 'Unidade',
+};
+
+
 const FichaTecnica = () => {
+    const { unidadeId } = useUnidade();
     const [produtos, setProdutos] = useState([]);
     const [produtoSelecionado, setProdutoSelecionado] = useState(null);
     const [precoPorcao, setPrecoPorcao] = useState('');
@@ -37,6 +49,7 @@ const FichaTecnica = () => {
     const [isVisible, setIsVisible] = useState(false);
     const [produtosAdicionados, setProdutosAdicionados] = useState([]);
     const [custoTotal, setCustoTotal] = useState(0);
+    const [produtosDaFicha, setProdutosDaFicha] = useState([]);
     const [valorVenda, setValorVenda] = useState('');
     const [lucroReal, setLucroReal] = useState(0);
     const [produtosCadastrados, setProdutosCadastrados] = useState([]);
@@ -54,15 +67,6 @@ const FichaTecnica = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    useEffect(() => {
-        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-        setProdutos(produtosSalvos);
-    }, []);
-
-    useEffect(() => {
-        const produtosCadastradosSalvos = JSON.parse(localStorage.getItem('produtosCadastrados')) || [];
-        setProdutosCadastrados(produtosCadastradosSalvos);
-    }, []);
 
     useEffect(() => {
         if (quantidade && precoPorcao) {
@@ -100,6 +104,22 @@ const FichaTecnica = () => {
             setValorRendimento(0);
         }
     }, [custoTotal, rendimento]);
+    const fetchProdutosDaFicha = async () => {
+        try {
+            const response = await api.get(`/ficha?unidadeId=${unidadeId}`);
+            const data = response.data.data; // Acesse a propriedade 'data'
+
+            console.log(data); // Verifique os dados no console
+
+            if (Array.isArray(data)) {
+                setProdutosDaFicha(data);
+            } else {
+                setProdutosDaFicha([]);
+            }
+        } catch (error) {
+            CustomToast({ type: "error", message: "Erro ao carregar produtos da ficha técnica!" });
+        }
+    };
 
     // Novo useEffect para calcular o CMV Real
     useEffect(() => {
@@ -116,12 +136,21 @@ const FichaTecnica = () => {
         }
     }, [custoTotal, valorVenda]);
 
+    useEffect(() => {
+        if (quantidade && precoPorcao) {
+            const valor = parseFloat(quantidade) * parseFloat(precoPorcao.replace('R$', '').replace(',', '.'));
+            setValorUtilizado(formatValor(valor));
+        } else {
+            setValorUtilizado('');
+        }
+    }, [quantidade, precoPorcao]);
+
     const handleProdutoChange = (value) => {
         const produto = produtos.find(prod => prod.id === value);
         setProdutoSelecionado(produto);
         if (produto) {
-            setUnidade(produto.unidade);
-            setPrecoPorcao(produto.precoPorcaoFormatado);
+            setUnidade(unidadeMedidaMap[produto.unidadeMedida]); // Mapeia a unidade de medida
+            setPrecoPorcao(formatValor(produto.valorPorcao)); // Define o preço da porção formatado
         } else {
             setUnidade('');
             setPrecoPorcao('');
@@ -157,64 +186,67 @@ const FichaTecnica = () => {
         const novosProdutos = produtosAdicionados.filter((_, i) => i !== index);
         setProdutosAdicionados(novosProdutos);
     };
-    const handleCadastrar = () => {
+
+    const handleCadastrar = async () => {
         if (!nomePrato) {
             CustomToast({ type: "error", message: "Informe o nome do prato!" });
             return;
         }
 
         if (produtosAdicionados.length === 0) {
-            CustomToast({ type: "error", message: "Adicione pelo menos um prato!" });
+            CustomToast({ type: "error", message: "Adicione pelo menos um produto!" });
             return;
         }
 
-        // Verifica se o valor de venda está preenchido
         if (!valorVenda) {
             CustomToast({ type: "error", message: "Informe o valor de venda!" });
             return;
         }
 
+        // Estrutura os dados para enviar
         const pratoCadastrado = {
-            nomePrato,
-            produtos: produtosAdicionados,
-            custoTotal,
-            valorVenda,
-            cmvReal,
-            lucroReal,
-            rendimento, // Adicione esta linha para salvar o rendimento
+            prato: {
+                nome: nomePrato,
+                custoTotal: custoTotal,
+                qtdRendimento: parseFloat(rendimento) || 0,
+                valorRendimento: valorRendimento,
+                valorVenda: parseFloat(valorVenda.replace('R$', '').replace('.', '').replace(',', '.')),
+                cmvReal: cmvReal,
+                lucroReal: lucroReal,
+            },
+            produtos: produtosAdicionados.map(produto => {
+                // Encontra o produto selecionado na lista de produtos
+                const produtoSelecionado = produtos.find(p => p.nome === produto.nome);
+                if (!produtoSelecionado) {
+                    CustomToast({ type: "error", message: "Produto selecionado não é válido!" });
+                    return null;
+                }
+                return {
+                    qtdUtilizado: parseFloat(produto.quantidade),
+                    valorUtilizado: parseFloat(produto.valorUtilizado.replace('R$', '').replace('.', '').replace(',', '.')),
+                    produtoId: produtoSelecionado.id, // Usa o ID do produto selecionado
+                };
+            }).filter(Boolean), // Remove os produtos que são null
         };
 
-        let novosProdutosCadastrados;
+        try {
+            // Envia os dados para a API com o parâmetro unidade na URL
+            const response = await api.post(`/ficha?unidade=${unidadeId}`, pratoCadastrado);
+            CustomToast({ type: "success", message: "Prato cadastrado com sucesso!" });
 
-        if (pratoEmEdicao) {
-            // Se estamos editando um prato, atualize-o
-            novosProdutosCadastrados = produtosCadastrados.map((prato, index) =>
-                index === produtosCadastrados.indexOf(pratoEmEdicao) ? pratoCadastrado : prato
-            );
-            setPratoEmEdicao(null); // Limpa o estado de edição
-        } else {
-            // Se estamos criando um novo prato, adicione-o
-            novosProdutosCadastrados = [...produtosCadastrados, pratoCadastrado];
+            // Limpa os campos após o cadastro
+            setProdutosAdicionados([]);
+            setNomePrato('');
+            setValorVenda('');
+            setCustoTotal(0);
+            setLucroReal(0);
+            setCmvReal(0);
+            setRendimento('');
+            handleFecharPrato();
+        } catch (error) {
+            CustomToast({ type: "error", message: "Erro ao cadastrar prato!" });
         }
-
-        // Atualiza o estado local
-        setProdutosCadastrados(novosProdutosCadastrados);
-
-        // Salva no localStorage
-        localStorage.setItem('produtosCadastrados', JSON.stringify(novosProdutosCadastrados));
-
-        // Limpa os campos
-        setProdutosAdicionados([]);
-        setNomePrato('');
-        setValorVenda('');
-        setCustoTotal(0);
-        setLucroReal(0);
-        setCmvReal(0); // Resetar o CMV Real
-        setRendimento(''); // Limpa o rendimento
-        handleFecharPrato();
-        CustomToast({ type: "success", message: "Prato atualizado com sucesso!" });
     };
-
     const handleEditPrato = (index) => {
         const prato = produtosCadastrados[index];
         setPratoEmEdicao(prato);
@@ -243,6 +275,26 @@ const FichaTecnica = () => {
         setPratoEmEdicao(null); // Limpa o prato em edição
     };
 
+    const fetchProdutos = async () => {
+        try {
+            const response = await api.get(`/produto?unidadeId=${unidadeId}`);
+
+            // Filtra os produtos pela unidadeId no frontend (se necessário)
+            const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
+
+            setProdutos(produtosFiltrados);
+        } catch (error) {
+            CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
+        }
+    };
+
+
+    useEffect(() => {
+        if (unidadeId) {
+            fetchProdutos();
+            fetchProdutosDaFicha();
+        }
+    }, [unidadeId]);
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -441,6 +493,12 @@ const FichaTecnica = () => {
                                     sx={{ width: { xs: '100%', sm: '50%', md: '40%', lg: '30%' } }}
                                 />
                                 <h2 className="font-bold text-xs mt-2">Produtos Adicionados:</h2>
+                                <div className='w-full items-center flex '>
+                                    <label className='w-[20%]' >Produto</label>
+                                    <label className='w-[13%]' >Quantidade</label>
+                                    <label className='w-[13%]'>Valor Porção</label>
+                                    <label className='w-[13%]'>Valor Utilizado</label>
+                                </div>
                                 <div className='flex gap-4 w-full flex-wrap'>
                                     <div className='w-[100%]  md:w-[66%]'>
                                         {produtosAdicionados.map((produto, index) => (
@@ -448,12 +506,12 @@ const FichaTecnica = () => {
                                                 <div style={{ border: '1px solid black', borderRadius: '10px' }} className='w-[100%] flex items-center p-1'>
                                                     <label className='text-xs w-[95%] items-center flex gap-2 flex-wrap'>
                                                         <FlatwareIcon />
-                                                        <p className='w-[40%] md:w-[15%] text-xs'>{produto.nome}</p>
-                                                        <p className=' w-[30%] md:w-[10%]' style={{ display: 'flex', textAlign: 'center', justifyContent: 'center', backgroundColor: '#BCDA72', color: 'white', padding: '5px', borderRadius: '5px', fontWeight: '700' }}> {produto.quantidade}</p>
-                                                        Valor Porção:
-                                                        <p className=' w-[50%] ml-2 md:w-[13%] md:ml-0' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#d9d9d9', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.precoPorcao}</p>
-                                                        Valor Utilizado:
-                                                        <p className=' w-[50%] md:w-[15%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#b0d847', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.valorUtilizado}</p>
+                                                        <p className='w-[40%] md:w-[25%] text-xs'>{produto.nome}</p>
+                                                        <p className=' w-[30%] md:w-[18%]' style={{ display: 'flex', textAlign: 'center', justifyContent: 'center', backgroundColor: '#BCDA72', color: 'black', padding: '5px', borderRadius: '5px', fontWeight: '700' }}> {produto.quantidade} - {produto.unidade}</p>
+
+                                                        <p className=' w-[50%] ml-2 md:w-[20%] md:ml-0' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#d9d9d9', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.precoPorcao}</p>
+
+                                                        <p className=' w-[50%] md:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#b0d847', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.valorUtilizado}</p>
                                                     </label>
                                                     <ButtonClose
                                                         funcao={() => handleRemoveProduto(index)}
@@ -544,9 +602,9 @@ const FichaTecnica = () => {
 
                     </div>
                 </CentralModal>
-                <div className={`mr-3 sm: md:mr-11 flex flex-wrap w-[95%]  p-4 gap-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
+                <div className={`mr-3 sm: md:mr-11 flex flex-wrap w-[95%] p-4 gap-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                     <TabelaProdutos
-                        pratos={produtosCadastrados}
+                        pratos={produtosDaFicha} // Passa os produtos da ficha técnica para a tabela
                         onEditClick={handleEditPrato}
                     />
                 </div>

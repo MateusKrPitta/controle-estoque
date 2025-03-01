@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../../components/navbars/header/index.js';
 import { AddCircleOutline, DateRange, Edit, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
-import { IconButton, InputAdornment, TextField } from '@mui/material';
+import { IconButton, InputAdornment, TextField, Typography } from '@mui/material'; // Importando Typography
 import ButtonComponent from '../../../components/button/index.js';
 import SearchIcon from '@mui/icons-material/Search';
 import TableComponent from '../../../components/table/index.js';
@@ -52,6 +52,7 @@ const Produtos = () => {
     const [dataReajuste, setDataReajuste] = useState('');
     const [produtosOriginais, setProdutosOriginais] = useState([]);
     const [produtosFiltrados, setProdutosFiltrados] = useState([]);
+    const [mensagemErro, setMensagemErro] = useState(''); // Estado para mensagem de erro
     const userOptionsUnidade = [
         { value: 1, label: 'Kilograma' },
         { value: 2, label: 'Grama' },
@@ -175,6 +176,7 @@ const Produtos = () => {
             setLoading(false);
         }
     };
+
     const handlePesquisar = () => {
         const produtosFiltrados = produtosOriginais.filter(produto => {
             const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
@@ -189,8 +191,10 @@ const Produtos = () => {
         handleCloseFiltro(); // Fecha a modal de filtro
 
         if (produtosFiltrados.length === 0) {
+            setMensagemErro('Nenhum produto encontrado com os critérios de pesquisa.'); // Atualiza a mensagem de erro
             CustomToast({ type: "error", message: "Nenhum produto encontrado com os critérios de pesquisa." });
         } else {
+            setMensagemErro(''); // Limpa a mensagem de erro se houver produtos
             CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
         }
     };
@@ -299,15 +303,12 @@ const Produtos = () => {
 
     const quantidadeProdutosCadastrados = produtos.length;
 
-
-
     useEffect(() => {
         const produtosFiltrados = produtosOriginais.filter(produto =>
             produto.nome.toLowerCase().includes(filtroNome.toLowerCase())
         );
         setProdutosFiltrados(produtosFiltrados);
     }, [filtroNome, produtosOriginais]);
-
 
     useEffect(() => {
         const carregarDados = async () => {
@@ -318,6 +319,7 @@ const Produtos = () => {
         };
         carregarDados();
     }, [unidadeId]);
+
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -389,15 +391,24 @@ const Produtos = () => {
                                         <TableLoading />
                                     </div>
                                 ) : (
-                                    <TableComponent
-                                        headers={headerProdutos}
-                                        rows={produtosFiltrados.length > 0 ? produtosFiltrados : produtos}
-                                        actionsLabel={"Ações"}
-                                        actionCalls={{
-                                            edit: (produto) => handleEditProduto(produto),
-                                            delete: (produto) => handleDeleteProduto(produto.id),
-                                        }}
-                                    />
+                                    <>
+                                        {produtosFiltrados.length === 0 ? ( // Verifica se não há produtos filtrados
+                                            <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
+                                            <TableLoading />
+                                           <label>Nenhum produto encontrato com esse nome!</label> 
+                                        </div>
+                                        ) : (
+                                            <TableComponent
+                                                headers={headerProdutos}
+                                                rows={produtosFiltrados}
+                                                actionsLabel={"Ações"}
+                                                actionCalls={{
+                                                    edit: (produto) => handleEditProduto(produto),
+                                                    delete: (produto) => handleDeleteProduto(produto.id),
+                                                }}
+                                            />
+                                        )}
+                                    </>
                                 )}
                             </div>
 
@@ -445,7 +456,7 @@ const Produtos = () => {
                                             autoComplete="off"
                                             sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '23%' } }}
                                             InputProps={{
-                                                startAdornment: (
+ startAdornment: (
                                                     <InputAdornment position="start">
                                                         <ScaleIcon />
                                                     </InputAdornment>
@@ -536,7 +547,6 @@ const Produtos = () => {
                                 tamanhoTitulo="75%"
                                 conteudo={
                                     <div className="flex gap-2 flex-wrap items-end justify-end w-full mt-2">
-                                       
                                         <TextField
                                             fullWidth
                                             variant="outlined"
@@ -596,7 +606,7 @@ const Produtos = () => {
 
                                         <NumericFormat
                                             customInput={TextField}
-                                            fullWidth
+                                            full Width
                                             variant="outlined"
                                             size="small"
                                             label="Valor Reajuste"
@@ -737,7 +747,7 @@ const Produtos = () => {
                                         <SelectTextFields
                                             width={'175px'}
                                             icon={<CategoryIcon fontSize="small" />}
-                                            label={'Categoria'}
+                                            label={'Categoria '}
                                             backgroundColor={"#D9D9D9"}
                                             name={"categoria"}
                                             fontWeight={500}

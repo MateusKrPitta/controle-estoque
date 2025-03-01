@@ -4,7 +4,7 @@ import { BounceLoader } from 'react-spinners';
 const TableLoading = () => {
     return (
         <div className="table-loading-container">
-            <BounceLoader color="#006b33" size={60} />
+            <BounceLoader color="#BCDA72" size={60} />
         </div>
     );
 };
