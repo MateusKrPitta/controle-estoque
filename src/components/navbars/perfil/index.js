@@ -59,13 +59,13 @@ const HeaderPerfil = () => {
       localStorage.setItem('unidadeId', unidadeObj.id);
       localStorage.setItem('unidadeNome', unidadeObj.nome);
 
-      // Recarrega a página após a seleção da unidade
+      
       window.location.reload();
     }
   };
 
   useEffect(() => {
-    setSelectedUnidade(unidadeId); // Atualiza o selectedUnidade quando unidadeId muda
+    setSelectedUnidade(unidadeId); 
   }, [unidadeId]);
 
   useEffect(() => {
@@ -82,7 +82,7 @@ const HeaderPerfil = () => {
           className="flex items-center justify-between pl-3 pr-4 w-[35%] h-20 bg-cover bg-no-repeat rounded-bl-lg"
           style={{ backgroundColor: '#BCDA72' }}
         >
-          <div className="w-[100%] items-star flex flex-wrap gap-4"> {/* Aumentei o gap para 16px */}
+          <div className="w-[100%] items-star flex flex-wrap gap-4"> 
             <SelectTextFields
               width={'150px'}
               icon={<LocationOnIcon fontSize="small" />}
@@ -95,7 +95,7 @@ const HeaderPerfil = () => {
               value={selectedUnidade}
               onChange={handleUnidadeChange}
             />
-            <div className="flex items-center justify-start text-black gap-2"> {/* Adicionei gap-2 para espaçamento */}
+            <div className="flex items-center justify-start text-black gap-2">
               <a className="cursor-pointer p-1">
                 <AccountCircleIcon />
               </a>

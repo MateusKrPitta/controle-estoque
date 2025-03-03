@@ -6,7 +6,6 @@ import ButtonComponent from '../../components/button';
 import { IconButton, InputAdornment, TextField } from '@mui/material';
 import { Print, FilterAlt, DateRange } from '@mui/icons-material';
 import TableComponent from '../../components/table/index.js';
-import { cmv } from '../../entities/headers/cmv.js';
 import { headerCmv } from '../../entities/headers/header-cmv.js';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
 import NumbersIcon from '@mui/icons-material/Numbers';
@@ -30,13 +29,13 @@ const CMV = () => {
   const [selectedCategoria, setSelectedCategoria] = useState('');
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [faturamento, setFaturamento] = useState(''); // Mantenha como string para a máscara
+  const [faturamento, setFaturamento] = useState(''); 
   const [cmv, setCmv] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 300); // Delay para a transição
+    }, 300);
 
     return () => clearTimeout(timer);
   }, []);
@@ -54,16 +53,16 @@ const CMV = () => {
       const entradas = Number(row.entradas || 0);
       const preco = Number(row.preco || 0);
 
-      // Calcular utilizado com a fórmula correta
+
       const utilizado = estoqueInicial + entradas - estoqueFinal;
 
-      // Calcular valor total
+
       const valorTotal = ((estoqueInicial + entradas + estoqueFinal) * preco).toFixed(2);
 
       return {
         ...row,
-        utilizado, // Quantidade sem máscara
-        valorUtilizado: formatCurrency(valorTotal), // Valor com máscara de moeda
+        utilizado, 
+        valorUtilizado: formatCurrency(valorTotal), 
       };
     });
   };
@@ -80,7 +79,7 @@ const CMV = () => {
       return acc;
     }, { totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
 
-    // Calcular totalUtilizado
+
     newTotals.totalUtilizado = newTotals.estoqueInicial + newTotals.totalEntradas - newTotals.estoqueFinal;
 
     setTotals(newTotals);
@@ -94,7 +93,7 @@ const CMV = () => {
   };
 
   const formatValor = (valor) => {
-    const parsedValor = parseFloat(valor); // Converte o valor para número
+    const parsedValor = parseFloat(valor); 
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
@@ -119,7 +118,7 @@ const CMV = () => {
       .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
 
     setCategorias(categoriasUnicas);
-    setUniqueCategoriesCount(categoriasUnicas.length); // Atualiza o estado com o número de categorias únicas
+    setUniqueCategoriesCount(categoriasUnicas.length);
   }, []);
 
   const handlePrint = () => {
@@ -167,30 +166,27 @@ const CMV = () => {
     printWindow.print();
   };
 
-  // Função para calcular o CMV
-  // Função para calcular o CMV
+
   const calculateCmv = () => {
-    const totalUtilizado = totals.totalUtilizado; // Use the total utilized from totals
+    const totalUtilizado = totals.totalUtilizado;
     const faturamentoValue = Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')) || 1; // Evitar divisão por zero
 
-    // Check if faturamentoValue is zero to avoid division by zero
+
     if (faturamentoValue === 0) {
-      setCmv(0); // Set CMV to 0 if faturamento is 0
+      setCmv(0);
       return;
     }
 
-    const cmvValue = (totalUtilizado / faturamentoValue) * 100; // Cálculo do CMV em porcentagem
-    setCmv(cmvValue); // Store cmv as a number
+    const cmvValue = (totalUtilizado / faturamentoValue) * 100; 
+    setCmv(cmvValue); 
   };
-
-  // UseEffect to recalculate CMV when faturamento or totals change
   useEffect(() => {
-    calculateCmv(); // Recalcula o CMV sempre que faturamento ou totals mudam
+    calculateCmv(); 
   }, [faturamento, totals]);
 
   useEffect(() => {
     if (faturamento) {
-      calculateCmv(); // Recalcula o CMV somente quando o faturamento é alterado
+      calculateCmv(); 
     }
   }, [faturamento, totals]);
 
@@ -267,7 +263,7 @@ const CMV = () => {
                   size="large"
                   label="CMV"
                   name="CMV"
-                  value={`${cmv.toFixed(2)}%`} // Exibe o CMV como fração
+                  value={`${cmv.toFixed(2)}%`} 
                   autoComplete="off"
                   InputProps={{
                     startAdornment: (
@@ -279,29 +275,29 @@ const CMV = () => {
                   sx={{
                     width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
                     fontSize: '20px',
-                    backgroundColor: '#ffffff', // Fundo branco para o campo
-                    borderRadius: '8px', // Arredondar bordas
+                    backgroundColor: '#ffffff',
+                    borderRadius: '8px', 
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {
-                        borderColor: '#1a894f', // Cor da borda padrão
+                        borderColor: '#1a894f', 
                       },
                       '&:hover fieldset': {
-                        borderColor: '#2563eb', // Cor da borda ao passar o mouse
+                        borderColor: '#2563eb',
                       },
                       '&.Mui-focused fieldset': {
-                        borderColor: '#1a894f', // Cor da borda quando em foco
+                        borderColor: '#1a894f', 
                       },
-                      backgroundColor: '#f3f4f6', // Fundo interno do campo
+                      backgroundColor: '#f3f4f6', 
                     },
                     '& .MuiInputLabel-root': {
-                      color: '#1a894f', // Cor do texto do label
+                      color: '#1a894f', 
                       fontWeight: 700
                     },
                     '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#2563eb', // Cor do label quando em foco
+                      color: '#2563eb', 
                     },
                     '& .MuiSvgIcon-root': {
-                      color: '#006b33', // Cor do ícone
+                      color: '#006b33',
                     },
                   }}
                 />
@@ -313,13 +309,13 @@ const CMV = () => {
                   size="large"
                   label="Faturamento"
                   name="Faturamento"
-                  value={faturamento} // Mantenha o valor como string
+                  value={faturamento} 
                   onValueChange={(values) => {
                     const { formattedValue, value } = values;
-                    setFaturamento(value); // Atualiza o estado com o valor numérico
+                    setFaturamento(value); 
                   }}
                   autoComplete="off"
-                  customInput={TextField} // Usando o TextField do MUI
+                  customInput={TextField} 
                   thousandSeparator="."
                   decimalSeparator=","
                   decimalScale={2}
@@ -454,8 +450,8 @@ const CMV = () => {
               name={"categoria"}
               fontWeight={500}
               options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
-              onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
-              value={selectedCategoria} // Reflete o estado atual no componente
+              onChange={(e) => setSelectedCategoria(e.target.value)}
+              value={selectedCategoria} 
             />
           </div>
           <div className='w-[95%] mt-2 flex items-end justify-end'>

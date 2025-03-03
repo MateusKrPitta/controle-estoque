@@ -47,8 +47,8 @@ const ButtonNavegacao = ({
         borderRadius: borderRadius || '5px',
         borderBottom: borderBottom ,
         borderTopLeftRadius: borderTopLeftRadius,
-        backgroundColor: backgroundColor, // Cor de fundo ativa
-        color: color, // Cor do texto ativa
+        backgroundColor: backgroundColor,
+        color: color, 
       }}
     >
       {imgSrc && (

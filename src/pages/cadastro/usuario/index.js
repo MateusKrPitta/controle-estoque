@@ -24,13 +24,11 @@ import CustomToast from "../../../components/toast";
 import api from "../../../services/api";
 import { useNavigate } from "react-router-dom";
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 
 const Usuario = () => {
   const navigate = useNavigate();
   const [cadastroUsuario, setCadastroUsuario] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(false);
   const [selectedUnidades, setSelectedUnidades] = useState([]);
   const [cpf, setCpf] = useState('')
   const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
@@ -38,7 +36,6 @@ const Usuario = () => {
   const [editUser, setEditUser] = useState(null);
   const [users, setUsers] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [newUser, setNewUser] = useState({
     nome: '',
     cpf: '',
@@ -56,7 +53,7 @@ const Usuario = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 300); // Delay para a transição
+    }, 300); 
 
     return () => clearTimeout(timer);
   }, []);
@@ -67,13 +64,12 @@ const Usuario = () => {
   };
 
   const handleCheckboxChange = (permissao) => {
-    // Cria um novo objeto de permissões, definindo todas como false
     const updatedPermissoes = {
       administrador: false,
       basico: false,
     };
 
-    // Define apenas a permissão selecionada como true
+
     updatedPermissoes[permissao] = true;
 
     setNewUser({
@@ -101,7 +97,7 @@ const Usuario = () => {
         basico: false,
       },
     });
-    setSelectedUnidades([]); // Limpa as unidades selecionadas
+    setSelectedUnidades([]); 
   };
 
   const handleCloseEditUser = () => {
@@ -117,7 +113,7 @@ const Usuario = () => {
         basico: false,
       },
     });
-    setSelectedUnidades([]); // Limpa as unidades selecionadas
+    setSelectedUnidades([]); 
   };
 
   const removeUnidade = (unidade) => {
@@ -126,7 +122,7 @@ const Usuario = () => {
 
   const handleSubmit = async () => {
     try {
-      // Validação dos campos obrigatórios
+
       if (!newUser.nome) {
         CustomToast({ type: "error", message: "O nome é obrigatório." });
         return;
@@ -144,20 +140,19 @@ const Usuario = () => {
         return;
       }
 
-      // Validação do CPF
+
       const cpfExistente = users.find(user => user.cpf === newUser.cpf);
       if (cpfExistente) {
         CustomToast({ type: "error", message: "CPF já cadastrado. Não é possível cadastrar outro." });
-        return; // Retorna para evitar o envio
+        return; 
       }
 
-      // Validação da senha
       if (newUser.senha.length < 6) {
         CustomToast({ type: "error", message: "A senha deve conter pelo menos 6 dígitos." });
-        return; // Retorna para evitar o envio
+        return; 
       }
 
-      // Prepara os dados do usuário
+
       const userData = {
         nome: newUser.nome,
         cpf: newUser.cpf,
@@ -165,14 +160,14 @@ const Usuario = () => {
         tipo: newUser.permissoes.administrador ? 1 : (newUser.permissoes.basico ? 2 : 0), // 1 para administrador, 2 para básico
         unidadeId: selectedUnidades.map(unidade => {
           const unidadeObj = userOptionsUnidade.find(option => option.label === unidade);
-          return unidadeObj ? unidadeObj.value : null; // Aqui você pega o ID da unidade
+          return unidadeObj ? unidadeObj.value : null; 
         }).filter(id => id !== null),
       };
 
-      // Envia os dados para a API usando a instância configurada
-      const response = await api.post('/usuario', userData); // Use a instância 'api'
 
-      // Atualiza a lista de usuários com as unidades
+      const response = await api.post('/usuario', userData); 
+
+
       const updatedUsers = [...users, { ...userData, unidades: selectedUnidades }];
       setUsers(updatedUsers);
 
@@ -192,14 +187,14 @@ const Usuario = () => {
       CustomToast({ type: "success", message: "Usuário cadastrado com sucesso!" });
     } catch (error) {
 
-      // Verifica se o erro é devido a um token expirado
+
       if (
         error.response &&
         error.response.data.message === "Credenciais inválidas" &&
         error.response.data.data === "Token de acesso inválido"
       ) {
         CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-        navigate("/"); // Redireciona para a tela de login
+        navigate("/"); 
       } else {
         CustomToast({ type: "error", message: "Erro ao cadastrar usuário!" });
       }
@@ -207,31 +202,31 @@ const Usuario = () => {
   };
 
   const handleEditUser = (user) => {
-    setEditUser(user); // Preenche o estado com os dados do usuário a ser editado
+    setEditUser(user); 
     setNewUser({
       nome: user.nome,
-      cpf: formatCPF(user.cpf), // Formata o CPF aqui
+      cpf: formatCPF(user.cpf),
       senha: user.senha,
       funcao: user.funcao || '',
       unidade: user.unidade || '',
       permissoes: {
-        administrador: user.tipo === "1", // Se tipo for 1, administrador deve ser true
-        basico: user.tipo === "2", // Se tipo for 2, basico deve ser true
+        administrador: user.tipo === "1",
+        basico: user.tipo === "2",
       },
     });
 
     setSelectedUnidades(
       user.unidadeId.map((id) => {
         const unidadeObj = userOptionsUnidade.find((option) => option.value === id);
-        return unidadeObj ? unidadeObj.label : null; // Aqui você pega o nome da unidade
+        return unidadeObj ? unidadeObj.label : null; 
       }).filter((label) => label !== null)
     );
-    setEditandoUsuario(true); // Abre a modal de edição
+    setEditandoUsuario(true); 
   };
 
   const handleUpdateUser = async () => {
     try {
-      // Validação dos campos obrigatórios
+
       if (!newUser.nome) {
         CustomToast({ type: "error", message: "O nome é obrigatório." });
         return;
@@ -249,46 +244,45 @@ const Usuario = () => {
         return;
       }
 
-      // Validação do CPF
       const cpfExistente = users.find(user => user.cpf === newUser.cpf && user.cpf !== editUser.cpf);
       if (cpfExistente) {
         CustomToast({ type: "error", message: "CPF já cadastrado. Não é possível cadastrar outro." });
-        return; // Retorna para evitar o envio
+        return; 
       }
 
-      // Validação da senha
+
       if (newUser.senha.length < 6) {
         CustomToast({ type: "error", message: "A senha deve conter pelo menos 6 dígitos." });
-        return; // Retorna para evitar o envio
+        return; 
       }
 
-      // Prepara os dados do usuário
+
       const userData = {
         nome: newUser.nome,
         cpf: newUser.cpf,
         senha: newUser.senha,
-        tipo: newUser.permissoes.administrador ? 1 : (newUser.permissoes.basico ? 2 : 0), // 1 para administrador, 2 para básico
+        tipo: newUser.permissoes.administrador ? 1 : (newUser.permissoes.basico ? 2 : 0), 
         unidadeId: selectedUnidades.map(unidade => {
           const unidadeObj = userOptionsUnidade.find(option => option.label === unidade);
-          return unidadeObj ? unidadeObj.value : null; // Aqui você pega o ID da unidade
+          return unidadeObj ? unidadeObj.value : null; 
         }).filter(id => id !== null),
       };
 
-      // Envia os dados para a API usando a instância configurada
-      const response = await api.put(`/usuario/${editUser.id}`, userData); // Use o ID do usuário que está sendo editado
+     
+      const response = await api.put(`/usuario/${editUser.id}`, userData);
 
       if (response.status === 200) {
-        // Atualiza os dados do usuário
+
         const updatedUsers = users.map(user => {
           if (user.id === editUser.id) {
-            return { ...userData, unidades: selectedUnidades }; // Atualiza os dados do usuário editado
+            return { ...userData, unidades: selectedUnidades }; 
           }
-          return user; // Retorna o usuário não editado
+          return user; 
         });
 
-        // Atualiza o estado local
+
         setUsers(updatedUsers);
-        // Limpa o estado e fecha a modal
+
         setEditandoUsuario(false);
         setEditUser(null);
         setNewUser({
@@ -315,25 +309,24 @@ const Usuario = () => {
   };
   const handleCPFChange = (e) => {
     const formattedCPF = formatCPF(e.target.value);
-    setCpf(formattedCPF); // Atualiza o estado do CPF
-    setNewUser({ ...newUser, cpf: formattedCPF }); // Atualiza o CPF no objeto newUser  
+    setCpf(formattedCPF); 
+    setNewUser({ ...newUser, cpf: formattedCPF }); 
   };
 
 
   const fetchUsers = async () => {
     try {
       const response = await api.get('/usuario');
-      setUsers(response.data.data || []); // Ajuste conforme a estrutura da resposta
+      setUsers(response.data.data || []); 
     } catch (error) {;
 
-      // Verifica se o erro é devido a um token expirado
       if (
         error.response &&
         error.response.data.message === "Credenciais inválidas" &&
         error.response.data.data === "Token de acesso inválido"
       ) {
         CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-        navigate("/"); // Redireciona para a tela de login
+        navigate("/"); 
       } else {
         CustomToast({ type: "error", message: "Erro ao buscar usuários!" });
       }
@@ -350,16 +343,16 @@ const Usuario = () => {
     const selectedValue = event.target.value;
     const unidadeObj = userOptionsUnidade.find(option => option.value === selectedValue);
     if (unidadeObj && !selectedUnidades.includes(unidadeObj.label)) {
-      setSelectedUnidades([...selectedUnidades, unidadeObj.label]); // Armazena o nome da unidade
+      setSelectedUnidades([...selectedUnidades, unidadeObj.label]);
     }
   };
 
   const handleDeleteUser = async (user) => {
     try {
-      const response = await api.delete(`/usuario/${user.id}`); // Use o ID do usuário que está sendo excluído
+      const response = await api.delete(`/usuario/${user.id}`);
       if (response.status === 200) {
-        // Atualiza a lista de usuários após a exclusão
-        const updatedUsers = users.filter(u => u.id !== user.id); // Filtra o usuário excluído
+
+        const updatedUsers = users.filter(u => u.id !== user.id); 
         setUsers(updatedUsers);
         CustomToast({ type: "success", message: "Usuário excluído com sucesso!" });
       }
@@ -372,10 +365,10 @@ const Usuario = () => {
     try {
       const response = await api.get("/unidade");
       const unidadesOptions = response.data.data.map(unidade => ({
-        value: unidade.id, // ID da unidade
-        label: unidade.nome // Nome da unidade
+        value: unidade.id, 
+        label: unidade.nome 
       }));
-      setUserOptionsUnidade(unidadesOptions); // Armazena as unidades como um array de objetos
+      setUserOptionsUnidade(unidadesOptions); 
     } catch (error) {
       console.error("Erro ao carregar as unidades:", error);
     }
@@ -399,11 +392,11 @@ const Usuario = () => {
   }, []);
 
   useEffect(() => {
-    // Aqui você pode fazer algo para atualizar a tabela de usuários, se necessário
+
   }, [userOptionsUnidade]);
 
   useEffect(() => {
-    fetchUsers(); // Chama a função para buscar usuários quando o componente é montado
+    fetchUsers(); 
   }, []);
 
   return (
@@ -454,8 +447,8 @@ const Usuario = () => {
                 rows={rows}
                 actionsLabel={"Ações"}
                 actionCalls={{
-                  edit: (user) => handleEditUser(user), // Chama a função de edição
-                  delete: (user) => handleDeleteUser(user), // Chama a função de exclusão
+                  edit: (user) => handleEditUser(user),
+                  delete: (user) => handleDeleteUser(user), 
                 }}
               />
             </div>
@@ -508,7 +501,7 @@ const Usuario = () => {
                         </InputAdornment>
                       ),
                       inputProps: {
-                        maxLength: 11, // Adiciona o limite de comprimento aqui
+                        maxLength: 11, 
                       },
                     }}
                   />
@@ -518,7 +511,7 @@ const Usuario = () => {
                     size="small"
                     label="Senha"
                     name="senha"
-                    type={showPassword ? "text" : "password"} // Alterna entre "text" e "password"
+                    type={showPassword ? "text" : "password"} 
                     value={newUser.senha}
                     onChange={handleInputChange}
                     autoComplete="off"
@@ -550,7 +543,7 @@ const Usuario = () => {
                     backgroundColor={"#D9D9D9"}
                     name={"unidade"}
                     fontWeight={500}
-                    options={userOptionsUnidade} // Deve ser um array de objetos
+                    options={userOptionsUnidade} 
                     onChange={handleUnidadeChange}
                   />
                 </div>
@@ -559,7 +552,7 @@ const Usuario = () => {
                   <ul className="flex flex-col gap-1">
                     {selectedUnidades.map((unidade, index) => (
                       <li key={index} className="flex justify-between border-[1px] p-2 rounded-lg text-xs ">
-                        {unidade} {/* Aqui você está exibindo o nome da unidade */}
+                        {unidade} 
                         <button style={{ color: 'red' }} onClick={() => removeUnidade(unidade)} className="text-red-500 ">
                           <HighlightOffIcon fontSize="small" />
                         </button>
@@ -593,7 +586,7 @@ const Usuario = () => {
                     title={'Cadastrar'}
                     subtitle={'Cadastrar'}
                     buttonSize="large"
-                    onClick={handleSubmit} // Chama a função de cadastro
+                    onClick={handleSubmit} 
                   />
                 </div>
               </div>
@@ -614,7 +607,7 @@ const Usuario = () => {
                       size="small"
                       label="Nome Completo"
                       name="nome"
-                      value={newUser.nome} // Use newUser  para edição
+                      value={newUser.nome} 
                       onChange={handleInputChange}
                       autoComplete="off"
                       sx={{ width: { xs: '100%', sm: '50%', md: '40%', lg: '47%' } }}
@@ -632,8 +625,8 @@ const Usuario = () => {
                       size="small"
                       label="CPF"
                       name="cpf"
-                      value={newUser.cpf} // Use newUser  para edição
-                      onChange={handleCPFChange} // Certifique-se de que o CPF está sendo atualizado no objeto newUser   
+                      value={newUser.cpf} 
+                      onChange={handleCPFChange} 
                       autoComplete="off"
                       sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '47%' } }}
                       InputProps={{
@@ -643,7 +636,7 @@ const Usuario = () => {
                           </InputAdornment>
                         ),
                         inputProps: {
-                          maxLength: 11, // Adiciona o limite de comprimento aqui
+                          maxLength: 11,
                         },
                       }}
                     />
@@ -653,7 +646,7 @@ const Usuario = () => {
                       size="small"
                       label="Senha"
                       name="senha"
-                      type={showPassword ? "text" : "password"} // Alterna entre "text" e "password"
+                      type={showPassword ? "text" : "password"} 
                       value={newUser.senha}
                       onChange={handleInputChange}
                       autoComplete="off"
@@ -684,7 +677,7 @@ const Usuario = () => {
                       backgroundColor={"#D9D9D9"}
                       name={"unidade"}
                       fontWeight={500}
-                      options={userOptionsUnidade} // Passa as unidades carregadas
+                      options={userOptionsUnidade} 
                       onChange={handleUnidadeChange}
                     />
                   </div>
@@ -693,7 +686,7 @@ const Usuario = () => {
                     <ul className="flex flex-col gap-1">
                       {selectedUnidades.map((unidade, index) => (
                         <li key={index} className="flex justify-between border-[1px] p-2 rounded-lg text-xs ">
-                          {unidade} {/* Aqui você está exibindo o nome da unidade */}
+                          {unidade} 
                           <button style={{ color: 'red' }} onClick={() => removeUnidade(unidade)} className="text-red-500 ">
                             <HighlightOffIcon fontSize="small" />
                           </button>
@@ -711,8 +704,8 @@ const Usuario = () => {
                       <div className="w-full flex  items-center" key={permissao}>
                         <div className="w-[12%]">
                           <Checkbox
-                            checked={newUser.permissoes[permissao]} // Verifica se a permissão está ativa
-                            onChange={() => handleCheckboxChange(permissao)} // Chama a função de mudança
+                            checked={newUser.permissoes[permissao]} 
+                            onChange={() => handleCheckboxChange(permissao)} 
                           />
                         </div>
                         <label className="text-xs w-[73%]">{permissao.charAt(0).toUpperCase() + permissao.slice(1)}</label>
@@ -725,7 +718,7 @@ const Usuario = () => {
                       title={'Salvar'}
                       subtitle={'Salvar'}
                       buttonSize="large"
-                      onClick={handleUpdateUser} // Chama a função de atualização
+                      onClick={handleUpdateUser} 
                     />
                   </div>
                 </div>

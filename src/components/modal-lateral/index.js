@@ -8,19 +8,19 @@ import ButtonClose from '../buttons/button-close';
 
 const style = (width) => ({
     position: 'absolute',
-    top: 0, // Começa do topo da tela
+    top: 0, 
     right: 0,
-    width: width || 400, // Usa o valor de width passado ou o padrão (400px)
-    height: '100vh', // Ocupa 100% da altura da viewport
+    width: width || 400, 
+    height: '100vh', 
     bgcolor: 'background.paper',
     boxShadow: 24,
     p: 2,
     borderTopLeftRadius: '16px',
     display: 'flex',
-    flexDirection: 'column', // Organiza o conteúdo em coluna
+    flexDirection: 'column', 
 });
 
-export default function ModalLateral({ open, overflowY, handleClose, tituloModal, conteudo, icon, width, tamanhoIcone, tamanhoTitulo, opcao, tamanhoOpcao }) {
+export default function ModalLateral({ open, handleClose, tituloModal, conteudo, icon, width, tamanhoIcone, tamanhoTitulo, opcao, tamanhoOpcao }) {
     return (
         <div>
             <Modal
@@ -38,7 +38,7 @@ export default function ModalLateral({ open, overflowY, handleClose, tituloModal
                     <Box sx={style(width)}>
                         <Lines display={'flex'} flexDirection={'column'} width={'100%'} height={'100%'} conteudo={
                             <>
-                                {/* Cabeçalho da modal */}
+                           
                                 <Lines width={'100%'} display={'flex'} alignItems={'center'} conteudo={
                                     <>
                                         <Lines width={tamanhoIcone || '10%'} alignItems={'center'} justifyContent={'center'} padding={'5px'} backgroundColor={'#b0d847'} borderRadius={'5px'} color={'#ffff'} conteudo={<>{icon}</>} />
@@ -48,15 +48,15 @@ export default function ModalLateral({ open, overflowY, handleClose, tituloModal
                                     </>
                                 } />
 
-                                {/* Conteúdo da modal */}
+                               
                                 <Lines
                                     overflowY={'scroll'}
-                                    flex={1} // Ocupa todo o espaço restante
+                                    flex={1} 
                                     width={'100%'}
                                     border={'1px solid #d9d9d9'}
                                     borderRadius={'10px'}
                                     padding={'10px'}
-                                    marginTop={'10px'} // Adiciona um espaço entre o cabeçalho e o conteúdo
+                                    marginTop={'10px'} 
                                     conteudo={<>{conteudo}</>}
                                 />
                             </>

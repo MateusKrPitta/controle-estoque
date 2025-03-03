@@ -14,10 +14,10 @@ export default function SelectTextFields({
   icon,
   disabled = false,
   borderRadius,
-  options = [], // Tamanho da fonte do TextField
+  options = [],
   optionFontSize = '0.875rem',
   placeholder,
-  height, // Novo prop para o tamanho das opções
+  height, 
 }) {
   return (
     <Box
@@ -45,7 +45,7 @@ export default function SelectTextFields({
         }}
         InputLabelProps={{
           style: {
-            fontSize: '13px', // Ajusta o tamanho da fonte do label
+            fontSize: '13px', 
           },
         }}
         InputProps={{
@@ -53,9 +53,9 @@ export default function SelectTextFields({
             <InputAdornment position="start">{icon}</InputAdornment>
           ),
           style: {
-            height: height || '36px', // Define a altura do select
+            height: height || '36px', 
             fontSize: '13px',
-            padding: '10px 8px', // Reduz o padding interno
+            padding: '10px 8px', 
             appearance: 'none',
             MozAppearance: 'textfield',
           },
@@ -66,8 +66,8 @@ export default function SelectTextFields({
             key={option.value}
             value={option.value}
             sx={{
-              fontSize: optionFontSize, // Tamanho da fonte das opções
-              padding: '4px 8px', // Reduz o padding das opções
+              fontSize: optionFontSize,
+              padding: '4px 8px', 
             }}
           >
             {option.label}

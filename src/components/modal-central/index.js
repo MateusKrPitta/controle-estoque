@@ -2,7 +2,6 @@ import React from "react";
 import { Modal, Box, Typography, Button, Grow } from "@mui/material";
 import Lines from "../lines";
 
-//icones
 import Label from "../label";
 import ButtonClose from "../buttons/button-close";
 
@@ -23,13 +22,13 @@ const CentralModal = ({ open, onClose, bottom, title, children, icon, width, top
                 <Box
                     sx={{
                         position: "absolute",
-                        top: { xs: '10%', sm: top || '20%' }, // Ajuste para telas menores
-                        left: { xs: '5%', sm: left || '28%' }, // Ajuste para telas menores
+                        top: { xs: '10%', sm: top || '20%' },
+                        left: { xs: '5%', sm: left || '28%' }, 
                         bottom: { bottom },
                         maxHeight: maxHeight,
                         overflowY: 'auto',
                         transform: "translate(-50%, -50%)",
-                        width: { xs: '90%', sm: width || '450px' }, // Ajuste para telas menores
+                        width: { xs: '90%', sm: width || '450px' },
                         bgcolor: "background.paper",
                         boxShadow: 24,
                         p: 3,

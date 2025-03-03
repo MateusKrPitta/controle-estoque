@@ -83,7 +83,7 @@ const EstoqueReal = () => {
             const response = await api.get(`/produto?unidadeId=${unidadeId}`);
             const produtosCadastrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
             setProdutos(produtosCadastrados);
-            setProdutosFiltrados(produtosCadastrados); // Inicialmente, os produtos filtrados são todos os produtos
+            setProdutosFiltrados(produtosCadastrados);
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
         }
@@ -178,8 +178,8 @@ const EstoqueReal = () => {
         const produtosFiltrados = produtos.filter(produto => {
             const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
     
-            // Verifica se a data de criação do produto está dentro do intervalo selecionado
-            const dataCriacaoProduto = new Date(produto.createdAt); // Usar `createdAt`
+
+            const dataCriacaoProduto = new Date(produto.createdAt); 
             const dataInicioFiltro = new Date(dataInicio);
             const dataFimFiltro = new Date(dataFim);
     

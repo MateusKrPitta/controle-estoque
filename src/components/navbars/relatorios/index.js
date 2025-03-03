@@ -3,16 +3,16 @@ import ButtonComponent from '../../button';
 import { useNavigate } from 'react-router-dom';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+
 const HeaderRelatorio = () => {
     const navigate = useNavigate();
 
     const handleNavigation = (section) => {
         switch (section) {
-            case 'estoque-real': // Aqui estava 'usuario', mas o botão chama 'usuarios'
+            case 'estoque-real': 
                 navigate('/relatorios/estoque-real');
                 break;
-            case 'lista-compra': // Aqui estava 'usuario', mas o botão chama 'usuarios'
+            case 'lista-compra': 
                 navigate('/relatorios/lista-compra');
                 break;
             // case 'desperdicio': // Aqui estava 'usuario', mas o botão chama 'usuarios'

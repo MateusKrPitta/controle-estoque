@@ -11,6 +11,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 import ScaleIcon from '@mui/icons-material/Scale';
 import ButtonComponent from '../../components/button';
 import FlatwareIcon from '@mui/icons-material/Flatware';
+import { NumericFormat } from 'react-number-format';
 import ButtonClose from '../../components/buttons/button-close';
 import TabelaProdutos from '../../components/table-expanded';
 import CustomToast from '../../components/toast';
@@ -52,6 +53,7 @@ const FichaTecnica = () => {
     const [produtosDaFicha, setProdutosDaFicha] = useState([]);
     const [valorVenda, setValorVenda] = useState('');
     const [lucroReal, setLucroReal] = useState(0);
+
     const [produtosCadastrados, setProdutosCadastrados] = useState([]);
     const [rendimento, setRendimento] = useState('');
     const [valorRendimento, setValorRendimento] = useState(0); // Novo estado para o valor do rendimento
@@ -104,6 +106,7 @@ const FichaTecnica = () => {
             setValorRendimento(0);
         }
     }, [custoTotal, rendimento]);
+
     const fetchProdutosDaFicha = async () => {
         try {
             const response = await api.get(`/ficha?unidadeId=${unidadeId}`);
@@ -246,6 +249,7 @@ const FichaTecnica = () => {
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao cadastrar prato!" });
         }
+        fetchProdutosDaFicha()
     };
     const handleEditPrato = (index) => {
         const prato = produtosCadastrados[index];
@@ -554,23 +558,24 @@ const FichaTecnica = () => {
                                         </div>
                                         <div className='flex items-center w-full '>
                                             <label className='text-xs font-bold w-[60%]'>Valor Venda: </label>
-                                            <input
-                                                type="text"
-                                                value={valorVenda ? formatValor(valorVenda) : ''} // Evita NaN
-                                                onChange={(e) => {
-                                                    const valor = e.target.value.replace('R$', '').replace('.', '').replace(',', '.').trim();
-                                                    setValorVenda(valor);
+                                            <NumericFormat
+                                                value={valorVenda}
+                                                onValueChange={(values) => {
+                                                    const { formattedValue, value } = values;
+                                                    setValorVenda(formattedValue); // Armazena o valor formatado
+                                                    // Você pode armazenar o valor numérico se precisar
                                                 }}
+                                                thousandSeparator={true}
+                                                decimalScale={2}
+                                                fixedDecimalScale={true}
+                                                prefix={'R$ '}
+                                                className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start'
                                                 style={{
-                                                    backgroundColor: "#d9d9d9",
-                                                    color: 'black',
+                                                    backgroundColor: '#BCDA72',
                                                     borderRadius: '10px',
-                                                    fontSize: '12px',
-                                                    fontWeight: '700',
-                                                    width: '40%',
-                                                    padding: '2px',
                                                     border: '1px solid #ccc',
-                                                    outline: 'none'
+                                                    outline: 'none',
+                                                    padding: '5px',
                                                 }}
                                             />
                                         </div>

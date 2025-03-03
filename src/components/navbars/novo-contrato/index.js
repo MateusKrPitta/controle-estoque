@@ -12,7 +12,7 @@ const HeaderNovoContrato = ({ activeSection, disabledSections, handleNavigation 
     const navigate = useNavigate();
 
     const handleNavigationLocal = (section) => {
-        handleNavigation(section); // Use a função recebida como prop
+        handleNavigation(section);
         switch (section) {
             case 'dadosGerais':
                 navigate('/novo-contrato/dados-gerais');

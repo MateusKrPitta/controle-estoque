@@ -12,7 +12,7 @@ const Relatorio = () => {
         useEffect(() => {
             const timer = setTimeout(() => {
                 setIsVisible(true);
-            }, 300); // Delay para a transição
+            }, 300); 
     
             return () => clearTimeout(timer);
         }, []);

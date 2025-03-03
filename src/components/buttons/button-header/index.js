@@ -21,13 +21,13 @@ const ButtonHeader = ({
   imgWidth,
   imgHeight,
   label,
-  active, // Adicionando a prop active
+  active, 
 }) => {
   return (
     <button
       onClick={funcao}
       title={label}
-      className={`button-custom-header ${active ? 'active' : ''}`} // Adicionando a classe active
+      className={`button-custom-header ${active ? 'active' : ''}`} 
       style={{
         gap: gap,
         padding: padding,

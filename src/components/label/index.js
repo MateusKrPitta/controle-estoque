@@ -39,7 +39,7 @@ const Label = ({
     padding: padding,
     color: color,
     iconEnd:iconEnd,
-    fontWeight: fontWeight, // Certifique-se de que esta propriedade esteja sendo aplicada corretamente no estilo
+    fontWeight: fontWeight,
   };
 
   return (

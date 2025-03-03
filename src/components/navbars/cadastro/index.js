@@ -11,7 +11,7 @@ const HeaderCadastro = () => {
 
     const handleNavigation = (section) => {
         switch (section) {
-            case 'usuarios': // Aqui estava 'usuario', mas o botão chama 'usuarios'
+            case 'usuarios':
                 navigate('/cadastro/usuarios');
                 break;
             case 'produtos':

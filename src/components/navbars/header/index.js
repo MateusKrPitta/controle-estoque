@@ -51,7 +51,7 @@ const Navbar = ({ user }) => {
                         <img src={logo} alt="Logo" style={{backgroundColor:'black', padding:'15px', borderRadius:"10px", width:'65%'}} title={user ? "Clique para acessar a Dashboard" : ''} className="w-24" />
                         <label className='text-white text-xs'>Controle de Estoque</label>
                     </div>
-                    {/* {user ? ( */}
+                    
                     <div className="flex flex-col gap-2 text-white overflow-hidden transition-all">
                         <label className="text-sm mt-1 text-white font-bold">Home</label>
                         <button

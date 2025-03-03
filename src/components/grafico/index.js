@@ -12,5 +12,5 @@ const CustomTooltip = ({ active, payload }) => {
     return null;
 };
 export default CustomTooltip;
-// E no gráfico:
+
 <Tooltip content={<CustomTooltip />} />

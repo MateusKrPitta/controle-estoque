@@ -14,7 +14,8 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import Estoque from '../../assets/png/logo.png';
 import SelectTextFields from '../select';
 import api from '../../services/api';
-const MenuMobile = ({ user }) => {
+
+const MenuMobile = () => {
     const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
     const [selectedUnidade, setSelectedUnidade] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
@@ -31,7 +32,7 @@ const MenuMobile = ({ user }) => {
 
     const handleNavigate = (route) => {
         navigate(route);
-        handleClose(); // Fecha o menu após a navegação
+        handleClose();
     };
 
     const handleUnidadeChange = (event) => {

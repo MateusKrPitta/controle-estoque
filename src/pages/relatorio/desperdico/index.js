@@ -11,13 +11,13 @@ import { formatValor } from '../../../utils/functions';
 import ButtonComponent from '../../../components/button';
 import { headerDesperdicio } from '../../../entities/headers/header-desperdicio';
 import TableComponent from '../../../components/table';
-import SelectTextFields from '../../../components/select/index.js'; // Import your SelectTextFields component
+import SelectTextFields from '../../../components/select/index.js'; 
 import { NumericFormat } from 'react-number-format';
 import Logo from '../../../assets/png/logo_preta.png'
 const Desperdicio = () => {
     const [produto, setProduto] = useState('');
     const [quantidade, setQuantidade] = useState('');
-    const [precoRaw, setPrecoRaw] = useState(''); // Raw price input
+    const [precoRaw, setPrecoRaw] = useState(''); 
     const [produtos, setProdutos] = useState([]);
     const [desperdicioRows, setDesperdicioRows] = useState([]);
     const [isVisible, setIsVisible] = useState(false);
@@ -25,20 +25,20 @@ const Desperdicio = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsVisible(true);
-        }, 300); // Delay para a transição
+        }, 300); 
 
         return () => clearTimeout(timer);
     }, []);
 
     useEffect(() => {
-        // Fetch products from local storage
+
         const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
         setProdutos(produtosSalvos);
 
-        // Fetch entradas e saídas from local storage
+  
         const entradasSaidasSalvas = JSON.parse(localStorage.getItem('entradasSaidas')) || [];
 
-        // Filtrar apenas os registros de desperdício
+
         const desperdicioSalvo = entradasSaidasSalvas.filter(item => item.tipo === 'desperdicio');
         setDesperdicioRows(desperdicioSalvo);
     }, []);
@@ -49,7 +49,7 @@ const Desperdicio = () => {
             return;
         }
 
-        const parsedPreco = parseFloat(precoRaw); // Agora já está correto
+        const parsedPreco = parseFloat(precoRaw); 
 
         if (isNaN(parsedPreco) || parsedPreco <= 0) {
             alert("O valor do preço é inválido.");
@@ -59,20 +59,18 @@ const Desperdicio = () => {
         const total = parsedPreco * parseInt(quantidade, 10);
 
         const newDesperdicio = {
-            id: Date.now(), // Adiciona um ID único
+            id: Date.now(),
             produto,
             quantidade,
-            precoPorcao: parsedPreco, // Mantém o preço por porção
-            total: total, // Mantém o total
-            tipo: 'desperdicio', // Adiciona o tipo
-            dataCadastro: new Date().toISOString().split('T')[0] // Adiciona a data de cadastro
+            precoPorcao: parsedPreco,
+            total: total,
+            tipo: 'desperdicio', 
+            dataCadastro: new Date().toISOString().split('T')[0] 
         };
 
         const updatedDesperdicioRows = [...desperdicioRows, newDesperdicio];
         setDesperdicioRows(updatedDesperdicioRows);
-        localStorage.setItem('entradasSaidas', JSON.stringify(updatedDesperdicioRows)); // Salva no localStorage
-
-        // Resetar os campos
+        localStorage.setItem('entradasSaidas', JSON.stringify(updatedDesperdicioRows)); 
         setProduto('');
         setQuantidade('');
         setPrecoRaw('');
@@ -173,8 +171,8 @@ const Desperdicio = () => {
                                 name={"produto"}
                                 fontWeight={500}
                                 options={produtos.map(prod => ({ label: prod.nome, value: prod.nome }))}
-                                onChange={(e) => setProduto(e.target.value)} // Update the selected product
-                                value={produto} // Reflect the current state
+                                onChange={(e) => setProduto(e.target.value)}
+                                value={produto}
                             />
                             <TextField
                                 fullWidth
@@ -203,7 +201,7 @@ const Desperdicio = () => {
                                 sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '20%' } }}
                                 value={precoRaw}
                                 onValueChange={(values) => {
-                                    // Usa values.floatValue, que já está no formato correto
+                     
                                     setPrecoRaw(values.floatValue || '');
                                 }}
                                 thousandSeparator="."
@@ -240,13 +238,13 @@ const Desperdicio = () => {
                                 headers={headerDesperdicio}
                                 rows={desperdicioRows.map(row => ({
                                     ...row,
-                                    total: formatValor(row.precoPorcao * row.quantidade), // Calcula o total
-                                    precoPorcao: formatValor(row.precoPorcao), // Formata o preço por porção
+                                    total: formatValor(row.precoPorcao * row.quantidade), 
+                                    precoPorcao: formatValor(row.precoPorcao), 
                                     dataCadastro: new Date(row.dataCadastro).toLocaleDateString('pt-BR'), // Formata a data
                                 }))}
-                                actionsLabel={"Ações"} // Se você quiser adicionar ações
+                                actionsLabel={"Ações"} 
                                 actionCalls={{
-                                    // Aqui você pode adicionar ações como editar ou deletar
+                              
                                 }}
                             />
                         </div>

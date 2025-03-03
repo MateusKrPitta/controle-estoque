@@ -12,7 +12,7 @@ const Cadastro = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsVisible(true);
-        }, 100); // Delay para a transição
+        }, 100);
 
         return () => clearTimeout(timer);
     }, []);

@@ -1,4 +1,4 @@
-// LoginPage.js
+
 import React, { useState } from 'react';
 import { VisibilityOffOutlined, VisibilityOutlined } from '@mui/icons-material';
 import logoPaxVerde from '../../assets/png/logo.png';
@@ -66,7 +66,7 @@ const LoginPage = () => {
                     const unidadeSelecionada = unidade[0];
                     setUnidadeId(unidadeSelecionada.id);
                     setUnidadeNome(unidadeSelecionada.nome);
-                    // Aqui você pode adicionar a lógica para atualizar o selectedUnidade
+                   
                     localStorage.setItem('unidadeId', unidadeSelecionada.id);
                     localStorage.setItem('unidadeNome', unidadeSelecionada.nome);
                 }

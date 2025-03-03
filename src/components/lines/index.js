@@ -24,7 +24,7 @@ const Lines = ({
   color,
   border,
   flexWrap,
-  zIndex, // Adicione zIndex como uma prop
+  zIndex,
   onClick
 }) => {
   const estilos = {
@@ -35,7 +35,7 @@ const Lines = ({
     justifyContent: justifyContent || 'flex-start',
     width: width || '100%',
     marginTop: marginTop,
-    position: position, // Certifique-se de que position esteja definido
+    position: position, 
     maxHeight: maxHeight,
     overflow: overflow,
     overflowX: overflowX,
@@ -50,7 +50,7 @@ const Lines = ({
     marginLeft: marginLeft,
     flexWrap: flexWrap || 'wrap',
     whiteSpace: whiteSpace,
-    zIndex: zIndex // Adicione zIndex ao estilo
+    zIndex: zIndex
   };
 
   return (

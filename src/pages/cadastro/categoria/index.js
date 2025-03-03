@@ -4,7 +4,7 @@ import MenuMobile from '../../../components/menu-mobile';
 import HeaderPerfil from '../../../components/navbars/perfil';
 import HeaderCadastro from '../../../components/navbars/cadastro';
 import CategoryIcon from '@mui/icons-material/Category';
-import { InputAdornment, TextField, Typography } from '@mui/material'; // Importando Typography
+import { InputAdornment, TextField, Typography } from '@mui/material'; 
 import ButtonComponent from '../../../components/button';
 import CentralModal from '../../../components/modal-central';
 import { Edit, Save } from "@mui/icons-material";
@@ -12,7 +12,6 @@ import TableComponent from '../../../components/table';
 import { headerCategoria } from '../../../entities/headers/header-categoria';
 import ModalLateral from '../../../components/modal-lateral';
 import CustomToast from '../../../components/toast';
-import SelectTextFields from '../../../components/select';
 import api from '../../../services/api';
 import TableLoading from '../../../components/loading/loading-table/loading';
 import AddCircleOutline from "@mui/icons-material/AddCircleOutline";
@@ -22,7 +21,7 @@ import { useUnidade } from '../../../components/unidade-context';
 
 const Categoria = () => {
     const navigate = useNavigate();
-    const { unidadeId } = useUnidade(); // Obtendo a unidadeId do contexto
+    const { unidadeId } = useUnidade();
     const [cadastroCategoria, setCadastroCategoria] = useState(false);
     const [loading, setLoading] = useState(false);
     const [categorias, setCategorias] = useState([]);
@@ -33,7 +32,7 @@ const Categoria = () => {
     const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
     const [filtroNome, setFiltroNome] = useState('');
     const [produtosFiltrados, setProdutosFiltrados] = useState([]);
-    const [mensagemErro, setMensagemErro] = useState(''); // Estado para mensagem de erro
+    const [mensagemErro, setMensagemErro] = useState(''); 
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -49,22 +48,22 @@ const Categoria = () => {
 
     useEffect(() => {
         if (unidadeId) {
-            carregarCategorias(unidadeId); // Carrega categorias com a unidadeId
+            carregarCategorias(unidadeId); 
         }
-    }, [unidadeId]); // Adicione unidadeId como dependência
+    }, [unidadeId]); 
 
     useEffect(() => {
-        // Filtra as categorias sempre que filtroNome mudar
+        
         const categoriasFiltradas = categorias.filter(categoria =>
             categoria.nome.toLowerCase().includes(filtroNome.toLowerCase())
         );
         setProdutosFiltrados(categoriasFiltradas);
 
-        // Atualiza a mensagem de erro se não houver categorias filtradas
+        
         if (categoriasFiltradas.length === 0 && filtroNome) {
             setMensagemErro('Nenhuma categoria encontrada com esse nome.');
         } else {
-            setMensagemErro(''); // Limpa a mensagem de erro se houver categorias
+            setMensagemErro(''); 
         }
     }, [filtroNome, categorias]);
 
@@ -74,7 +73,7 @@ const Categoria = () => {
             const response = await api.get(`/categoria?unidade=${unidadeId}`);
             if (Array.isArray(response.data.data)) {
                 setCategorias(response.data.data);
-                console.log(response.data.data); // Verifique as categorias carregadas
+                console.log(response.data.data);
             } else {
                 setCategorias([]);
             }
@@ -88,7 +87,7 @@ const Categoria = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setCategoria({ ...categoria, [name]: value });
-        console.log(value); // Verifique o valor que está sendo digitado
+        console.log(value); 
     };
 
     const handleCadastroCategoria = () => setCadastroCategoria(true);
@@ -98,10 +97,10 @@ const Categoria = () => {
         try {
             const novaCategoria = {
                 nome: categoria.nome,
-                unidadeId: unidadeId // Use a unidadeId do contexto
+                unidadeId: unidadeId 
             };
             await api.post('/categoria', novaCategoria);
-            await carregarCategorias(unidadeId); // Carrega categorias após cadastrar
+            await carregarCategorias(unidadeId); 
             setCategoria({ nome: '', unidadeId: '' });
             handleCloseCadastroCategoria();
             CustomToast({ type: "success", message: "Categoria cadastrada com sucesso!" });
@@ -119,7 +118,7 @@ const Categoria = () => {
         if (categoriaEditada) {
             try {
                 await api.put(`/categoria/${categoriaEditada.id}`, categoriaEditada);
-                await carregarCategorias(unidadeId); // Carrega categorias após editar
+                await carregarCategorias(unidadeId); 
                 setEditandoCategoria(false);
                 setCategoriaEditada(null);
                 CustomToast({ type: "success", message: "Categoria editada com sucesso!" });
@@ -132,7 +131,7 @@ const Categoria = () => {
     const handleDeleteCategoria = async (categoria) => {
         try {
             await api.delete(`/categoria/${categoria.id}`);
-            await carregarCategorias(unidadeId); // Carrega categorias após deletar
+            await carregarCategorias(unidadeId); 
             CustomToast({ type: "success", message: "Categoria deletada com sucesso!" });
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao deletar categoria." });
@@ -154,9 +153,9 @@ const Categoria = () => {
 
     useEffect(() => {
         if (unidadeId) {
-            carregarCategorias(unidadeId); // Carrega categorias com a unidadeId
+            carregarCategorias(unidadeId); 
         }
-    }, [unidadeId]); // Adicione unidadeId como dependência
+    }, [unidadeId]); 
 
     return (
         <div className="flex w-full ">
@@ -206,7 +205,7 @@ const Categoria = () => {
                                 </div>
                             ) : (
                                 <>
-                                    {produtosFiltrados.length === 0 ? ( // Verifica se não há produtos filtrados
+                                    {produtosFiltrados.length === 0 ? ( 
                                         <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
                                             <TableLoading />
                                            <label>{mensagemErro}</label> 
@@ -214,7 +213,7 @@ const Categoria = () => {
                                     ) : (
                                         <TableComponent
                                             headers={headerCategoria}
-                                            rows={produtosFiltrados} // Usa a lista filtrada
+                                            rows={produtosFiltrados} 
                                             actionsLabel={"Ações"}
                                             actionCalls={{
                                                 edit: handleEditCategoria,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../../components/navbars/header/index.js';
 import { AddCircleOutline, DateRange, Edit, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
-import { IconButton, InputAdornment, TextField, Typography } from '@mui/material'; // Importando Typography
+import { IconButton, InputAdornment, TextField,  } from '@mui/material'; 
 import ButtonComponent from '../../../components/button/index.js';
 import SearchIcon from '@mui/icons-material/Search';
 import TableComponent from '../../../components/table/index.js';
@@ -18,7 +18,7 @@ import ScaleIcon from '@mui/icons-material/Scale';
 import ModalLateral from '../../../components/modal-lateral/index.js';
 import SelectTextFields from '../../../components/select/index.js';
 import { NumericFormat } from 'react-number-format';
-import { formatPrecoPorcao, formatValor } from '../../../utils/functions.js';
+import { formatValor } from '../../../utils/functions.js';
 import CustomToast from '../../../components/toast/index.js';
 import { MoneyOutlined } from '@mui/icons-material';
 import Caixa from '../../../assets/icones/caixa.png';
@@ -48,11 +48,10 @@ const Produtos = () => {
     const [filtroDataFinal, setFiltroDataFinal] = useState('');
     const [produtoEditado, setProdutoEditado] = useState(null);
     const [valorReajuste, setValorReajuste] = useState('');
-    const [categoriasFiltradas, setCategoriasFiltradas] = useState([]);
     const [dataReajuste, setDataReajuste] = useState('');
     const [produtosOriginais, setProdutosOriginais] = useState([]);
     const [produtosFiltrados, setProdutosFiltrados] = useState([]);
-    const [mensagemErro, setMensagemErro] = useState(''); // Estado para mensagem de erro
+    const [mensagemErro, setMensagemErro] = useState(''); 
     const userOptionsUnidade = [
         { value: 1, label: 'Kilograma' },
         { value: 2, label: 'Grama' },
@@ -70,7 +69,7 @@ const Produtos = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    // Função para limpar os campos do cadastro
+
     const clearCadastroFields = () => {
         setNome('');
         setQtdMin('');
@@ -80,7 +79,7 @@ const Produtos = () => {
         setSelectedCategoria('');
     };
 
-    // Função para limpar os campos de edição
+
     const clearEditFields = () => {
         setNome('');
         setQtdMin('');
@@ -99,7 +98,7 @@ const Produtos = () => {
     const handleCadastroProdutos = () => setCadastroAdicionais(true);
     const handleCloseCadastroProdutos = () => {
         setCadastroAdicionais(false);
-        clearCadastroFields(); // Limpa os campos ao fechar a modal
+        clearCadastroFields(); 
     };
 
     const handleFiltro = () => setFiltro(true);
@@ -118,13 +117,13 @@ const Produtos = () => {
             rendimento: rendimentoNumerico,
             valor: precoNumerico,
             unidadeMedida: selectedUnidade,
-            unidadeId, // Certifique-se de que a unidadeId está sendo enviada
+            unidadeId, 
             categoriaId: selectedCategoria,
         };
 
         try {
             const response = await api.post('/produto', novoProduto);
-            await carregaProdutos(unidadeId); // Recarrega os produtos com a unidadeId correta
+            await carregaProdutos(unidadeId); 
             handleCloseCadastroProdutos();
             CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
         } catch (error) {
@@ -134,7 +133,7 @@ const Produtos = () => {
 
     useEffect(() => {
         if (unidadeId) {
-            carregaProdutos(unidadeId); // Carrega produtos com a unidadeId
+            carregaProdutos(unidadeId); 
         }
     }, [unidadeId]);
 
@@ -147,7 +146,7 @@ const Produtos = () => {
                 const mappedProdutos = produtosFiltrados.map(produto => {
                     const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
                     const valorFormatado = formatValor(produto.valorReajuste || produto.valor);
-
+                
                     return {
                         id: produto.id,
                         nome: produto.nome,
@@ -159,7 +158,7 @@ const Produtos = () => {
                         valorFormatado: valorFormatado,
                         qtdMin: produto.qtdMin,
                         categoriaId: produto.categoriaId,
-                        createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'),
+                        createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'), 
                         categoriaNome: produto.categoriaNome
                     };
                 });
@@ -171,7 +170,7 @@ const Produtos = () => {
             }
         } catch (error) {
             console.error('Erro ao buscar produtos:', error);
-            // Trate o erro conforme necessário
+        
         } finally {
             setLoading(false);
         }
@@ -180,31 +179,36 @@ const Produtos = () => {
     const handlePesquisar = () => {
         const produtosFiltrados = produtosOriginais.filter(produto => {
             const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
-            const dataInicialMatch = filtroDataInicial ? new Date(produto.createdAt) >= new Date(filtroDataInicial) : true;
-            const dataFinalMatch = filtroDataFinal ? new Date(produto.createdAt) <= new Date(filtroDataFinal) : true;
+            
+            const dataProduto = new Date(produto.createdAt).getTime(); // Converte para timestamp
+            const dataInicial = filtroDataInicial ? new Date(filtroDataInicial).setHours(0, 0, 0, 0) : null; // Início do dia
+            const dataFinal = filtroDataFinal ? new Date(filtroDataFinal).setHours(23, 59, 59, 999) : null; // Fim do dia
+    
+            const dataInicialMatch = dataInicial ? dataProduto >= dataInicial : true;
+            const dataFinalMatch = dataFinal ? dataProduto <= dataFinal : true;
+    
             const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
-
+    
             return nomeMatch && dataInicialMatch && dataFinalMatch && categoriaMatch;
         });
-
+    
         setProdutosFiltrados(produtosFiltrados);
-        handleCloseFiltro(); // Fecha a modal de filtro
-
+        handleCloseFiltro();
+    
         if (produtosFiltrados.length === 0) {
-            setMensagemErro('Nenhum produto encontrado com os critérios de pesquisa.'); // Atualiza a mensagem de erro
+            setMensagemErro('Nenhum produto encontrado com os critérios de pesquisa.');
             CustomToast({ type: "error", message: "Nenhum produto encontrado com os critérios de pesquisa." });
         } else {
-            setMensagemErro(''); // Limpa a mensagem de erro se houver produtos
+            setMensagemErro('');
             CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
         }
     };
-
     const handleDeleteProduto = async (produtoId) => {
         try {
-            // Chama a API para deletar o produto
+          
             await api.delete(`/produto/${produtoId}`);
 
-            // Atualiza o estado local para remover o produto deletado
+     
             const produtosAtualizados = produtos.filter((produto) => produto.id !== produtoId);
             setProdutos(produtosAtualizados);
 
@@ -217,18 +221,16 @@ const Produtos = () => {
     const handleEditProduto = (produto) => {
         setProdutoEditado(produto);
         setNome(produto.nome);
-        setQtdMin(produto.qtdMin); // Certifique-se de que isso está correto
+        setQtdMin(produto.qtdMin);
         setRendimento(produto.rendimento);
 
-        // Use o valorFormatado para definir o preco
+
         setPreco(produto.valorFormatado);
 
-        // Mapeie a unidade de medida para o valor correspondente
         const unidadeSelecionada = userOptionsUnidade.find(unit => unit.label === produto.unidadeMedida);
-        setSelectedUnidade(unidadeSelecionada ? unidadeSelecionada.value : ""); // Defina o valor correspondente
-
+        setSelectedUnidade(unidadeSelecionada ? unidadeSelecionada.value : "");
         setSelectedCategoria(produto.categoriaId);
-        setEditandoCategoria(true); // Abre o modal de edição
+        setEditandoCategoria(true); 
     };
 
     const handleSalvarProduto = async () => {
@@ -266,13 +268,13 @@ const Produtos = () => {
             dataReajuste: dataReajusteFormatada,
             valorReajuste: valorReajusteNumerico,
             unidadeMedida: selectedUnidade,
-            unidadeId, // Mantém a unidadeId
+            unidadeId, 
             categoriaId: selectedCategoria,
         };
 
         try {
             const response = await api.put(`/produto/${produtoEditado.id}`, produtoAtualizado);
-            await carregaProdutos(unidadeId); // Recarrega os produtos com a unidadeId correta
+            await carregaProdutos(unidadeId); 
             setEditandoCategoria(false);
             clearEditFields();
             CustomToast({ type: "success", message: "Produto atualizado com sucesso!" });
@@ -284,13 +286,12 @@ const Produtos = () => {
     const carregaCategorias = async (unidadeId) => {
         if (!unidadeId) {
             console.error('unidadeId não está definido');
-            return; // Não faz nada se unidadeId não estiver definido
+            return; 
         }
 
         try {
-            const response = await api.get(`/categoria?unidadeId=${unidadeId}`); // Carrega categorias pela unidadeId
+            const response = await api.get(`/categoria?unidadeId=${unidadeId}`); 
             if (Array.isArray(response.data.data)) {
-                // Filtra as categorias pela unidadeId
                 const categoriasFiltradas = response.data.data.filter(categoria => categoria.unidadeId === unidadeId);
                 setCategorias(categoriasFiltradas);
             } else {
@@ -313,12 +314,14 @@ const Produtos = () => {
     useEffect(() => {
         const carregarDados = async () => {
             if (unidadeId) {
-                await carregaCategorias(unidadeId); // Passa a unidadeId para a função
+                await carregaCategorias(unidadeId); 
                 await carregaProdutos(unidadeId);
             }
         };
         carregarDados();
     }, [unidadeId]);
+
+
 
     return (
         <div className="flex w-full ">
@@ -392,7 +395,7 @@ const Produtos = () => {
                                     </div>
                                 ) : (
                                     <>
-                                        {produtosFiltrados.length === 0 ? ( // Verifica se não há produtos filtrados
+                                        {produtosFiltrados.length === 0 ? ( 
                                             <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
                                             <TableLoading />
                                            <label>Nenhum produto encontrato com esse nome!</label> 
@@ -553,8 +556,8 @@ const Produtos = () => {
                                             size="small"
                                             label="Quantidade Mínima"
                                             name="quantidadeMinima"
-                                            value={qtdMin} // Certifique-se de que está usando o estado correto
-                                            onChange={(e) => setQtdMin(e.target.value)} // Atualiza o estado ao mudar
+                                            value={qtdMin} 
+                                            onChange={(e) => setQtdMin(e.target.value)} 
                                             sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '47%' } }}
                                             InputProps={{
                                                 startAdornment: (
@@ -570,7 +573,7 @@ const Produtos = () => {
                                             size="small"
                                             label="Rendimento"
                                             name="rendimento"
-                                            value={rendimento} // Certifique-se de que está usando o estado correto
+                                            value={rendimento} 
                                             onChange={(e) => setRendimento(e.target.value)}
                                             sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
                                             InputProps={{
@@ -587,7 +590,7 @@ const Produtos = () => {
                                             variant="outlined"
                                             size="small"
                                             label="Preço"
-                                            sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '47%' }, }}
+                                            sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '50%' }, }}
                                             value={preco}
                                             onValueChange={(values) => setPreco(values.value)}
                                             thousandSeparator="."
@@ -612,7 +615,7 @@ const Produtos = () => {
                                             label="Valor Reajuste"
                                             sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '47%' }, }}
                                             value={valorReajuste}
-                                            onValueChange={(values) => setValorReajuste(values.value)} // Atualiza o estado com o valor formatado
+                                            onValueChange={(values) => setValorReajuste(values.value)} 
                                             thousandSeparator="."
                                             decimalSeparator=","
                                             prefix="R$ "
@@ -644,7 +647,7 @@ const Produtos = () => {
                                             }}
                                         />
                                         <SelectTextFields
-                                            width="144px"
+                                            width="155px"
                                             icon={<CategoryIcon fontSize="small" />}
                                             label="Categoria"
                                             backgroundColor="#D9D9D9"
@@ -652,10 +655,10 @@ const Produtos = () => {
                                             fontWeight={500}
                                             options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
                                             onChange={(e) => setSelectedCategoria(e.target.value)}
-                                            value={selectedCategoria} // Certifique-se de que está usando o estado correto
+                                            value={selectedCategoria} 
                                         />
                                         <SelectTextFields
-                                            width="300px"
+                                            width="330px"
                                             icon={<ScaleIcon fontSize="small" />}
                                             label="Unidade Medida"
                                             backgroundColor="#D9D9D9"
@@ -663,14 +666,14 @@ const Produtos = () => {
                                             fontWeight={500}
                                             options={userOptionsUnidade}
                                             onChange={handleUnidadeChange}
-                                            value={selectedUnidade} // Certifique-se de que está usando o estado correto
+                                            value={selectedUnidade} 
                                         />
                                         <div className="w-[95%] mt-2 flex items-end justify-end">
                                             <ButtonComponent
                                                 title="Salvar"
                                                 subtitle="Salvar"
                                                 startIcon={<Save />}
-                                                onClick={handleSalvarProduto} // Chama a função de salvar
+                                                onClick={handleSalvarProduto}
                                             />
                                         </div>
                                     </div>

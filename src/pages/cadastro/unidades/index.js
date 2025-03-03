@@ -3,7 +3,6 @@ import Navbar from "../../../components/navbars/header";
 import HeaderPerfil from "../../../components/navbars/perfil";
 import { InputAdornment, TextField } from "@mui/material";
 import ButtonComponent from "../../../components/button";
-import SearchIcon from "@mui/icons-material/Search";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import HeaderCadastro from "../../../components/navbars/cadastro";
 import TableComponent from "../../../components/table";
@@ -20,11 +19,11 @@ import { useNavigate } from "react-router-dom";
 const Unidades = () => {
   const [cadastrarUnidade, setCadastrarUnidade] = useState(false);
   const [unidades, setUnidades] = useState([]);
-  const [filtroNome, setFiltroNome] = useState(""); // Estado para o filtro de busca
-  const [unidadesFiltradas, setUnidadesFiltradas] = useState([]); // Estado para as unidades filtradas
+  const [filtroNome, setFiltroNome] = useState(""); 
+  const [unidadesFiltradas, setUnidadesFiltradas] = useState([]); 
   const navigate = useNavigate();
   const [unidadeEditando, setUnidadeEditando] = useState(null);
-  const [nomeUnidade, setNomeUnidade] = useState(""); // Estado para o nome da unidade
+  const [nomeUnidade, setNomeUnidade] = useState(""); 
   const [editandoUnidade, setEditandoUnidade] = useState(false);
   const [unidadeEditada, setUnidadeEditada] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -32,7 +31,7 @@ const Unidades = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 300); // Delay para a transição
+    }, 300); 
 
     return () => clearTimeout(timer);
   }, []);
@@ -40,7 +39,7 @@ const Unidades = () => {
   const handleCadastroUnidade = () => {
     setCadastrarUnidade(true);
     setUnidadeEditando(null);
-    setNomeUnidade(""); // Limpa o nome da unidade ao abrir o modal
+    setNomeUnidade(""); 
   };
 
   const handleCloseCadastroUnidade = () => {
@@ -51,7 +50,7 @@ const Unidades = () => {
     try {
       const response = await api.get("/unidade");
       setUnidades(response.data.data);
-      setUnidadesFiltradas(response.data.data); // Inicializa as unidades filtradas
+      setUnidadesFiltradas(response.data.data); 
     } catch (error) {
   
       if (
@@ -72,7 +71,7 @@ const Unidades = () => {
   }, []);
 
   useEffect(() => {
-    // Filtra as unidades sempre que filtroNome mudar
+
     const unidadesFiltradas = unidades.filter(unidade =>
       unidade.nome.toLowerCase().includes(filtroNome.toLowerCase())
     );
@@ -93,7 +92,7 @@ const Unidades = () => {
         CustomToast({ type: "success", message: "Unidade cadastrada com sucesso!" });
         setNomeUnidade("");
         setCadastrarUnidade(false);
-        await carregarUnidades(); // Recarrega as unidades após a criação
+        await carregarUnidades(); 
       }
     } catch (error) {
       console.log("Erro completo:", error);
@@ -107,17 +106,16 @@ const Unidades = () => {
         return;
       }
   
-      // Fecha a modal antes da requisição assíncrona
       setEditandoUnidade(false);
   
       try {
-        // Envia a solicitação PUT para editar a unidade na API
+    
         const response = await api.put(`/unidade/${unidadeEditada.id}`, unidadeEditada);
   
         CustomToast({ type: "success", message: "Unidade editada com sucesso!" });
         carregarUnidades();
         if (response.status === 200) {
-          // Atualiza o estado local das unidades com a unidade editada
+
           setUnidades((prevUnidades) => {
             return prevUnidades.map((unidade) =>
               unidade.id === unidadeEditada.id ? { ...unidade, nome: unidadeEditada.nome } : unidade
@@ -131,17 +129,17 @@ const Unidades = () => {
   };
 
   const handleEditUnidade = (unidade) => {
-    setUnidadeEditada({ ...unidade }); // Clona a unidade para edição
+    setUnidadeEditada({ ...unidade });
     setEditandoUnidade(true);
   };
 
   const handleDeleteUnidade = async (unidade) => {
     try {
-      // Faz a requisição DELETE para a API
+     
       const response = await api.delete(`/unidade/${unidade.id}`);
       
       if (response.status === 200) {
-        // Atualiza o estado local removendo a unidade deletada
+     
         const updatedUnidades = unidades.filter((cat) => cat.id !== unidade.id);
         setUnidades(updatedUnidades);
         CustomToast({ type: "success", message: "Unidade deletada com sucesso!" });
@@ -179,8 +177,8 @@ const Unidades = () => {
                 size="small"
                 label="Buscar unidade"
                 autoComplete="off"
-                value={filtroNome} // Adiciona o valor do filtro
-                onChange={(e) => setFiltroNome(e.target.value)} // Atualiza o estado ao digitar
+                value={filtroNome} 
+                onChange={(e) => setFiltroNome(e.target.value)} 
                 sx={{ width: { xs: "90%", sm: "50%", md: "40%", lg: "40%" } }}
                 InputProps={{
                   startAdornment: (
@@ -203,7 +201,7 @@ const Unidades = () => {
             <TableComponent
               headers={headerUnidade}
               actionsLabel={"Ações"}
-              rows={unidadesFiltradas} // Usa a lista filtrada
+              rows={unidadesFiltradas} 
               actionCalls={{
                 edit: handleEditUnidade,
                 delete: handleDeleteUnidade,
@@ -230,8 +228,8 @@ const Unidades = () => {
                     size="small"
                     label="Nome da Unidade"
                     autoComplete="off"
-                    value={nomeUnidade} // Use o estado para o valor
-                    onChange={(e) => setNomeUnidade(e.target.value)} // Atualiza o estado ao digitar
+                    value={nomeUnidade} 
+                    onChange={(e) => setNomeUnidade(e.target.value)} 
                     sx={{ width: { xs: "95%", sm: "50%", md: "40%", lg: "95%" } }}
                     InputProps={{
                       startAdornment: (
@@ -273,7 +271,7 @@ const Unidades = () => {
                       value={unidadeEditada ? unidadeEditada.nome : ""}
                       onChange={(e) =>
                         setUnidadeEditada({ ...unidadeEditada, nome: e.target.value })
-                      } // Atualiza o estado corretamente
+                      } 
                       sx={{ width: "100%" }}
                       InputProps={{
                         startAdornment: (
