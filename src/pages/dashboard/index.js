@@ -28,11 +28,9 @@ const Dashboard = () => {
     const [produtos, setProdutos] = useState([]);
     const [entradasSaidas, setEntradasSaidas] = useState([]);
     const [dataGrafico, setDataGrafico] = useState([]);
-    const [categorias, setCategorias] = useState([]);
     const [isVisible, setIsVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     const [produtosOriginais, setProdutosOriginais] = useState([]);
-    const [entradasSaidasOriginais, setEntradasSaidasOriginais] = useState([]);
     const userOptionsUnidade = [
         { value: 1, label: 'Kilograma' },
         { value: 2, label: 'Grama' },

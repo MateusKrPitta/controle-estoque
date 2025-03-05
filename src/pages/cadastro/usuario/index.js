@@ -1,21 +1,14 @@
 import React, { useState, useEffect } from "react";
 import Navbar from '../../../components/navbars/header';
 import HeaderPerfil from '../../../components/navbars/perfil';
-import { IconButton, InputAdornment, TextField } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
 import ButtonComponent from '../../../components/button';
-import SearchIcon from '@mui/icons-material/Search';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import HeaderCadastro from '../../../components/navbars/cadastro';
 import TableComponent from '../../../components/table/index';
 import CentralModal from '../../../components/modal-central';
 import SelectTextFields from "../../../components/select";
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import Checkbox from '@mui/material/Checkbox';
-import NotesIcon from '@mui/icons-material/Notes';
-import { LocationOnOutlined, Password } from "@mui/icons-material";
 import MenuMobile from "../../../components/menu-mobile";
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { headerUsuario } from "../../../entities/headers/header-usuarios";
 import ModalLateral from "../../../components/modal-lateral";
 import { Edit } from '@mui/icons-material';
@@ -23,6 +16,15 @@ import { formatCPF } from "../../../utils/functions";
 import CustomToast from "../../../components/toast";
 import api from "../../../services/api";
 import { useNavigate } from "react-router-dom";
+import TableLoading from "../../../components/loading/loading-table/loading";
+
+import { IconButton, InputAdornment, TextField } from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
+import SearchIcon from '@mui/icons-material/Search';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import NotesIcon from '@mui/icons-material/Notes';
+import { LocationOnOutlined, Password } from "@mui/icons-material";
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 const Usuario = () => {
@@ -48,12 +50,14 @@ const Usuario = () => {
     },
   });
 
+
+
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 300); 
+    }, 300);
 
     return () => clearTimeout(timer);
   }, []);
@@ -97,7 +101,7 @@ const Usuario = () => {
         basico: false,
       },
     });
-    setSelectedUnidades([]); 
+    setSelectedUnidades([]);
   };
 
   const handleCloseEditUser = () => {
@@ -113,7 +117,7 @@ const Usuario = () => {
         basico: false,
       },
     });
-    setSelectedUnidades([]); 
+    setSelectedUnidades([]);
   };
 
   const removeUnidade = (unidade) => {
@@ -122,7 +126,7 @@ const Usuario = () => {
 
   const handleSubmit = async () => {
     try {
-
+      // Validações dos campos
       if (!newUser.nome) {
         CustomToast({ type: "error", message: "O nome é obrigatório." });
         return;
@@ -140,19 +144,20 @@ const Usuario = () => {
         return;
       }
 
-
+      // Verifica se o CPF já está cadastrado
       const cpfExistente = users.find(user => user.cpf === newUser.cpf);
       if (cpfExistente) {
         CustomToast({ type: "error", message: "CPF já cadastrado. Não é possível cadastrar outro." });
-        return; 
+        return;
       }
 
+      // Verifica se a senha tem pelo menos 6 dígitos
       if (newUser.senha.length < 6) {
         CustomToast({ type: "error", message: "A senha deve conter pelo menos 6 dígitos." });
-        return; 
+        return;
       }
 
-
+      // Prepara os dados do usuário para enviar ao backend
       const userData = {
         nome: newUser.nome,
         cpf: newUser.cpf,
@@ -160,41 +165,32 @@ const Usuario = () => {
         tipo: newUser.permissoes.administrador ? 1 : (newUser.permissoes.basico ? 2 : 0), // 1 para administrador, 2 para básico
         unidadeId: selectedUnidades.map(unidade => {
           const unidadeObj = userOptionsUnidade.find(option => option.label === unidade);
-          return unidadeObj ? unidadeObj.value : null; 
+          return unidadeObj ? unidadeObj.value : null;
         }).filter(id => id !== null),
       };
 
+      // Faz a chamada à API para cadastrar o usuário
+      const response = await api.post('/usuario', userData);
 
-      const response = await api.post('/usuario', userData); 
+      if (response.status === 201) { // 201 significa que o usuário foi criado com sucesso
+        // Atualiza a lista de usuários
+        const updatedUsers = [...users, response.data];
+        setUsers(updatedUsers);
 
-
-      const updatedUsers = [...users, { ...userData, unidades: selectedUnidades }];
-      setUsers(updatedUsers);
-
-      handleCloseCadastroUsuario();
-      setNewUser({
-        nome: '',
-        cpf: '',
-        senha: '',
-        funcao: '',
-        unidade: '',
-        permissoes: {
-          administrador: false,
-          basico: false,
-        },
-      });
-      setSelectedUnidades([]);
-      CustomToast({ type: "success", message: "Usuário cadastrado com sucesso!" });
+        // Fecha o modal de cadastro e limpa os campos
+        handleCloseCadastroUsuario();
+        CustomToast({ type: "success", message: "Usuário cadastrado com sucesso!" });
+      } else {
+        CustomToast({ type: "error", message: "Erro ao cadastrar usuário!" });
+      }
     } catch (error) {
-
-
       if (
         error.response &&
         error.response.data.message === "Credenciais inválidas" &&
         error.response.data.data === "Token de acesso inválido"
       ) {
         CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-        navigate("/"); 
+        navigate("/");
       } else {
         CustomToast({ type: "error", message: "Erro ao cadastrar usuário!" });
       }
@@ -202,7 +198,7 @@ const Usuario = () => {
   };
 
   const handleEditUser = (user) => {
-    setEditUser(user); 
+    setEditUser(user);
     setNewUser({
       nome: user.nome,
       cpf: formatCPF(user.cpf),
@@ -218,15 +214,15 @@ const Usuario = () => {
     setSelectedUnidades(
       user.unidadeId.map((id) => {
         const unidadeObj = userOptionsUnidade.find((option) => option.value === id);
-        return unidadeObj ? unidadeObj.label : null; 
+        return unidadeObj ? unidadeObj.label : null;
       }).filter((label) => label !== null)
     );
-    setEditandoUsuario(true); 
+    setEditandoUsuario(true);
   };
 
   const handleUpdateUser = async () => {
     try {
-
+      // Validações dos campos
       if (!newUser.nome) {
         CustomToast({ type: "error", message: "O nome é obrigatório." });
         return;
@@ -247,42 +243,36 @@ const Usuario = () => {
       const cpfExistente = users.find(user => user.cpf === newUser.cpf && user.cpf !== editUser.cpf);
       if (cpfExistente) {
         CustomToast({ type: "error", message: "CPF já cadastrado. Não é possível cadastrar outro." });
-        return; 
+        return;
       }
-
 
       if (newUser.senha.length < 6) {
         CustomToast({ type: "error", message: "A senha deve conter pelo menos 6 dígitos." });
-        return; 
+        return;
       }
-
 
       const userData = {
         nome: newUser.nome,
         cpf: newUser.cpf,
         senha: newUser.senha,
-        tipo: newUser.permissoes.administrador ? 1 : (newUser.permissoes.basico ? 2 : 0), 
+        tipo: newUser.permissoes.administrador ? 1 : (newUser.permissoes.basico ? 2 : 0),
         unidadeId: selectedUnidades.map(unidade => {
           const unidadeObj = userOptionsUnidade.find(option => option.label === unidade);
-          return unidadeObj ? unidadeObj.value : null; 
+          return unidadeObj ? unidadeObj.value : null;
         }).filter(id => id !== null),
       };
 
-     
       const response = await api.put(`/usuario/${editUser.id}`, userData);
 
       if (response.status === 200) {
-
         const updatedUsers = users.map(user => {
           if (user.id === editUser.id) {
-            return { ...userData, unidades: selectedUnidades }; 
+            return { ...userData, unidades: selectedUnidades };
           }
-          return user; 
+          return user;
         });
 
-
         setUsers(updatedUsers);
-
         setEditandoUsuario(false);
         setEditUser(null);
         setNewUser({
@@ -295,30 +285,36 @@ const Usuario = () => {
             basico: false,
           },
         });
+        handleCloseEditUser();
         fetchUsers();
-        CustomToast({ type: "success", message: "Usuário atualizado com sucesso!" });
-        setEditandoUsuario(false)
+
+        CustomToast({ type: "success", message: response.data.message || "Usuário atualizado com sucesso!" });
       } else {
         CustomToast({ type: "success", message: "Usuário atualizado com sucesso!" });
+        handleCloseEditUser();
         fetchUsers();
-        setEditandoUsuario(false)
+
       }
     } catch (error) {
-      CustomToast({ type: "success", message: "Usuário atualizado com sucesso!" });
+      CustomToast({ type: "error", message: error.response?.data?.message || "Erro ao atualizar usuário!" });
     }
   };
+
+
+
   const handleCPFChange = (e) => {
     const formattedCPF = formatCPF(e.target.value);
-    setCpf(formattedCPF); 
-    setNewUser({ ...newUser, cpf: formattedCPF }); 
+    setCpf(formattedCPF);
+    setNewUser({ ...newUser, cpf: formattedCPF });
   };
 
 
   const fetchUsers = async () => {
     try {
       const response = await api.get('/usuario');
-      setUsers(response.data.data || []); 
-    } catch (error) {;
+      setUsers(response.data.data || []);
+    } catch (error) {
+      ;
 
       if (
         error.response &&
@@ -326,17 +322,40 @@ const Usuario = () => {
         error.response.data.data === "Token de acesso inválido"
       ) {
         CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-        navigate("/"); 
+        navigate("/");
       } else {
         CustomToast({ type: "error", message: "Erro ao buscar usuários!" });
       }
     }
   };
 
-  const filteredUsers = Array.isArray(users) ? users.filter(user => user.nome.toLowerCase().includes(searchTerm.toLowerCase())) : [];
+  const handleInactiveUser = async (user) => {
+    console.log("Marking user as inactive with ID:", user.id);
+    try {
+      const response = await api.delete(`/usuario/${user.id}`);
+      if (response.status === 200) {
+        // Update the user state to mark as inactive
+        const updatedUsers = users.map(u => {
+          if (u.id === user.id) {
+            return { ...u, isActive: false }; // Mark user as inactive
+          }
+          return u;
+        });
+        setUsers(updatedUsers);
+        CustomToast({ type: "success", message: response.data.message || "Usuário inativado com sucesso!" });
+      } else {
+        CustomToast({ type: "error", message: "Erro ao inativar usuário!" });
+      }
+    } catch (error) {
+      CustomToast({ type: "error", message: error.response?.data?.message || "Erro ao inativar usuário!" });
+    }
+  };
 
-
-
+  const filteredUsers = Array.isArray(users)
+    ? users.filter(user =>
+      user && typeof user === 'object' && (user.nome || '').toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    : [];
 
 
   const handleUnidadeChange = (event) => {
@@ -348,16 +367,18 @@ const Usuario = () => {
   };
 
   const handleDeleteUser = async (user) => {
+    console.log("Deleting user with ID:", user.id);
     try {
       const response = await api.delete(`/usuario/${user.id}`);
       if (response.status === 200) {
-
-        const updatedUsers = users.filter(u => u.id !== user.id); 
+        const updatedUsers = users.filter(u => u.id !== user.id);
         setUsers(updatedUsers);
-        CustomToast({ type: "success", message: "Usuário excluído com sucesso!" });
+        CustomToast({ type: "success", message: response.data.message || "Usuário excluído com sucesso!" });
+      } else {
+        CustomToast({ type: "error", message: "Erro ao excluir usuário!" });
       }
     } catch (error) {
-      CustomToast({ type: "error", message: "Erro ao excluir usuário!" });
+      CustomToast({ type: "error", message: error.response?.data?.message || "Erro ao excluir usuário!" });
     }
   };
 
@@ -365,21 +386,20 @@ const Usuario = () => {
     try {
       const response = await api.get("/unidade");
       const unidadesOptions = response.data.data.map(unidade => ({
-        value: unidade.id, 
-        label: unidade.nome 
+        value: unidade.id,
+        label: unidade.nome
       }));
-      setUserOptionsUnidade(unidadesOptions); 
+      setUserOptionsUnidade(unidadesOptions);
     } catch (error) {
       console.error("Erro ao carregar as unidades:", error);
     }
   };
 
   const rows = filteredUsers.map(user => {
-    const unidadeNames = user.unidadeId.map(id => {
+    const unidadeNames = Array.isArray(user.unidadeId) ? user.unidadeId.map(id => {
       const unidadeObj = userOptionsUnidade.find(option => option.value === id);
       return unidadeObj ? unidadeObj.label : "Unidade Desconhecida";
-    });
-
+    }) : [];
     return {
       ...user,
       unidade: unidadeNames.join(", ") || "Unidade Desconhecida",
@@ -396,7 +416,7 @@ const Usuario = () => {
   }, [userOptionsUnidade]);
 
   useEffect(() => {
-    fetchUsers(); 
+    fetchUsers();
   }, []);
 
   return (
@@ -441,16 +461,22 @@ const Usuario = () => {
               />
             </div>
             <div className="w-[97%] ml-0 sm:ml-0 ">
-
-              <TableComponent
-                headers={headerUsuario}
-                rows={rows}
-                actionsLabel={"Ações"}
-                actionCalls={{
-                  edit: (user) => handleEditUser(user),
-                  delete: (user) => handleDeleteUser(user), 
-                }}
-              />
+              {filteredUsers.length === 0 ? (
+                <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
+                  <TableLoading />
+                  <label className="text-sm">Não foi encontrado um usuário com esse nome!</label>
+                </div>
+              ) : (
+                <TableComponent
+                  headers={headerUsuario}
+                  rows={rows}
+                  actionsLabel={"Ações"}
+                  actionCalls={{
+                    edit: (user) => handleEditUser(user),
+                    inactivate: (user) => handleInactiveUser(user),
+                  }}
+                />
+              )}
             </div>
 
             <CentralModal
@@ -501,7 +527,7 @@ const Usuario = () => {
                         </InputAdornment>
                       ),
                       inputProps: {
-                        maxLength: 11, 
+                        maxLength: 11,
                       },
                     }}
                   />
@@ -511,7 +537,7 @@ const Usuario = () => {
                     size="small"
                     label="Senha"
                     name="senha"
-                    type={showPassword ? "text" : "password"} 
+                    type={showPassword ? "text" : "password"}
                     value={newUser.senha}
                     onChange={handleInputChange}
                     autoComplete="off"
@@ -543,7 +569,7 @@ const Usuario = () => {
                     backgroundColor={"#D9D9D9"}
                     name={"unidade"}
                     fontWeight={500}
-                    options={userOptionsUnidade} 
+                    options={userOptionsUnidade}
                     onChange={handleUnidadeChange}
                   />
                 </div>
@@ -552,7 +578,7 @@ const Usuario = () => {
                   <ul className="flex flex-col gap-1">
                     {selectedUnidades.map((unidade, index) => (
                       <li key={index} className="flex justify-between border-[1px] p-2 rounded-lg text-xs ">
-                        {unidade} 
+                        {unidade}
                         <button style={{ color: 'red' }} onClick={() => removeUnidade(unidade)} className="text-red-500 ">
                           <HighlightOffIcon fontSize="small" />
                         </button>
@@ -586,7 +612,7 @@ const Usuario = () => {
                     title={'Cadastrar'}
                     subtitle={'Cadastrar'}
                     buttonSize="large"
-                    onClick={handleSubmit} 
+                    onClick={handleSubmit}
                   />
                 </div>
               </div>
@@ -607,7 +633,7 @@ const Usuario = () => {
                       size="small"
                       label="Nome Completo"
                       name="nome"
-                      value={newUser.nome} 
+                      value={newUser.nome}
                       onChange={handleInputChange}
                       autoComplete="off"
                       sx={{ width: { xs: '100%', sm: '50%', md: '40%', lg: '47%' } }}
@@ -625,8 +651,8 @@ const Usuario = () => {
                       size="small"
                       label="CPF"
                       name="cpf"
-                      value={newUser.cpf} 
-                      onChange={handleCPFChange} 
+                      value={newUser.cpf}
+                      onChange={handleCPFChange}
                       autoComplete="off"
                       sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '47%' } }}
                       InputProps={{
@@ -646,7 +672,7 @@ const Usuario = () => {
                       size="small"
                       label="Senha"
                       name="senha"
-                      type={showPassword ? "text" : "password"} 
+                      type={showPassword ? "text" : "password"}
                       value={newUser.senha}
                       onChange={handleInputChange}
                       autoComplete="off"
@@ -677,7 +703,7 @@ const Usuario = () => {
                       backgroundColor={"#D9D9D9"}
                       name={"unidade"}
                       fontWeight={500}
-                      options={userOptionsUnidade} 
+                      options={userOptionsUnidade}
                       onChange={handleUnidadeChange}
                     />
                   </div>
@@ -686,7 +712,7 @@ const Usuario = () => {
                     <ul className="flex flex-col gap-1">
                       {selectedUnidades.map((unidade, index) => (
                         <li key={index} className="flex justify-between border-[1px] p-2 rounded-lg text-xs ">
-                          {unidade} 
+                          {unidade}
                           <button style={{ color: 'red' }} onClick={() => removeUnidade(unidade)} className="text-red-500 ">
                             <HighlightOffIcon fontSize="small" />
                           </button>
@@ -704,8 +730,8 @@ const Usuario = () => {
                       <div className="w-full flex  items-center" key={permissao}>
                         <div className="w-[12%]">
                           <Checkbox
-                            checked={newUser.permissoes[permissao]} 
-                            onChange={() => handleCheckboxChange(permissao)} 
+                            checked={newUser.permissoes[permissao]}
+                            onChange={() => handleCheckboxChange(permissao)}
                           />
                         </div>
                         <label className="text-xs w-[73%]">{permissao.charAt(0).toUpperCase() + permissao.slice(1)}</label>
@@ -718,7 +744,7 @@ const Usuario = () => {
                       title={'Salvar'}
                       subtitle={'Salvar'}
                       buttonSize="large"
-                      onClick={handleUpdateUser} 
+                      onClick={handleUpdateUser}
                     />
                   </div>
                 </div>

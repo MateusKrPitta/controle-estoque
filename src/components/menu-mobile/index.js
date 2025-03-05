@@ -14,13 +14,16 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import Estoque from '../../assets/png/logo.png';
 import SelectTextFields from '../select';
 import api from '../../services/api';
+import { useUnidade } from "../unidade-context";
 
 const MenuMobile = () => {
+     const { unidades, setUnidadeId, setUnidadeNome, unidadeId } = useUnidade();
     const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
     const [selectedUnidade, setSelectedUnidade] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
     const navigate = useNavigate();
+      const [userName, setUserName] = useState('');
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -37,29 +40,31 @@ const MenuMobile = () => {
 
     const handleUnidadeChange = (event) => {
         const selectedValue = event.target.value;
-        const unidadeObj = userOptionsUnidade.find(option => option.value === selectedValue);
+        const unidadeObj = unidades.find(option => option.id === selectedValue);
+    
         if (unidadeObj) {
-          setSelectedUnidade(unidadeObj.value);
+          setUnidadeId(unidadeObj.id);
+          setUnidadeNome(unidadeObj.nome);
+          localStorage.setItem('unidadeId', unidadeObj.id);
+          localStorage.setItem('unidadeNome', unidadeObj.nome);
+    
+          
+          window.location.reload();
         }
       };
 
       
-    const carregarUnidades = async () => {
-        try {
-            const response = await api.get("/unidade");
-            const unidadesOptions = response.data.data.map(unidade => ({
-                value: unidade.id,
-                label: unidade.nome
-            }));
-            setUserOptionsUnidade(unidadesOptions);
-        } catch (error) {
-            console.error("Erro ao carregar as unidades:", error);
-        }
-    };
 
-    useEffect(() => {
-        carregarUnidades();
-    }, []);
+  useEffect(() => {
+    setSelectedUnidade(unidadeId); 
+  }, [unidadeId]);
+
+  useEffect(() => {
+    const storedUserName = localStorage.getItem('userName');
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+  }, []);
 
     return (
         <div className='w-[100%]  flex items-center justify-center p-3 gap-10  z-30  lg:hidden' style={{ backgroundColor: 'black' }}>
@@ -67,6 +72,7 @@ const MenuMobile = () => {
                 <img style={{ width: '100%', marginRight: '150px', padding:'10px' }} src={Estoque} alt="Total de Produtos" />
             </div>
             <div className='flex items-start w-[30%]'>
+            
                 <SelectTextFields
                     width={'150px'}
                     icon={<LocationOnIcon fontSize="small" />}
@@ -74,7 +80,7 @@ const MenuMobile = () => {
                     backgroundColor={"#D9D9D9"}
                     name={"Unidades"}
                     fontWeight={500}
-                    options={userOptionsUnidade}
+                    options={unidades.map(unidade => ({ value: unidade.id, label: unidade.nome }))}
                     value={selectedUnidade}
                     onChange={handleUnidadeChange}
                 />

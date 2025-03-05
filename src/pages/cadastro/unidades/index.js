@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../../../components/navbars/header";
 import HeaderPerfil from "../../../components/navbars/perfil";
-import { InputAdornment, TextField } from "@mui/material";
 import ButtonComponent from "../../../components/button";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import HeaderCadastro from "../../../components/navbars/cadastro";
 import TableComponent from "../../../components/table";
 import CentralModal from "../../../components/modal-central";
-import EditIcon from "@mui/icons-material/Edit";
 import { LocationOnOutlined, Save } from "@mui/icons-material";
 import ModalLateral from "../../../components/modal-lateral";
 import MenuMobile from "../../../components/menu-mobile";
@@ -15,6 +12,11 @@ import { headerUnidade } from "../../../entities/headers/header-unidades";
 import CustomToast from "../../../components/toast";
 import api from "../../../services/api";
 import { useNavigate } from "react-router-dom";
+import TableLoading from "../../../components/loading/loading-table/loading";
+
+import { InputAdornment, TextField } from "@mui/material";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import EditIcon from "@mui/icons-material/Edit";
 
 const Unidades = () => {
   const [cadastrarUnidade, setCadastrarUnidade] = useState(false);
@@ -27,14 +29,8 @@ const Unidades = () => {
   const [editandoUnidade, setEditandoUnidade] = useState(false);
   const [unidadeEditada, setUnidadeEditada] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 300); 
-
-    return () => clearTimeout(timer);
-  }, []);
+  const [loading, setLoading] = useState(false); 
+  const [mensagemErro, setMensagemErro] = useState('');
 
   const handleCadastroUnidade = () => {
     setCadastrarUnidade(true);
@@ -47,12 +43,14 @@ const Unidades = () => {
   };
 
   const carregarUnidades = async () => {
+    setLoading(true); 
     try {
       const response = await api.get("/unidade");
       setUnidades(response.data.data);
       setUnidadesFiltradas(response.data.data); 
+      setMensagemErro(''); // Clear error message on success
     } catch (error) {
-  
+      setMensagemErro("Erro ao carregar as unidades!"); // Set error message
       if (
         error.response &&
         error.response.data.message === "Credenciais inválidas" &&
@@ -63,20 +61,10 @@ const Unidades = () => {
       } else {
         CustomToast({ type: "error", message: "Erro ao carregar as unidades!" });
       }
+    } finally {
+      setLoading(false); // Set loading to false
     }
   };
-
-  useEffect(() => {
-    carregarUnidades();
-  }, []);
-
-  useEffect(() => {
-
-    const unidadesFiltradas = unidades.filter(unidade =>
-      unidade.nome.toLowerCase().includes(filtroNome.toLowerCase())
-    );
-    setUnidadesFiltradas(unidadesFiltradas);
-  }, [filtroNome, unidades]);
 
   const handleSalvarUnidade = async () => {
     if (!nomeUnidade.trim()) {
@@ -109,13 +97,11 @@ const Unidades = () => {
       setEditandoUnidade(false);
   
       try {
-    
         const response = await api.put(`/unidade/${unidadeEditada.id}`, unidadeEditada);
   
         CustomToast({ type: "success", message: "Unidade editada com sucesso!" });
         carregarUnidades();
         if (response.status === 200) {
-
           setUnidades((prevUnidades) => {
             return prevUnidades.map((unidade) =>
               unidade.id === unidadeEditada.id ? { ...unidade, nome: unidadeEditada.nome } : unidade
@@ -135,11 +121,9 @@ const Unidades = () => {
 
   const handleDeleteUnidade = async (unidade) => {
     try {
-     
       const response = await api.delete(`/unidade/${unidade.id}`);
       
       if (response.status === 200) {
-     
         const updatedUnidades = unidades.filter((cat) => cat.id !== unidade.id);
         setUnidades(updatedUnidades);
         CustomToast({ type: "success", message: "Unidade deletada com sucesso!" });
@@ -151,6 +135,24 @@ const Unidades = () => {
     }
   };
 
+  useEffect(() => {
+    const unidadesFiltradas = unidades.filter(unidade =>
+      unidade.nome.toLowerCase().includes(filtroNome.toLowerCase())
+    );
+    setUnidadesFiltradas(unidadesFiltradas);
+  }, [filtroNome, unidades]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 300); 
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    carregarUnidades();
+  }, []);
   return (
     <div className="flex w-full ">
       <Navbar />
@@ -198,15 +200,30 @@ const Unidades = () => {
               />
             </div>
 
-            <TableComponent
-              headers={headerUnidade}
-              actionsLabel={"Ações"}
-              rows={unidadesFiltradas} 
-              actionCalls={{
-                edit: handleEditUnidade,
-                delete: handleDeleteUnidade,
-              }}
-            />
+            {loading ? (
+              <div className='flex items-center justify-center h-96'>
+                <TableLoading />
+              </div>
+            ) : (
+              <>
+                {unidadesFiltradas.length === 0 ? (
+                  <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
+                    <TableLoading />
+                    <label className="text-sm">Não foi encontrado nenhuma unidade!</label>
+                  </div>
+                ) : (
+                  <TableComponent
+                    headers={headerUnidade}
+                    actionsLabel={"Ações"}
+                    rows={unidadesFiltradas} 
+                    actionCalls={{
+                      edit: handleEditUnidade,
+                      delete: handleDeleteUnidade,
+                    }}
+                  />
+                )}
+              </>
+            )}
 
             <CentralModal
               tamanhoTitulo={"81%"}

@@ -109,11 +109,11 @@ const FichaTecnica = () => {
 
     const fetchProdutosDaFicha = async () => {
         try {
-            const response = await api.get(`/ficha?unidadeId=${unidadeId}`);
+            const response = await api.get(`/ficha?unidade=${unidadeId}`); // Altere aqui
             const data = response.data.data; // Acesse a propriedade 'data'
-
+    
             console.log(data); // Verifique os dados no console
-
+    
             if (Array.isArray(data)) {
                 setProdutosDaFicha(data);
             } else {
@@ -283,7 +283,7 @@ const FichaTecnica = () => {
         try {
             const response = await api.get(`/produto?unidadeId=${unidadeId}`);
 
-            // Filtra os produtos pela unidadeId no frontend (se necessário)
+
             const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
 
             setProdutos(produtosFiltrados);
@@ -296,7 +296,7 @@ const FichaTecnica = () => {
     useEffect(() => {
         if (unidadeId) {
             fetchProdutos();
-            fetchProdutosDaFicha();
+            fetchProdutosDaFicha(); // Certifique-se de que esta função está sendo chamada
         }
     }, [unidadeId]);
     return (

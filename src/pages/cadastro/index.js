@@ -7,11 +7,11 @@ import HeaderCadastro from '../../components/navbars/cadastro';
 import CadastroImagem from '../../assets/png/cadas.png';
 
 const Cadastro = () => {
-    const [isVisible, setIsVisible] = useState(false);
+    const [efeito, setEfeito] = useState(false);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsVisible(true);
+        const timer = setEfeito(() => {
+            setEfeito(true);
         }, 100);
 
         return () => clearTimeout(timer);
@@ -30,7 +30,7 @@ const Cadastro = () => {
                     <div className='w-[100%] md:w-[14%]'>
                         <HeaderCadastro />
                     </div>
-                    <div className={`w-[100%] md:w-[80%] flex-col flex items-center justify-center transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
+                    <div className={`w-[100%] md:w-[80%] flex-col flex items-center justify-center transition-opacity duration-500 ${efeito ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                         <img className='w-[30%]' src={CadastroImagem} alt="Cadastro" />
                         <h1 className='font-bold text-primary'>Selecione uma opção do menu!</h1>
                     </div>

@@ -4,7 +4,7 @@ import HeaderPerfil from '../../components/navbars/perfil/index.js';
 import MenuMobile from '../../components/menu-mobile/index.js';
 import ButtonComponent from '../../components/button';
 import { IconButton, InputAdornment, TextField } from '@mui/material';
-import { Print, FilterAlt, DateRange } from '@mui/icons-material';
+import { Print, FilterAlt, DateRange, DataObject } from '@mui/icons-material';
 import TableComponent from '../../components/table/index.js';
 import { headerCmv } from '../../entities/headers/header-cmv.js';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
@@ -17,8 +17,14 @@ import SearchIcon from '@mui/icons-material/Search';
 import PercentIcon from '@mui/icons-material/Percent';
 import { NumericFormat } from 'react-number-format';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import { useUnidade } from '../../components/unidade-context/index.js';
+import api from '../../services/api.js';
+import { formatValor } from '../../utils/functions.js';
+import TopicIcon from '@mui/icons-material/Topic';
 
 const CMV = () => {
+  const { unidadeId } = useUnidade();
+  const [loading, setLoading] = useState(false);
   const [produtos, setProdutos] = useState([]);
   const [totals, setTotals] = useState({ totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0, totalUtilizado: 0 });
   const [filtro, setFiltro] = useState(false);
@@ -26,11 +32,20 @@ const CMV = () => {
   const [dataInicial, setDataInicial] = useState('');
   const [dataFinal, setDataFinal] = useState('');
   const [categorias, setCategorias] = useState([]);
+  const [nome, setNome] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('');
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [faturamento, setFaturamento] = useState(''); 
+  const [faturamento, setFaturamento] = useState('');
+  const [produtosOriginais, setProdutosOriginais] = useState([]);
   const [cmv, setCmv] = useState(0);
+  const userOptionsUnidade = [
+    { value: 1, label: 'Kilograma' },
+    { value: 2, label: 'Grama' },
+    { value: 3, label: 'Litro' },
+    { value: 4, label: 'Mililitro' },
+    { value: 5, label: 'Unidade' },
+  ];
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -61,8 +76,8 @@ const CMV = () => {
 
       return {
         ...row,
-        utilizado, 
-        valorUtilizado: formatCurrency(valorTotal), 
+        utilizado,
+        valorUtilizado: formatCurrency(valorTotal),
       };
     });
   };
@@ -92,13 +107,6 @@ const CMV = () => {
     });
   };
 
-  const formatValor = (valor) => {
-    const parsedValor = parseFloat(valor); 
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(parsedValor);
-  };
 
   const handleCadastro = () => setCadastro(true);
   const handleCloseCadastro = () => setCadastro(false);
@@ -111,15 +119,6 @@ const CMV = () => {
     setProdutos(updatedWithUtilizado);
     calculateTotals(updatedWithUtilizado);
   };
-
-  useEffect(() => {
-    const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
-    const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
-      .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
-
-    setCategorias(categoriasUnicas);
-    setUniqueCategoriesCount(categoriasUnicas.length);
-  }, []);
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
@@ -167,6 +166,51 @@ const CMV = () => {
   };
 
 
+  const carregaProdutos = async (unidadeId) => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/produto?unidadeId=${unidadeId}`);
+      if (Array.isArray(response.data.data)) {
+        const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
+        const mappedProdutos = produtosFiltrados.map(produto => {
+          const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
+          const valorFormatado = formatValor(produto.valorReajuste || produto.valor);
+
+          return {
+            id: produto.id,
+            nome: produto.nome,
+            rendimento: produto.rendimento,
+            unidadeMedida: unidade ? unidade.label : 'N/A',
+            categoria: produto.categoriaNome,
+            valorPorcao: formatValor(produto.valorPorcao),
+            valor: formatValor(produto.valorReajuste || produto.valor), // Aqui você está formatando o valor
+            preco: produto.valorReajuste || produto.valor, // Adicione esta linha para incluir o preço
+            valorFormatado: valorFormatado,
+            qtdMin: produto.qtdMin,
+            categoriaId: produto.categoriaId,
+            createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'),
+            categoriaNome: produto.categoriaNome
+          };
+        });
+        setProdutos(mappedProdutos);
+        setProdutosOriginais(mappedProdutos);
+      } else {
+        setProdutos([]);
+        setProdutosOriginais([]);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (unidadeId) {
+      carregaProdutos(unidadeId);
+    }
+  }, [unidadeId]);
+
   const calculateCmv = () => {
     const totalUtilizado = totals.totalUtilizado;
     const faturamentoValue = Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')) || 1; // Evitar divisão por zero
@@ -177,16 +221,26 @@ const CMV = () => {
       return;
     }
 
-    const cmvValue = (totalUtilizado / faturamentoValue) * 100; 
-    setCmv(cmvValue); 
+    const cmvValue = (totalUtilizado / faturamentoValue) * 100;
+    setCmv(cmvValue);
   };
+
   useEffect(() => {
-    calculateCmv(); 
+    const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
+    const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
+      .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
+
+    setCategorias(categoriasUnicas);
+    setUniqueCategoriesCount(categoriasUnicas.length);
+  }, []);
+
+  useEffect(() => {
+    calculateCmv();
   }, [faturamento, totals]);
 
   useEffect(() => {
     if (faturamento) {
-      calculateCmv(); 
+      calculateCmv();
     }
   }, [faturamento, totals]);
 
@@ -202,14 +256,14 @@ const CMV = () => {
         <div className={`mt-2 sm:mt-2 md:mt-9 flex flex-col w-full  transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
           <div className='flex gap-2 flex-col ml-4 w-[95%]'>
             <div className='flex items-center gap-3'>
-            <ButtonComponent
+              <ButtonComponent
                 startIcon={<AddCircleOutlineIcon fontSize='small' />}
                 title={'Cadastrar'}
                 subtitle={'Cadastrar'}
                 buttonSize="large"
                 onClick={handleCadastro}
               />
-            
+
               <ButtonComponent
                 startIcon={<Print fontSize='small' />}
                 title={'Imprimir'}
@@ -235,7 +289,7 @@ const CMV = () => {
               </IconButton>
 
             </div>
-            
+
           </div>
         </div>
       </div>
@@ -255,52 +309,72 @@ const CMV = () => {
         <>
           <div className='flex items-center gap-3'>
 
-            <div className='w-[90%] flex items-center gap-3 justify-end'>
-              <div className='w-[70%] md:w-[20%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  size="large"
-                  label="CMV"
-                  name="CMV"
-                  value={`${cmv.toFixed(2)}%`} 
-                  autoComplete="off"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PercentIcon fontSize="large" />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
-                    fontSize: '20px',
-                    backgroundColor: '#ffffff',
-                    borderRadius: '8px', 
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: '#1a894f', 
+            <div className='w-[90%] flex items-end gap-3 '>
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Nome do CMV"
+                sx={{ width: { xs: '90%', sm: '50%', md: '40%', lg: '30%' }, }}
+                value={nome} // Vincula o valor ao estado
+                onChange={(e) => setNome(e.target.value)} // Atualiza o estado ao digitar
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <TopicIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                autoComplete="off"
+              />
+              <div className='w-[70%] flex justify-end'>
+                <div className='w-[100%] md:w-[30%] p-5 ' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
+
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    size="large"
+                    label="CMV"
+                    name="CMV"
+                    value={`${cmv.toFixed(2)}%`}
+                    autoComplete="off"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PercentIcon fontSize="large" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
+                      fontSize: '20px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '8px',
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: '#1a894f',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#2563eb',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#1a894f',
+                        },
+                        backgroundColor: '#f3f4f6',
                       },
-                      '&:hover fieldset': {
-                        borderColor: '#2563eb',
+                      '& .MuiInputLabel-root': {
+                        color: '#1a894f',
+                        fontWeight: 700
                       },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#1a894f', 
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#2563eb',
                       },
-                      backgroundColor: '#f3f4f6', 
-                    },
-                    '& .MuiInputLabel-root': {
-                      color: '#1a894f', 
-                      fontWeight: 700
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#2563eb', 
-                    },
-                    '& .MuiSvgIcon-root': {
-                      color: '#006b33',
-                    },
-                  }}
-                />
+                      '& .MuiSvgIcon-root': {
+                        color: '#006b33',
+                      },
+                    }}
+                  />
+                </div>
               </div>
               <div className='w-[70%] md:w-[20%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
                 <NumericFormat
@@ -309,13 +383,13 @@ const CMV = () => {
                   size="large"
                   label="Faturamento"
                   name="Faturamento"
-                  value={faturamento} 
+                  value={faturamento}
                   onValueChange={(values) => {
                     const { formattedValue, value } = values;
-                    setFaturamento(value); 
+                    setFaturamento(value);
                   }}
                   autoComplete="off"
-                  customInput={TextField} 
+                  customInput={TextField}
                   thousandSeparator="."
                   decimalSeparator=","
                   decimalScale={2}
@@ -392,6 +466,13 @@ const CMV = () => {
               </span>
             </div>
           </div>
+          <div className='flex justify-center w-[100%]'>
+            <ButtonComponent
+              title={'Cadastrar'}
+              subtitle={'Cadastrar'}
+              startIcon={<SearchIcon />}
+            />
+          </div>
         </>
       </CentralModal>
       <CentralModal
@@ -451,7 +532,7 @@ const CMV = () => {
               fontWeight={500}
               options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
               onChange={(e) => setSelectedCategoria(e.target.value)}
-              value={selectedCategoria} 
+              value={selectedCategoria}
             />
           </div>
           <div className='w-[95%] mt-2 flex items-end justify-end'>

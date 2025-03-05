@@ -1,57 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../../components/navbars/header/index.js';
-import { AddCircleOutline, DateRange, Edit, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
-import { IconButton, InputAdornment, TextField,  } from '@mui/material'; 
-import ButtonComponent from '../../../components/button/index.js';
-import SearchIcon from '@mui/icons-material/Search';
-import TableComponent from '../../../components/table/index.js';
-import MenuMobile from '../../../components/menu-mobile/index.js';
-import { headerProdutos } from '../../../entities/headers/header-produtos.js';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import CentralModal from '../../../components/modal-central/index.js';
-import AddchartIcon from '@mui/icons-material/Addchart';
 import TableLoading from '../../../components/loading/loading-table/loading.js';
 import HeaderPerfil from '../../../components/navbars/perfil/index.js';
-import ArticleIcon from '@mui/icons-material/Article';
-import CategoryIcon from '@mui/icons-material/Category';
-import ScaleIcon from '@mui/icons-material/Scale';
 import ModalLateral from '../../../components/modal-lateral/index.js';
 import SelectTextFields from '../../../components/select/index.js';
 import { NumericFormat } from 'react-number-format';
 import { formatValor } from '../../../utils/functions.js';
 import CustomToast from '../../../components/toast/index.js';
-import { MoneyOutlined } from '@mui/icons-material';
 import Caixa from '../../../assets/icones/caixa.png';
 import HeaderCadastro from '../../../components/navbars/cadastro/index.js';
 import api from '../../../services/api.js';
 import { useUnidade } from '../../../components/unidade-context/index.js';
 import { useNavigate } from 'react-router-dom';
+import ButtonComponent from '../../../components/button/index.js';
+import SearchIcon from '@mui/icons-material/Search';
+import TableComponent from '../../../components/table/index.js';
+import MenuMobile from '../../../components/menu-mobile/index.js';
+import { headerProdutos } from '../../../entities/headers/header-produtos.js';
+
+import { AddCircleOutline, DateRange, Edit, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
+import { IconButton, InputAdornment, TextField,  } from '@mui/material'; 
+import AddchartIcon from '@mui/icons-material/Addchart';
+import ArticleIcon from '@mui/icons-material/Article';
+import CategoryIcon from '@mui/icons-material/Category';
+import ScaleIcon from '@mui/icons-material/Scale';
+import { MoneyOutlined } from '@mui/icons-material';
+
+
+
 
 const Produtos = () => {
     const navigate = useNavigate();
     const { unidadeId } = useUnidade();
+
+    const [produtos, setProdutos] = useState([]);
+    const [categorias, setCategorias] = useState([]);
+    const [produtosOriginais, setProdutosOriginais] = useState([]);
+    const [produtosFiltrados, setProdutosFiltrados] = useState([]);
+
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
     const [filtro, setFiltro] = useState(false);
     const [editandoCategoria, setEditandoCategoria] = useState(false);
-    const [quantidadeTotal, setQuantidadeTotal] = useState('');
     const [loading, setLoading] = useState(false);
+    const [produtoEditado, setProdutoEditado] = useState(null);
+    const [isVisible, setIsVisible] = useState(false);
+
+    const [quantidadeTotal, setQuantidadeTotal] = useState('');
     const [nome, setNome] = useState('');
     const [qtdMin, setQtdMin] = useState('');
     const [rendimento, setRendimento] = useState('');
-    const [produtos, setProdutos] = useState([]);
     const [selectedUnidade, setSelectedUnidade] = useState("");
-    const [categorias, setCategorias] = useState([]);
     const [selectedCategoria, setSelectedCategoria] = useState('');
     const [preco, setPreco] = useState('');
     const [filtroNome, setFiltroNome] = useState('');
     const [filtroDataInicial, setFiltroDataInicial] = useState('');
     const [filtroDataFinal, setFiltroDataFinal] = useState('');
-    const [produtoEditado, setProdutoEditado] = useState(null);
     const [valorReajuste, setValorReajuste] = useState('');
     const [dataReajuste, setDataReajuste] = useState('');
-    const [produtosOriginais, setProdutosOriginais] = useState([]);
-    const [produtosFiltrados, setProdutosFiltrados] = useState([]);
     const [mensagemErro, setMensagemErro] = useState(''); 
+    const quantidadeProdutosCadastrados = produtos.length;
     const userOptionsUnidade = [
         { value: 1, label: 'Kilograma' },
         { value: 2, label: 'Grama' },
@@ -59,15 +68,6 @@ const Produtos = () => {
         { value: 4, label: 'Mililitro' },
         { value: 5, label: 'Unidade' },
     ];
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsVisible(true);
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, []);
 
 
     const clearCadastroFields = () => {
@@ -101,7 +101,7 @@ const Produtos = () => {
         clearCadastroFields(); 
     };
 
-    const handleFiltro = () => setFiltro(true);
+
     const handleCloseFiltro = () => setFiltro(false);
 
     const handleCadastrarProduto = async () => {
@@ -109,7 +109,6 @@ const Produtos = () => {
         const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0;
         const rendimentoNumerico = parseFloat(rendimento) || 0;
         const qtdMinNumerica = parseFloat(qtdMin) || 0;
-
         const novoProduto = {
             nome,
             qtdMin: qtdMinNumerica,
@@ -131,11 +130,6 @@ const Produtos = () => {
         }
     };
 
-    useEffect(() => {
-        if (unidadeId) {
-            carregaProdutos(unidadeId); 
-        }
-    }, [unidadeId]);
 
     const carregaProdutos = async (unidadeId) => {
         setLoading(true);
@@ -203,6 +197,7 @@ const Produtos = () => {
             CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
         }
     };
+
     const handleDeleteProduto = async (produtoId) => {
         try {
           
@@ -213,6 +208,7 @@ const Produtos = () => {
             setProdutos(produtosAtualizados);
 
             CustomToast({ type: "success", message: "Produto deletado com sucesso!" });
+            carregaProdutos();
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao deletar produto!" });
         }
@@ -302,7 +298,20 @@ const Produtos = () => {
         }
     };
 
-    const quantidadeProdutosCadastrados = produtos.length;
+    useEffect(() => {
+        if (unidadeId) {
+            carregaProdutos(unidadeId); 
+        }
+    }, [unidadeId]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, []);
+
 
     useEffect(() => {
         const produtosFiltrados = produtosOriginais.filter(produto =>
@@ -398,7 +407,7 @@ const Produtos = () => {
                                         {produtosFiltrados.length === 0 ? ( 
                                             <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
                                             <TableLoading />
-                                           <label>Nenhum produto encontrato com esse nome!</label> 
+                                            <label className="text-sm">Não foi encontrado nenhum produto!</label>
                                         </div>
                                         ) : (
                                             <TableComponent

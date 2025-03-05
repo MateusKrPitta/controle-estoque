@@ -9,7 +9,7 @@ import ButtonComponent from "../../button";
 import SelectTextFields from "../../select";
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LogoutIcon from '@mui/icons-material/Logout';
-import api from '../../../services/api';
+import CustomToast from "../../toast";
 import { useUnidade } from "../../unidade-context";
 
 const style = {
@@ -47,6 +47,7 @@ const HeaderPerfil = () => {
     handleCloseLogoutConfirm();
     localStorage.clear();
     navigate("/");
+    CustomToast({ type: "success", message: "Logout realizado com sucesso!" });
   };
 
   const handleUnidadeChange = (event) => {
@@ -59,13 +60,13 @@ const HeaderPerfil = () => {
       localStorage.setItem('unidadeId', unidadeObj.id);
       localStorage.setItem('unidadeNome', unidadeObj.nome);
 
-      
+
       window.location.reload();
     }
   };
 
   useEffect(() => {
-    setSelectedUnidade(unidadeId); 
+    setSelectedUnidade(unidadeId);
   }, [unidadeId]);
 
   useEffect(() => {
@@ -82,7 +83,7 @@ const HeaderPerfil = () => {
           className="flex items-center justify-between pl-3 pr-4 w-[35%] h-20 bg-cover bg-no-repeat rounded-bl-lg"
           style={{ backgroundColor: '#BCDA72' }}
         >
-          <div className="w-[100%] items-star flex flex-wrap gap-4"> 
+          <div className="w-[100%] items-star flex flex-wrap gap-4">
             <SelectTextFields
               width={'150px'}
               icon={<LocationOnIcon fontSize="small" />}
