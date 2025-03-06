@@ -54,8 +54,8 @@ const EntradaSaida = () => {
     setSearchTerm(event.target.value);
   };
 
-  const filteredEntradasSaidas = entradasSaidasOriginais.filter((registro) => {
-    return registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredEntradasSaidas = entradasSaidas.filter((registro) => {
+    return registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const totalDesperdicio = entradasSaidas
@@ -157,8 +157,6 @@ const EntradaSaida = () => {
     return acc + (registro.tipo === 'entrada' ? valorRegistro : -valorRegistro);
   }, 0);
 
-
-
   const fetchProdutos = async () => {
     try {
       const response = await api.get(`/produto?unidadeId=${unidadeId}`);
@@ -204,7 +202,7 @@ const EntradaSaida = () => {
           precoPorcao: mov.precoPorcao,
           valorTotal: valorTotal,
           observacao: mov.observacao,
-          dataCadastro: new Date(mov.data).toLocaleDateString('pt-BR'),
+          dataCadastro: new Date(mov.data).toLocaleDateString('pt-BR'), // Formatação para DD/MM/YYYY
         };
       });
 
@@ -229,30 +227,34 @@ const EntradaSaida = () => {
   }, []);
 
   const handlePesquisar = () => {
-    const filteredEntradasSaidas = entradasSaidasOriginais.filter((registro) => {
-      // Filtro por termo de pesquisa (nome do produto)
-      const matchesSearchTerm = registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase());
+    const filteredData = entradasSaidasOriginais.filter((registro) => {
+      const matchesSearchTerm = registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase());
   
-      // Filtro por data inicial
-      const matchesDataInicial = dataInicial ? new Date(registro.dataCadastro) >= new Date(dataInicial) : true;
+      // Converte as datas inicial e final para objetos Date
+      const dataInicialDate = dataInicial ? new Date(dataInicial) : null;
+      const dataFinalDate = dataFinal ? new Date(dataFinal) : null;
   
-      // Filtro por data final
-      const matchesDataFinal = dataFinal ? new Date(registro.dataCadastro) <= new Date(dataFinal) : true;
+      // Converte a data do registro para um objeto Date
+      const registroData = new Date(registro.data); // registro.data já está no formato ISO 8601
   
-      // Filtro por categoria
+      // Verifica se a data do registro está dentro do intervalo
+      const matchesDataInicial = dataInicialDate ? registroData >= dataInicialDate : true;
+      const matchesDataFinal = dataFinalDate ? registroData <= dataFinalDate : true;
+  
       const matchesCategoria = selectedCategoria ? registro.categoria === selectedCategoria : true;
-  
-      // Filtro por tipo
       const matchesTipo = selectedTipo ? registro.tipo === selectedTipo : true;
   
-      // Retorna true apenas se todos os filtros forem atendidos
+      // Debugging
+      console.log("Data Inicial:", dataInicialDate);
+      console.log("Data Final:", dataFinalDate);
+      console.log("Data do Registro:", registroData);
+      console.log("Matches Data Inicial:", matchesDataInicial);
+      console.log("Matches Data Final:", matchesDataFinal);
+  
       return matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
     });
   
-    // Atualiza o estado com os dados filtrados
-    setEntradasSaidas(filteredEntradasSaidas);
-  
-    // Fecha o modal de filtro
+    setEntradasSaidas(filteredData);
     handleCloseFiltro();
   };
 
@@ -262,8 +264,6 @@ const EntradaSaida = () => {
       fetchCategorias();
     }
   }, [unidadeId]);
-
-
 
   useEffect(() => {
     if (unidadeId) {
@@ -374,7 +374,7 @@ const EntradaSaida = () => {
             ) : (
               <TableComponent
                 headers={headerEntradaSaida}
-                rows={filteredEntradasSaidas}
+                rows={filteredEntradasSaidas} // Usa filteredEntradasSaidas para a pesquisa
                 actionsLabel={"Ações"}
               />
             )}
@@ -412,6 +412,7 @@ const EntradaSaida = () => {
                 variant="outlined"
                 size="small"
                 label="Quantidade"
+                type='number'
                 value={quantidade}
                 onChange={(e) => setQuantidade(e.target.value)}
                 autoComplete="off"
@@ -469,92 +470,92 @@ const EntradaSaida = () => {
         </CentralModal>
 
         <CentralModal
-  tamanhoTitulo={'81%'}
-  maxHeight={'100vh'}
-  top={'20%'}
-  left={'28%'}
-  width={'400px'}
-  icon={<FilterAltIcon fontSize="small" />}
-  open={filtro}
-  onClose={handleCloseFiltro}
-  title="Filtro"
->
-  <div>
-    <div className='mt-4 flex gap-3 flex-wrap'>
-      <TextField
-        fullWidth
-        variant="outlined"
-        size="small"
-        label="Data Inicial"
-        value={dataInicial}
-        type='date'
-        onChange={(e) => setDataInicial(e.target.value)}
-        autoComplete="off"
-        sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <DateRange />
-            </InputAdornment>
-          ),
-        }}
-      />
-      <TextField
-        fullWidth
-        variant="outlined"
-        size="small"
-        label="Data Final"
-        type='date'
-        value={dataFinal}
-        onChange={(e) => setDataFinal(e.target.value)}
-        autoComplete="off"
-        sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <DateRange />
-            </InputAdornment>
-          ),
-        }}
-      />
-      <SelectTextFields
-        width={'170px'}
-        icon={<CategoryIcon fontSize="small" />}
-        label={'Categorias'}
-        backgroundColor={"#D9D9D9"}
-        name={"categoria"}
-        fontWeight={500}
-        options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.nome }))} // Use o nome da categoria como valor
-        onChange={(e) => setSelectedCategoria(e.target.value)} // Atualiza o estado
-        value={selectedCategoria} // Reflete o estado atual no componente
-      />
-      <SelectTextFields
-        width={'155px'}
-        icon={<AddchartIcon fontSize="small" />}
-        label={'Tipo'}
-        backgroundColor={"#D9D9D9"}
-        name={"tipo"}
-        fontWeight={500}
-        options={[
-          { value: '', label: 'Todos' }, // Opção para mostrar todos
-          { value: 'entrada', label: 'Entrada' },
-          { value: 'saida', label: 'Saída' },
-          { value: 'desperdicio', label: 'Desperdício' },
-        ]}
-        onChange={(e) => setSelectedTipo(e.target.value)} // Atualiza o estado
-        value={selectedTipo} // Reflete o estado atual no componente
-      />
-    </div>
-    <div className='w-[95%] mt-2 flex items-end justify-end'>
-      <ButtonComponent
-        title={'Pesquisar'}
-        subtitle={'Pesquisar'}
-        startIcon={<SearchIcon />}
-        onClick={handlePesquisar} // Chama a função de pesquisa
-      />
-    </div>
-  </div>
-</CentralModal>
+          tamanhoTitulo={'81%'}
+          maxHeight={'100vh'}
+          top={'20%'}
+          left={'28%'}
+          width={'400px'}
+          icon={<FilterAltIcon fontSize="small" />}
+          open={filtro}
+          onClose={handleCloseFiltro}
+          title="Filtro"
+        >
+          <div>
+            <div className='mt-4 flex gap-3 flex-wrap'>
+            <TextField
+  fullWidth
+  variant="outlined"
+  size="small"
+  label="Data Inicial"
+  value={dataInicial}
+  type='date'
+  onChange={(e) => setDataInicial(e.target.value)}
+  autoComplete="off"
+  sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <DateRange />
+      </InputAdornment>
+    ),
+  }}
+/>
+<TextField
+  fullWidth
+  variant="outlined"
+  size="small"
+  label="Data Final"
+  type='date'
+  value={dataFinal}
+  onChange={(e) => setDataFinal(e.target.value)}
+  autoComplete="off"
+  sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <DateRange />
+      </InputAdornment>
+    ),
+  }}
+/>
+              <SelectTextFields
+                width={'170px'}
+                icon={<CategoryIcon fontSize="small" />}
+                label={'Categorias'}
+                backgroundColor={"#D9D9D9"}
+                name={"categoria"}
+                fontWeight={500}
+                options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.nome }))}
+                onChange={(e) => setSelectedCategoria(e.target.value)}
+                value={selectedCategoria}
+              />
+              <SelectTextFields
+                width={'155px'}
+                icon={<AddchartIcon fontSize="small" />}
+                label={'Tipo'}
+                backgroundColor={"#D9D9D9"}
+                name={"tipo"}
+                fontWeight={500}
+                options={[
+                  { value: '', label: 'Todos' },
+                  { value: 'entrada', label: 'Entrada' },
+                  { value: 'saida', label: 'Saída' },
+                  { value: 'desperdicio', label: 'Desperdício' },
+                ]}
+                onChange={(e) => setSelectedTipo(e.target.value)}
+                value={selectedTipo}
+              />
+            </div>
+            <div className='w-[95%] mt-2 flex items-end justify-end'>
+              <ButtonComponent
+                title={'Pesquisar'}
+                subtitle={'Pesquisar'}
+                startIcon={<SearchIcon />}
+                onClick={handlePesquisar}
+              />
+            </div>
+          </div>
+        </CentralModal>
       </div>
     </div>
   );
