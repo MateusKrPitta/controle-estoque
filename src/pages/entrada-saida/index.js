@@ -25,6 +25,7 @@ import api from '../../services/api.js';
 import { useNavigate } from 'react-router-dom';
 import { useUnidade } from '../../components/unidade-context/index.js';
 import TableLoading from '../../components/loading/loading-table/loading.js';
+import moment from 'moment';
 
 const EntradaSaida = () => {
   const { unidadeId } = useUnidade();
@@ -186,10 +187,9 @@ const EntradaSaida = () => {
   const fetchEntradasSaidas = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/movimentacao?unidade=${unidadeId}`); // Corrigido para unidadeId
-      console.log("Movimentações da API:", response.data.data); // Adicione este log
+      const response = await api.get(`/movimentacao?unidade=${unidadeId}`);
       const movimentacoes = response.data.data;
-
+  
       // Formatar as movimentações
       const formattedMovimentacoes = movimentacoes.map(mov => {
         const valorTotal = mov.precoPorcao * mov.quantidade; // Calcule o valor total
@@ -202,16 +202,17 @@ const EntradaSaida = () => {
           precoPorcao: mov.precoPorcao,
           valorTotal: valorTotal,
           observacao: mov.observacao,
-          dataCadastro: new Date(mov.data).toLocaleDateString('pt-BR'), // Formatação para DD/MM/YYYY
+          dataCadastro: moment(mov.data).format('DD/MM/YYYY'), // Formatação para DD/MM/YYYY
+          dataISO: mov.data // Armazena a data original em formato ISO para comparação
         };
       });
-
+  
       setEntradasSaidas(formattedMovimentacoes);
-      setEntradasSaidasOriginais(formattedMovimentacoes); // Armazena os dados originais para filtragem
+      setEntradasSaidasOriginais(formattedMovimentacoes);
     } catch (error) {
       CustomToast({ type: "error", message: "Erro ao carregar as movimentações!" });
     } finally {
-      setLoading(false); // Finaliza o carregamento
+      setLoading(false);
     }
   };
 
@@ -230,26 +231,19 @@ const EntradaSaida = () => {
     const filteredData = entradasSaidasOriginais.filter((registro) => {
       const matchesSearchTerm = registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase());
   
-      // Converte as datas inicial e final para objetos Date
-      const dataInicialDate = dataInicial ? new Date(dataInicial) : null;
-      const dataFinalDate = dataFinal ? new Date(dataFinal) : null;
+      // Converte as datas inicial e final para objetos Moment
+      const dataInicialMoment = dataInicial ? moment(dataInicial) : null;
+      const dataFinalMoment = dataFinal ? moment(dataFinal) : null;
   
-      // Converte a data do registro para um objeto Date
-      const registroData = new Date(registro.data); // registro.data já está no formato ISO 8601
+      // Converte a data do registro para um objeto Moment
+      const registroDataMoment = moment(registro.dataISO); // Usando a data original em formato ISO
   
       // Verifica se a data do registro está dentro do intervalo
-      const matchesDataInicial = dataInicialDate ? registroData >= dataInicialDate : true;
-      const matchesDataFinal = dataFinalDate ? registroData <= dataFinalDate : true;
+      const matchesDataInicial = dataInicialMoment ? registroDataMoment.isSameOrAfter(dataInicialMoment) : true;
+      const matchesDataFinal = dataFinalMoment ? registroDataMoment.isSameOrBefore(dataFinalMoment) : true;
   
       const matchesCategoria = selectedCategoria ? registro.categoria === selectedCategoria : true;
       const matchesTipo = selectedTipo ? registro.tipo === selectedTipo : true;
-  
-      // Debugging
-      console.log("Data Inicial:", dataInicialDate);
-      console.log("Data Final:", dataFinalDate);
-      console.log("Data do Registro:", registroData);
-      console.log("Matches Data Inicial:", matchesDataInicial);
-      console.log("Matches Data Final:", matchesDataFinal);
   
       return matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
     });
@@ -257,7 +251,6 @@ const EntradaSaida = () => {
     setEntradasSaidas(filteredData);
     handleCloseFiltro();
   };
-
   useEffect(() => {
     if (unidadeId) {
       fetchProdutos();
@@ -561,4 +554,4 @@ const EntradaSaida = () => {
   );
 }
 
-export default EntradaSaida;
+export default EntradaSaida; 
