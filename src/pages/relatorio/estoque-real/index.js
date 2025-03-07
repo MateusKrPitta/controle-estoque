@@ -178,20 +178,12 @@ const EstoqueReal = () => {
     const handlePesquisar = () => {
         const produtosFiltrados = produtos.filter(produto => {
             const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
-    
-            // Usando moment para manipular as datas
             const dataCriacaoProduto = moment(produto.createdAt);
-            const dataInicioFiltro = moment(dataInicio).startOf('day'); // Começo do dia
-            const dataFimFiltro = moment(dataFim).endOf('day'); // Fim do dia
-    
-            console.log("Data de Criação do Produto:", dataCriacaoProduto.format());
-            console.log("Data Início Filtro:", dataInicioFiltro.format());
-            console.log("Data Fim Filtro:", dataFimFiltro.format());
-    
+            const dataInicioFiltro = moment(dataInicio).startOf('day'); 
+            const dataFimFiltro = moment(dataFim).endOf('day');   
             const dataMatch = (dataInicio && dataFim) ?
                 dataCriacaoProduto.isBetween(dataInicioFiltro, dataFimFiltro, null, '[]') : true;
-    
-            console.log("Data Match:", dataMatch);
+
     
             return categoriaMatch && dataMatch;
         });
@@ -272,7 +264,6 @@ const EstoqueReal = () => {
         printWindow.print();
     };
 
-    const handleFiltro = () => setFiltro(true);
     const handleCloseFiltro = () => setFiltro(false);
 
     return (

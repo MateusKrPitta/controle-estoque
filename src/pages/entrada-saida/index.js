@@ -5,11 +5,7 @@ import Navbar from '../../components/navbars/header';
 import HeaderPerfil from '../../components/navbars/perfil/index.js';
 import MenuMobile from '../../components/menu-mobile/index.js';
 import ButtonComponent from '../../components/button';
-import { AddCircleOutline, Save, DateRange } from '@mui/icons-material';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import CentralModal from '../../components/modal-central/index.js';
-import ArticleIcon from '@mui/icons-material/Article';
-import ScaleIcon from '@mui/icons-material/Scale';
 import SelectTextFields from '../../components/select/index.js';
 import TableComponent from '../../components/table/index.js';
 import { headerEntradaSaida } from '../../entities/headers/header-entrada-saida.js';
@@ -19,13 +15,18 @@ import Saida from '../../assets/icones/saida.png';
 import Desperdicio from '../../assets/icones/desperdicio.png';
 import Entradas from '../../assets/icones/entradas.png';
 import Valor from '../../assets/icones/valor.png';
-import CategoryIcon from '@mui/icons-material/Category';
-import SearchIcon from '@mui/icons-material/Search';
 import api from '../../services/api.js';
 import { useNavigate } from 'react-router-dom';
 import { useUnidade } from '../../components/unidade-context/index.js';
 import TableLoading from '../../components/loading/loading-table/loading.js';
 import moment from 'moment';
+
+import { AddCircleOutline, Save, DateRange } from '@mui/icons-material';
+import ArticleIcon from '@mui/icons-material/Article';
+import ScaleIcon from '@mui/icons-material/Scale';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import CategoryIcon from '@mui/icons-material/Category';
+import SearchIcon from '@mui/icons-material/Search';
 
 const EntradaSaida = () => {
   const [isDesativa, setDesativa] = useState(false);
@@ -60,24 +61,9 @@ const EntradaSaida = () => {
     return registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  const totalDesperdicio = entradasSaidas
-    .filter(registro => registro.tipo === 'desperdicio')
-    .reduce((acc, registro) => acc + Number(registro.quantidade), 0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 300); // Delay para a transição
-
-    return () => clearTimeout(timer);
-  }, []);
-
-
-
   const handleCadastro = () => setCadastro(true);
   const handleCloseCadastro = () => setCadastro(false);
 
-  const handleFiltro = () => setFiltro(true);
   const handleCloseFiltro = () => setFiltro(false);
 
   const handleProdutoChange = (value) => {
@@ -88,44 +74,40 @@ const EntradaSaida = () => {
 
   const handleCadastrarRegistro = async () => {
     setDesativa(true);
-    const quantidadeNumerica = parseFloat(quantidade) || 0; // Converte a quantidade para número
-    const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0; // Calcule o valor total
+    const quantidadeNumerica = parseFloat(quantidade) || 0;
+    const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0; 
 
-    // Crie o objeto com os dados a serem enviados
+
     const novoRegistro = {
-      data: new Date().toISOString().split('T')[0], // Data atual
-      movTipo: tipo === 'entrada' ? 1 : tipo === 'saida' ? 2 : 3, // Mapeia o tipo para 1, 2 ou 3
+      data: new Date().toISOString().split('T')[0],
+      movTipo: tipo === 'entrada' ? 1 : tipo === 'saida' ? 2 : 3, 
       quantidade: quantidadeNumerica,
-      produtoId: produtoSelecionado ? produtoSelecionado.id : null, // ID do produto selecionado
-      observacao: observacao // Observação do campo
+      produtoId: produtoSelecionado ? produtoSelecionado.id : null,
+      observacao: observacao 
     };
 
     try {
-      // Envie os dados para a API
       const response = await api.post('/movimentacao', novoRegistro);
 
-      // Atualize o estado local
       const updatedEntradasSaidas = [...entradasSaidas, { ...novoRegistro, valorTotal }];
       setEntradasSaidas(updatedEntradasSaidas);
 
-      // Resetar os campos
       setProduto('');
       setQuantidade('');
       setTipo('entrada');
       setProdutoSelecionado(null);
-      setObservacao(''); // Limpa o campo de observação
+      setObservacao('');
       handleCloseCadastro();
 
-      // Recarregar os dados da tabela
-      fetchEntradasSaidas(); // Chame a função para buscar os dados novamente
+
+      fetchEntradasSaidas(); 
     } catch (error) {
       CustomToast({ type: "error", message: "Erro ao cadastrar registro!" });
     } finally {
-      setDesativa(false); // Reabilita o botão
+      setDesativa(false); 
     }
   };
 
-  // Calcular o valor total de entradas
   const valorTotalEntradas = entradasSaidas
     .filter(registro => registro.tipo === 'entrada')
     .reduce((acc, registro) => acc + Number(registro.valorTotal), 0);
@@ -134,7 +116,6 @@ const EntradaSaida = () => {
     .filter(registro => registro.tipo === 'desperdicio')
     .reduce((acc, registro) => acc + Number(registro.valorTotal), 0);
 
-  // Calcular o valor total de saídas
   const valorTotalSaidas = entradasSaidas
     .filter(registro => registro.tipo === 'saida')
     .reduce((acc, registro) => acc + Number(registro.valorTotal), 0);
@@ -147,17 +128,15 @@ const EntradaSaida = () => {
     .filter(registro => registro.tipo === 'saida')
     .reduce((acc, registro) => acc + Number(registro.quantidade), 0);
 
-  // Calcular o valor total em estoque
+
   const valorTotalEstoque = entradasSaidas.reduce((acc, registro) => {
-    const valorRegistro = registro.valorTotal; // O valor total já calculado ao cadastrar
+    const valorRegistro = registro.valorTotal; 
     return acc + (registro.tipo === 'entrada' ? valorRegistro : -valorRegistro);
   }, 0);
 
   const fetchProdutos = async () => {
     try {
       const response = await api.get(`/produto?unidadeId=${unidadeId}`);
-
-      // Filtra os produtos pela unidadeId no frontend
       const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
 
       setProdutos(produtosFiltrados);
@@ -168,11 +147,8 @@ const EntradaSaida = () => {
 
   const fetchCategorias = async () => {
     try {
-      const response = await api.get(`/categoria?unidade=${unidadeId}`); // Busca todas as categorias
-
-      // Filtra as categorias com base na unidadeId no frontend
+      const response = await api.get(`/categoria?unidade=${unidadeId}`); 
       const categoriasFiltradas = response.data.data.filter(categoria => categoria.unidadeId === unidadeId);
-
       setCategorias(categoriasFiltradas);
     } catch (error) {
       CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
@@ -184,10 +160,8 @@ const EntradaSaida = () => {
     try {
       const response = await api.get(`/movimentacao?unidade=${unidadeId}`);
       const movimentacoes = response.data.data;
-
-      // Formatar as movimentações
       const formattedMovimentacoes = movimentacoes.map(mov => {
-        const valorTotal = mov.precoPorcao * mov.quantidade; // Calcule o valor total
+        const valorTotal = mov.precoPorcao * mov.quantidade; 
         return {
           id: mov.id,
           tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === "2" ? 'saida' : 'desperdicio',
@@ -197,8 +171,8 @@ const EntradaSaida = () => {
           precoPorcao: mov.precoPorcao,
           valorTotal: valorTotal,
           observacao: mov.observacao,
-          dataCadastro: moment(mov.data).format('DD/MM/YYYY'), // Formatação para DD/MM/YYYY
-          dataISO: mov.data // Armazena a data original em formato ISO para comparação
+          dataCadastro: moment(mov.data).format('DD/MM/YYYY'),
+          dataISO: mov.data 
         };
       });
 
@@ -219,27 +193,18 @@ const EntradaSaida = () => {
     setCategorias(categoriasUnicas);
     setUniqueCategoriesCount(categoriasUnicas.length);
     fetchProdutos();
-    // Atualiza o estado com o número de categorias únicas
   }, []);
 
   const handlePesquisar = () => {
     const filteredData = entradasSaidasOriginais.filter((registro) => {
       const matchesSearchTerm = registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase());
-
-      // Converte as datas inicial e final para objetos Moment
       const dataInicialMoment = dataInicial ? moment(dataInicial) : null;
       const dataFinalMoment = dataFinal ? moment(dataFinal) : null;
-
-      // Converte a data do registro para um objeto Moment
-      const registroDataMoment = moment(registro.dataISO); // Usando a data original em formato ISO
-
-      // Verifica se a data do registro está dentro do intervalo
+      const registroDataMoment = moment(registro.dataISO); 
       const matchesDataInicial = dataInicialMoment ? registroDataMoment.isSameOrAfter(dataInicialMoment) : true;
       const matchesDataFinal = dataFinalMoment ? registroDataMoment.isSameOrBefore(dataFinalMoment) : true;
-
       const matchesCategoria = selectedCategoria ? registro.categoria === selectedCategoria : true;
       const matchesTipo = selectedTipo ? registro.tipo === selectedTipo : true;
-
       return matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
     });
 
@@ -260,6 +225,13 @@ const EntradaSaida = () => {
     }
   }, [unidadeId]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <div className="flex w-full ">
       <Navbar />
@@ -270,7 +242,7 @@ const EntradaSaida = () => {
           <AddchartIcon /> Entrada e Saída
         </h1>
         <div className={`w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
-          {/* Card Entradas */}
+     
           <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
             <label className='text-xs font-bold'>Entradas</label>
             <div className='flex items-center justify-center gap-5'>
@@ -279,25 +251,22 @@ const EntradaSaida = () => {
             </div>
           </div>
 
-          {/* Card Saídas */}
+       
           <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
             <label className='text-xs font-bold'>Saídas</label>
             <div className='flex items-center justify-center gap-5'>
               <img src={Saida} alt="Saídas" />
-              <label>{formatValor(valorTotalSaidas)}</label> {/* Exibe o valor total das saídas */}
+              <label>{formatValor(valorTotalSaidas)}</label> 
             </div>
           </div>
-
-          {/* Card Desperdício */}
           <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
             <label className='text-xs font-bold'>Desperdício</label>
             <div className='flex items-center justify-center gap-5'>
               <img src={Desperdicio} alt="Desperdício" />
-              <label>{formatValor(valorTotalDesperdicio)}</label> {/* Exibe o valor total do desperdício */}
+              <label>{formatValor(valorTotalDesperdicio)}</label>
             </div>
           </div>
 
-          {/* Card Valor Total em Estoque */}
           <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
             <label className='text-xs font-bold'>Valor total em estoque</label>
             <div className='flex items-center justify-center gap-5'>
@@ -320,7 +289,7 @@ const EntradaSaida = () => {
                   </InputAdornment>
                 ),
               }}
-              value={searchTerm} // Adiciona o valor do termo de pesquisa
+              value={searchTerm} 
               onChange={handlePesquisarProduto}
               autoComplete="off"
               sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '40%' } }}
@@ -362,7 +331,7 @@ const EntradaSaida = () => {
             ) : (
               <TableComponent
                 headers={headerEntradaSaida}
-                rows={filteredEntradasSaidas} // Usa filteredEntradasSaidas para a pesquisa
+                rows={filteredEntradasSaidas}
                 actionsLabel={"Ações"}
               />
             )}
@@ -389,11 +358,11 @@ const EntradaSaida = () => {
                 name={"produto"}
                 fontWeight={500}
                 options={produtos.map(produto => ({
-                  value: produto.nome, // O valor que será armazenado
-                  label: `${produto.nome} - ${formatValor(produto.valorPorcao)}` // Exibe o nome e o preço por porção formatado
+                  value: produto.nome, 
+                  label: `${produto.nome} - ${formatValor(produto.valorPorcao)}` 
                 }))}
-                value={produto} // Preenche o campo com o produto atual
-                onChange={(e) => handleProdutoChange(e.target.value)} // Passando o valor correto
+                value={produto} 
+                onChange={(e) => handleProdutoChange(e.target.value)} 
               />
               <TextField
                 fullWidth
@@ -418,14 +387,14 @@ const EntradaSaida = () => {
                 variant="outlined"
                 size="small"
                 label="Observação"
-                value={observacao} // Adicione um estado para armazenar a observação
+                value={observacao} 
                 sx={{ width: { xs: '30%', sm: '50%', md: '40%', lg: '96%' }, }}
-                onChange={(e) => setObservacao(e.target.value)} // Função para atualizar a observação
+                onChange={(e) => setObservacao(e.target.value)} 
                 autoComplete="off"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <ArticleIcon fontSize="small" /> {/* Ícone para o campo de observação */}
+                      <ArticleIcon fontSize="small" /> 
                     </InputAdornment>
                   ),
                 }}
@@ -440,9 +409,9 @@ const EntradaSaida = () => {
                 options={[
                   { value: 'entrada', label: 'Entrada' },
                   { value: 'saida', label: 'Saída' },
-                  { value: 'desperdicio', label: 'Desperdício' }, // Nova opção adicionada
+                  { value: 'desperdicio', label: 'Desperdício' },
                 ]}
-                onChange={(e) => setTipo(e.target.value)} // Passando o valor correto
+                onChange={(e) => setTipo(e.target.value)} 
               />
             </div>
 
@@ -452,7 +421,7 @@ const EntradaSaida = () => {
                 subtitle={'Cadastrar'}
                 startIcon={<Save />}
                 disabled={isDesativa}
-                onClick={handleCadastrarRegistro} // Chama a função para cadastrar
+                onClick={handleCadastrarRegistro} 
               />
             </div>
           </div>

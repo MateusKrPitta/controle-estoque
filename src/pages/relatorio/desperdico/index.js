@@ -14,6 +14,7 @@ import TableComponent from '../../../components/table';
 import SelectTextFields from '../../../components/select/index.js'; 
 import { NumericFormat } from 'react-number-format';
 import Logo from '../../../assets/png/logo_preta.png'
+
 const Desperdicio = () => {
     const [produto, setProduto] = useState('');
     const [quantidade, setQuantidade] = useState('');
@@ -30,18 +31,7 @@ const Desperdicio = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    useEffect(() => {
 
-        const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-        setProdutos(produtosSalvos);
-
-  
-        const entradasSaidasSalvas = JSON.parse(localStorage.getItem('entradasSaidas')) || [];
-
-
-        const desperdicioSalvo = entradasSaidasSalvas.filter(item => item.tipo === 'desperdicio');
-        setDesperdicioRows(desperdicioSalvo);
-    }, []);
 
     const handleAddDesperdicio = () => {
         if (!produto || !quantidade || !precoRaw) {

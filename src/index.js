@@ -12,21 +12,21 @@ const theme = createTheme({
     segundary:{
       main: '#b0d847'
     },
-    // Adicionando uma cor personalizada dentro da paleta
+
     customGray: {
       main: '#b0d847',
     },
   },
   typography: {
     fontFamily: '"Montserrat", sans-serif',
-    fontSize: 12, // Define o tamanho da fonte padrão
+    fontSize: 12, 
   },
   components: {
     MuiTextField: {
       styleOverrides: {
         root: {
           '& .MuiInputBase-input': {
-            fontSize: '12px', // Define o tamanho da fonte para os inputs
+            fontSize: '12px',
           },
         },
       },

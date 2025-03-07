@@ -47,28 +47,19 @@ const Dashboard = () => {
         return colors[index % colors.length];
     };
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsVisible(true);
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, []);
-
     const carregaProdutos = async () => {
         setLoading(true);
         try {
             const response = await api.get(`/produto?unidadeId=${unidadeId}`);
 
-    
+
             if (Array.isArray(response.data.data)) {
-                // Filtra os produtos com base na unidadeId
                 const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
-    
+
                 const mappedProdutos = produtosFiltrados.map(produto => {
                     const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
                     const valorFormatado = formatValor(produto.valorReajuste || produto.valor);
-    
+
                     return {
                         id: produto.id,
                         nome: produto.nome,
@@ -84,7 +75,7 @@ const Dashboard = () => {
                         categoriaNome: produto.categoriaNome
                     };
                 });
-    
+
                 setProdutos(mappedProdutos);
                 setProdutosOriginais(mappedProdutos);
             } else {
@@ -92,7 +83,7 @@ const Dashboard = () => {
                 setProdutosOriginais([]);
             }
         } catch (error) {
-    
+
             if (error.response && error.response.data.message === "Credenciais inválidas" && error.response.data.data === "Token de acesso inválido") {
                 CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
                 navigate("/");
@@ -135,8 +126,6 @@ const Dashboard = () => {
         try {
             const response = await api.get(`/movimentacao?unidadeId=${unidadeId}`);
             const movimentacoes = response.data.data;
-
-            // Agrupar movimentações por produtoNome e calcular entradas, saídas e desperdícios
             const agrupadas = movimentacoes.reduce((acc, mov) => {
                 if (!acc[mov.produtoNome]) {
                     acc[mov.produtoNome] = { nome: mov.produtoNome, entradas: 0, saidas: 0, desperdicio: 0 };
@@ -147,10 +136,9 @@ const Dashboard = () => {
                 return acc;
             }, {});
 
-            // Converter o objeto em um array para o gráfico
             const data = Object.values(agrupadas);
             setDataGrafico(data);
-            setEntradasSaidas(movimentacoes); // Armazenar movimentações completas, se precisar usar
+            setEntradasSaidas(movimentacoes); 
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao carregar movimentações!" });
         }
@@ -184,7 +172,7 @@ const Dashboard = () => {
                 acc[categoria] = 0;
             }
 
-            acc[categoria] += 1; // Conta a quantidade de produtos na categoria
+            acc[categoria] += 1; 
             return acc;
         }, {});
 
@@ -199,15 +187,15 @@ const Dashboard = () => {
     useEffect(() => {
         const data = produtos.map(produto => {
             const entradas = entradasSaidas
-                .filter(item => item.produtoNome === produto.nome && item.tipo === '1') // Tipo 1 = entrada
+                .filter(item => item.produtoNome === produto.nome && item.tipo === '1') 
                 .reduce((acc, item) => acc + parseInt(item.quantidade), 0);
 
             const saidas = entradasSaidas
-                .filter(item => item.produtoNome === produto.nome && item.tipo === '2') // Tipo 2 = saída
+                .filter(item => item.produtoNome === produto.nome && item.tipo === '2') 
                 .reduce((acc, item) => acc + parseInt(item.quantidade), 0);
 
             const desperdicio = entradasSaidas
-                .filter(item => item.produtoNome === produto.nome && item.tipo === '3') // Tipo 3 = desperdício
+                .filter(item => item.produtoNome === produto.nome && item.tipo === '3')
                 .reduce((acc, item) => acc + parseInt(item.quantidade), 0);
 
             return {
@@ -234,7 +222,13 @@ const Dashboard = () => {
             carregaProdutos();
         }
     }, [unidadeId]);
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300);
 
+        return () => clearTimeout(timer);
+    }, []);
     return (
         <div className="lg:flex w-[100%] h-[100%]">
             <MenuMobile />
@@ -312,23 +306,23 @@ const Dashboard = () => {
                         <div className="mt-8 w-[100%] md:w-[30%] h-64">
                             <h2 className="text-lg text-center w-full font-bold text-primary mt-12 md:mt-0 mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
                             <ResponsiveContainer width="100%" height={250}>
-    <BarChart data={dataGrafico}>
-        <XAxis 
-            dataKey="nome" 
-            tick={{ fontSize: 10 }} // Diminui o tamanho da fonte do eixo X
-        />
-        <YAxis 
-            tick={{ fontSize: 10 }} // Diminui o tamanho da fonte do eixo Y
-        />
-        <Tooltip 
-            content={<CustomTooltip />} 
-            contentStyle={{ fontSize: 12 }} // Diminui o tamanho da fonte do Tooltip
-        />
-        <Bar dataKey="entradas" fill="#BCDA72" />
-        <Bar dataKey="saidas" fill="#FF0000" />
-        <Bar dataKey="desperdicio" fill="#000000" />
-    </BarChart>
-</ResponsiveContainer>
+                                <BarChart data={dataGrafico}>
+                                    <XAxis
+                                        dataKey="nome"
+                                        tick={{ fontSize: 10 }} 
+                                    />
+                                    <YAxis
+                                        tick={{ fontSize: 10 }}
+                                    />
+                                    <Tooltip
+                                        content={<CustomTooltip />}
+                                        contentStyle={{ fontSize: 12 }} 
+                                    />
+                                    <Bar dataKey="entradas" fill="#BCDA72" />
+                                    <Bar dataKey="saidas" fill="#FF0000" />
+                                    <Bar dataKey="desperdicio" fill="#000000" />
+                                </BarChart>
+                            </ResponsiveContainer>
 
                         </div>
                     </div>

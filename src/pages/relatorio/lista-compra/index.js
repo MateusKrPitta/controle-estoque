@@ -4,15 +4,15 @@ import Navbar from '../../../components/navbars/header';
 import MenuMobile from '../../../components/menu-mobile';
 import HeaderPerfil from '../../../components/navbars/perfil';
 import TableComponent from '../../../components/table';
-import { formatValor } from '../../../utils/functions'; // Função para formatar valores
+import { formatValor } from '../../../utils/functions'; 
 import ButtonComponent from '../../../components/button';
-import { Category, Filter, Print, Save, Search } from '@mui/icons-material';
+import { Category, Print,  Search } from '@mui/icons-material';
 import HeaderRelatorio from '../../../components/navbars/relatorios';
 import CentralModal from '../../../components/modal-central/index';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import SelectTextFields from '../../../components/select';
 import Logo from '../../../assets/png/logo_preta.png';
-import api from '../../../services/api'; // Importa a API
+import api from '../../../services/api'; 
 import { useUnidade } from '../../../components/unidade-context';
 import CustomToast from '../../../components/toast';
 import { InputAdornment, TextField } from '@mui/material';
@@ -21,7 +21,6 @@ const ListaCompra = () => {
     const { unidadeId } = useUnidade();
     const [produtos, setProdutos] = useState([]);
     const [entradasSaidas, setEntradasSaidas] = useState([]);
-    const [loading, setLoading] = useState(false);
     const [categorias, setCategorias] = useState([]);
     const [isVisible, setIsVisible] = useState(false);
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
@@ -29,19 +28,6 @@ const ListaCompra = () => {
     const [produtosFiltrados, setProdutosFiltrados] = useState([]);
     const [filtroNome, setFiltroNome] = useState('');
 
-    useEffect(() => {
-
-        fetchProdutos();
-        carregarCategorias();
-    }, [unidadeId]);
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsVisible(true);
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, []);
 
     const calcularEstoqueAtual = (produtoNome) => {
         const estoque = {
@@ -252,6 +238,19 @@ const ListaCompra = () => {
         setProdutosFiltrados(filtrados);
     }, [filtroNome, produtos]);
 
+    
+    useEffect(() => {
+        fetchProdutos();
+        carregarCategorias();
+    }, [unidadeId]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, []);
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -329,8 +328,8 @@ const ListaCompra = () => {
                                 icon={<Category fontSize="small" />}
                                 label={'Categorias'}
                                 backgroundColor={"#D9D9D9"}
-                                options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))} // Passa as categorias para o Select
-                                onChange={(e) => setCategoriaSelecionada(e.target.value)} // Atualiza o estado com a categoria selecionada
+                                options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+                                onChange={(e) => setCategoriaSelecionada(e.target.value)} 
                                 value={categoriaSelecionada}
                             />
                         </div>

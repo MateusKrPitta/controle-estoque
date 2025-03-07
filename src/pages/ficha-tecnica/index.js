@@ -3,14 +3,8 @@ import Navbar from '../../components/navbars/header';
 import MenuMobile from '../../components/menu-mobile';
 import HeaderPerfil from '../../components/navbars/perfil';
 import ContentPasteSearchIcon from '@mui/icons-material/ContentPasteSearch';
-import { InputAdornment, TextField } from '@mui/material';
-import { AddCircleOutline, Edit, MoneySharp, Save, Search } from '@mui/icons-material';
-import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import SelectTextFields from '../../components/select';
-import ArticleIcon from '@mui/icons-material/Article';
-import ScaleIcon from '@mui/icons-material/Scale';
 import ButtonComponent from '../../components/button';
-import FlatwareIcon from '@mui/icons-material/Flatware';
 import { NumericFormat } from 'react-number-format';
 import ButtonClose from '../../components/buttons/button-close';
 import TabelaProdutos from '../../components/table-expanded';
@@ -20,12 +14,16 @@ import { formatCmvReal } from '../../utils/functions';
 import { useUnidade } from '../../components/unidade-context';
 import api from '../../services/api';
 import TableLoading from '../../components/loading/loading-table/loading';
-import TableComponent from '../../components/table';
-import ModalLateral from '../../components/modal-lateral';
 
-// Função de formatação
+import { InputAdornment, TextField } from '@mui/material';
+import { AddCircleOutline, Edit, MoneySharp, Save, Search } from '@mui/icons-material';
+import LocalDiningIcon from '@mui/icons-material/LocalDining';
+import ArticleIcon from '@mui/icons-material/Article';
+import ScaleIcon from '@mui/icons-material/Scale';
+import FlatwareIcon from '@mui/icons-material/Flatware';
+
 export const formatValor = (valor) => {
-    const parsedValor = parseFloat(valor); // Converte o valor para número
+    const parsedValor = parseFloat(valor);
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
@@ -40,16 +38,14 @@ const unidadeMedidaMap = {
     5: 'Unidade',
 };
 
-
 const FichaTecnica = () => {
     const [isEditing, setIsEditing] = useState(false);
-const [itemToEdit, setItemToEdit] = useState(null);
+    const [itemToEdit, setItemToEdit] = useState(null);
     const { unidadeId } = useUnidade();
     const [produtos, setProdutos] = useState([]);
     const [produtoSelecionado, setProdutoSelecionado] = useState(null);
     const [precoPorcao, setPrecoPorcao] = useState('');
     const [quantidade, setQuantidade] = useState('');
-    const [editando, setEditando] = useState(false);
     const [nomePrato, setNomePrato] = useState('');
     const [unidade, setUnidade] = useState('');
     const [valorUtilizado, setValorUtilizado] = useState('');
@@ -61,28 +57,14 @@ const [itemToEdit, setItemToEdit] = useState(null);
     const [produtosDaFicha, setProdutosDaFicha] = useState([]);
     const [valorVenda, setValorVenda] = useState('');
     const [lucroReal, setLucroReal] = useState(0);
-
     const [produtosCadastrados, setProdutosCadastrados] = useState([]);
     const [rendimento, setRendimento] = useState('');
-    const [valorRendimento, setValorRendimento] = useState(0); // Novo estado para o valor do rendimento
-    const [cmvReal, setCmvReal] = useState(0); // Novo estado para o CMV Real
+    const [valorRendimento, setValorRendimento] = useState(0); 
+    const [cmvReal, setCmvReal] = useState(0); 
     const [pratoEmEdicao, setPratoEmEdicao] = useState(null);
     const [criarPrato, setCriarPrato] = useState(false);
+    const [editar, setEditar] = useState(false);
 
-    const handleEditClick = (index) => {
-        const item = produtosDaFicha[index]; // Use produtosDaFicha em vez de pratos
-        setItemToEdit(item);
-        setIsEditing(true); // Abre a modal
-    };
-
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsVisible(true);
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, []);
 
     const handleSearch = (event) => {
         setSearchTerm(event.target.value);
@@ -119,10 +101,11 @@ const [itemToEdit, setItemToEdit] = useState(null);
         }
     }, [valorVenda, custoTotal]);
 
-    // Novo useEffect para calcular o valor do rendimento
+    
     useEffect(() => {
         if (custoTotal && rendimento) {
-            const valorRendimentoCalculado = (custoTotal / parseFloat(rendimento)) * 1000; // Cálculo do valor do rendimento
+            const valorRendimentoCalculado = (custoTotal / parseFloat(rendimento)) * 1000;
+            
             setValorRendimento(valorRendimentoCalculado);
         } else {
             setValorRendimento(0);
@@ -131,11 +114,8 @@ const [itemToEdit, setItemToEdit] = useState(null);
 
     const fetchProdutosDaFicha = async () => {
         try {
-            const response = await api.get(`/ficha?unidade=${unidadeId}`); // Altere aqui
-            const data = response.data.data; // Acesse a propriedade 'data'
-
-            console.log(data); // Verifique os dados no console
-
+            const response = await api.get(`/ficha?unidade=${unidadeId}`); 
+            const data = response.data.data; 
             if (Array.isArray(data)) {
                 setProdutosDaFicha(data);
             } else {
@@ -146,12 +126,12 @@ const [itemToEdit, setItemToEdit] = useState(null);
         }
     };
 
-    // Novo useEffect para calcular o CMV Real
+
     useEffect(() => {
         if (custoTotal && valorVenda) {
             const valorVendaNumerico = parseFloat(valorVenda.replace('R$', '').replace(',', '.'));
             if (!isNaN(valorVendaNumerico) && valorVendaNumerico > 0) {
-                const cmvCalculado = (custoTotal / valorVendaNumerico) * 100; // Multiplicando por 100 para obter a porcentagem
+                const cmvCalculado = (custoTotal / valorVendaNumerico) * 100;
                 setCmvReal(cmvCalculado);
             } else {
                 setCmvReal(0);
@@ -174,8 +154,8 @@ const [itemToEdit, setItemToEdit] = useState(null);
         const produto = produtos.find(prod => prod.id === value);
         setProdutoSelecionado(produto);
         if (produto) {
-            setUnidade(unidadeMedidaMap[produto.unidadeMedida]); // Mapeia a unidade de medida
-            setPrecoPorcao(formatValor(produto.valorPorcao)); // Define o preço da porção formatado
+            setUnidade(unidadeMedidaMap[produto.unidadeMedida]); 
+            setPrecoPorcao(formatValor(produto.valorPorcao)); 
         } else {
             setUnidade('');
             setPrecoPorcao('');
@@ -228,7 +208,7 @@ const [itemToEdit, setItemToEdit] = useState(null);
             return;
         }
 
-        // Estrutura os dados para enviar
+
         const pratoCadastrado = {
             prato: {
                 nome: nomePrato,
@@ -240,7 +220,7 @@ const [itemToEdit, setItemToEdit] = useState(null);
                 lucroReal: lucroReal,
             },
             produtos: produtosAdicionados.map(produto => {
-                // Encontra o produto selecionado na lista de produtos
+  
                 const produtoSelecionado = produtos.find(p => p.nome === produto.nome);
                 if (!produtoSelecionado) {
                     CustomToast({ type: "error", message: "Produto selecionado não é válido!" });
@@ -249,17 +229,15 @@ const [itemToEdit, setItemToEdit] = useState(null);
                 return {
                     qtdUtilizado: parseFloat(produto.quantidade),
                     valorUtilizado: parseFloat(produto.valorUtilizado.replace('R$', '').replace('.', '').replace(',', '.')),
-                    produtoId: produtoSelecionado.id, // Usa o ID do produto selecionado
+                    produtoId: produtoSelecionado.id, 
                 };
-            }).filter(Boolean), // Remove os produtos que são null
+            }).filter(Boolean),
         };
 
         try {
-            // Envia os dados para a API com o parâmetro unidade na URL
             const response = await api.post(`/ficha?unidade=${unidadeId}`, pratoCadastrado);
             CustomToast({ type: "success", message: "Prato cadastrado com sucesso!" });
 
-            // Limpa os campos após o cadastro
             setProdutosAdicionados([]);
             setNomePrato('');
             setValorVenda('');
@@ -273,46 +251,27 @@ const [itemToEdit, setItemToEdit] = useState(null);
         }
         fetchProdutosDaFicha()
     };
-    
-    const handleEditPrato = (index) => {
-        const prato = produtosCadastrados[index];
-        if (!prato) {
-            CustomToast({ type: "error", message: "Prato não encontrado!" });
-            return; // Retorna se o prato não for encontrado
-        }
-        setPratoEmEdicao(prato);
-        setNomePrato(prato.nomePrato);
-        setProdutosAdicionados(prato.produtos);
-        setValorVenda(prato.valorVenda);
-        setCustoTotal(prato.custoTotal);
-        setRendimento(prato.rendimento);
-        setCmvReal(prato.cmvReal);
-        setIsEditing(true); // Abre a modal lateral para edição
-    };
 
-
+    const handleFecharEditar = () => setEditar(false);
+    const handleEditar = () => setEditar(true);
 
     const handleCriarPrato = () => setCriarPrato(true);
     const handleFecharPrato = () => {
-        setCriarPrato(false); // Fecha a modal
-        // Limpa os campos
+        setCriarPrato(false); 
         setNomePrato('');
         setProdutosAdicionados([]);
         setValorVenda('');
         setCustoTotal(0);
         setLucroReal(0);
         setCmvReal(0);
-        setRendimento(''); // Limpa o rendimento
-        setPratoEmEdicao(null); // Limpa o prato em edição
+        setRendimento('');
+        setPratoEmEdicao(null); 
     };
 
     const fetchProdutos = async () => {
         try {
             const response = await api.get(`/produto?unidadeId=${unidadeId}`);
-
-
             const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
-
             setProdutos(produtosFiltrados);
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
@@ -323,9 +282,18 @@ const [itemToEdit, setItemToEdit] = useState(null);
     useEffect(() => {
         if (unidadeId) {
             fetchProdutos();
-            fetchProdutosDaFicha(); // Certifique-se de que esta função está sendo chamada
+            fetchProdutosDaFicha();
         }
     }, [unidadeId]);
+
+        useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -644,20 +612,25 @@ const [itemToEdit, setItemToEdit] = useState(null);
                         </div>
                     ) : (
                         <TabelaProdutos
-                            pratos={filteredPratos} // Passa os pratos filtrados para a tabela
-                            onEditClick={handleEditPrato}
+                            pratos={filteredPratos}
+                            onEditClick={handleEditar}
                         />
                     )}
                 </div>
             </div>
-            <ModalLateral
-    open={isEditing}
-    handleClose={() => setIsEditing(false)}
-                tituloModal="Editar CMV"
-                icon={<Edit />}
-                tamanhoTitulo={'75%'}
-                conteudo={
-                    <div>
+            <CentralModal
+                tamanhoTitulo={'81%'}
+                maxHeight={'100vh'}
+                top={'15%'}
+                left={'20%'}
+                bottom={'5%'}
+                width={'1050px'}
+                icon={<Edit fontSize="small" />}
+                open={editar}
+                onClose={handleFecharEditar}
+                title="Editar Prato"
+            >
+                <div>
                     <div className={` w-[94.5%] overflow-auto transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                         <div className='p-6 flex flex-wrap gap-2' style={{ border: '1px solid black', borderRadius: '10px' }}>
                             <SelectTextFields
@@ -909,8 +882,7 @@ const [itemToEdit, setItemToEdit] = useState(null);
                     </div>
 
                 </div>
-                }
-            />
+            </CentralModal>
 
         </div>
     );

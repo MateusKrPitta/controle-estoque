@@ -5,7 +5,6 @@ import ButtonComponent from "../../../components/button";
 import HeaderCadastro from "../../../components/navbars/cadastro";
 import TableComponent from "../../../components/table";
 import CentralModal from "../../../components/modal-central";
-import { LocationOnOutlined, Save } from "@mui/icons-material";
 import ModalLateral from "../../../components/modal-lateral";
 import MenuMobile from "../../../components/menu-mobile";
 import { headerUnidade } from "../../../entities/headers/header-unidades";
@@ -17,6 +16,7 @@ import TableLoading from "../../../components/loading/loading-table/loading";
 import { InputAdornment, TextField } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EditIcon from "@mui/icons-material/Edit";
+import { LocationOnOutlined, Save } from "@mui/icons-material";
 
 const Unidades = () => {
   const [isDesativa, setDesativa] = useState(false);
@@ -34,7 +34,6 @@ const Unidades = () => {
   const [mensagemErro, setMensagemErro] = useState('');
 
   const handleCadastroUnidade = () => {
-    
     setCadastrarUnidade(true);
     setUnidadeEditando(null);
     setNomeUnidade("");
@@ -50,9 +49,9 @@ const Unidades = () => {
       const response = await api.get("/unidade");
       setUnidades(response.data.data);
       setUnidadesFiltradas(response.data.data);
-      setMensagemErro(''); // Clear error message on success
+      setMensagemErro('');
     } catch (error) {
-      setMensagemErro("Erro ao carregar as unidades!"); // Set error message
+      setMensagemErro("Erro ao carregar as unidades!"); 
       if (
         error.response &&
         error.response.data.message === "Credenciais inválidas" &&
@@ -64,7 +63,7 @@ const Unidades = () => {
         CustomToast({ type: "error", message: "Erro ao carregar as unidades!" });
       }
     } finally {
-      setLoading(false); // Set loading to false
+      setLoading(false); 
     }
   };
 
@@ -88,8 +87,8 @@ const Unidades = () => {
     } catch (error) {
       console.log("Erro completo:", error);
     } finally {
-      setDesativa(false); // Reabilita o botão
-  }
+      setDesativa(false); 
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -268,7 +267,7 @@ const Unidades = () => {
                       subtitle={"Cadastrar"}
                       buttonSize="large"
                       onClick={handleSalvarUnidade}
-                      disabled={isDesativa} 
+                      disabled={isDesativa}
                     />
                   </div>
                 </div>

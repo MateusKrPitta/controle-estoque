@@ -25,8 +25,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 const Categoria = () => {
     const navigate = useNavigate();
     const { unidadeId } = useUnidade();
-
-      const [isDesativa, setDesativa] = useState(false);
+    const [isDesativa, setDesativa] = useState(false);
     const [cadastroCategoria, setCadastroCategoria] = useState(false);
     const [loading, setLoading] = useState(false);
     const [editandoCategoria, setEditandoCategoria] = useState(false);
@@ -44,19 +43,20 @@ const Categoria = () => {
 
     const handleCadastroCategoria = () => setCadastroCategoria(true);
     const handleCloseCadastroCategoria = () => setCadastroCategoria(false);
-    
+
     const carregarCategorias = async (unidadeId) => {
         setLoading(true);
         try {
             const response = await api.get(`/categoria?unidade=${unidadeId}`);
             if (Array.isArray(response.data.data)) {
                 setCategorias(response.data.data);
-                console.log(response.data.data);
             } else {
                 setCategorias([]);
             }
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
+            CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
+            navigate("/");
         } finally {
             setLoading(false);
         }
@@ -65,7 +65,6 @@ const Categoria = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setCategoria({ ...categoria, [name]: value });
-        console.log(value);
     };
 
     const handleCadastrarCategoria = async () => {
@@ -83,7 +82,7 @@ const Categoria = () => {
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao cadastrar categoria." });
         } finally {
-            setDesativa(false); // Reabilita o botão
+            setDesativa(false);
         }
     };
 
@@ -277,7 +276,7 @@ const Categoria = () => {
                             subtitle={'Cadastrar'}
                             startIcon={<Save />}
                             onClick={handleCadastrarCategoria}
-                            disabled={isDesativa} 
+                            disabled={isDesativa}
                         />
                     </div>
                 </div>

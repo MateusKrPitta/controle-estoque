@@ -15,11 +15,11 @@ import api from '../../../services/api.js';
 import { useUnidade } from '../../../components/unidade-context/index.js';
 import { useNavigate } from 'react-router-dom';
 import ButtonComponent from '../../../components/button/index.js';
-import SearchIcon from '@mui/icons-material/Search';
 import TableComponent from '../../../components/table/index.js';
 import MenuMobile from '../../../components/menu-mobile/index.js';
 import { headerProdutos } from '../../../entities/headers/header-produtos.js';
 import moment from 'moment';
+
 import { AddCircleOutline, DateRange, Edit, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
 import { IconButton, InputAdornment, TextField, } from '@mui/material';
 import AddchartIcon from '@mui/icons-material/Addchart';
@@ -27,9 +27,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 import CategoryIcon from '@mui/icons-material/Category';
 import ScaleIcon from '@mui/icons-material/Scale';
 import { MoneyOutlined } from '@mui/icons-material';
-
-
-
+import SearchIcon from '@mui/icons-material/Search';
 
 const Produtos = () => {
     const navigate = useNavigate();
@@ -80,7 +78,6 @@ const Produtos = () => {
         setSelectedCategoria('');
     };
 
-
     const clearEditFields = () => {
         setNome('');
         setQtdMin('');
@@ -106,7 +103,7 @@ const Produtos = () => {
     const handleCloseFiltro = () => setFiltro(false);
 
     const handleCadastrarProduto = async () => {
-        setIsSubmitting(true); // Desabilita o botão
+        setIsSubmitting(true);
 
         const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
         const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0;
@@ -131,7 +128,7 @@ const Produtos = () => {
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao cadastrar produto!" });
         } finally {
-            setIsSubmitting(false); // Reabilita o botão
+            setIsSubmitting(false);
         }
     };
 
@@ -169,40 +166,26 @@ const Produtos = () => {
             }
         } catch (error) {
             console.error('Erro ao buscar produtos:', error);
-
+            CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
+            navigate("/");
         } finally {
             setLoading(false);
         }
     };
 
     const handlePesquisar = () => {
-        console.log("Produtos antes do filtro:", produtos); // Log dos produtos antes do filtro
-    
         const produtosFiltrados = produtosOriginais.filter(produto => {
-            // Filtro por nome
             const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
-    
-            // Filtro por categoria
             const categoriaMatch = !selectedCategoria || produto.categoriaId === selectedCategoria;
-    
-            // Formata as datas
-            const dataProduto = moment(produto.createdAt, "DD/MM/YYYY"); // A data do produto
+            const dataProduto = moment(produto.createdAt, "DD/MM/YYYY");
             const dataInicial = filtroDataInicial ? moment(filtroDataInicial) : null;
             const dataFinal = filtroDataFinal ? moment(filtroDataFinal).endOf('day') : null;
-    
-            // Verifica se a data do produto está dentro do intervalo
             const dataInicialMatch = !dataInicial || dataProduto.isSameOrAfter(dataInicial);
             const dataFinalMatch = !dataFinal || dataProduto.isSameOrBefore(dataFinal);
-    
-            // Retorna true se todos os filtros forem atendidos
             return nomeMatch && categoriaMatch && dataInicialMatch && dataFinalMatch;
         });
-    
-        console.log("Produtos filtrados:", produtosFiltrados); // Log dos produtos após o filtro
         setProdutosFiltrados(produtosFiltrados);
         handleCloseFiltro();
-    
-        // Mensagem de erro se nenhum produto for encontrado
         if (produtosFiltrados.length === 0) {
             setMensagemErro('Nenhum produto encontrado com os critérios de pesquisa.');
             CustomToast({ type: "error", message: "Nenhum produto encontrado com os critérios de pesquisa." });
@@ -215,8 +198,6 @@ const Produtos = () => {
         try {
 
             await api.delete(`/produto/${produtoId}`);
-
-
             const produtosAtualizados = produtos.filter((produto) => produto.id !== produtoId);
             setProdutos(produtosAtualizados);
 
@@ -232,10 +213,7 @@ const Produtos = () => {
         setNome(produto.nome);
         setQtdMin(produto.qtdMin);
         setRendimento(produto.rendimento);
-
-
         setPreco(produto.valorFormatado);
-
         const unidadeSelecionada = userOptionsUnidade.find(unit => unit.label === produto.unidadeMedida);
         setSelectedUnidade(unidadeSelecionada ? unidadeSelecionada.value : "");
         setSelectedCategoria(produto.categoriaId);
@@ -376,8 +354,8 @@ const Produtos = () => {
                                     size="small"
                                     label="Buscar Produto"
                                     sx={{ width: { xs: '90%', sm: '50%', md: '40%', lg: '40%' }, }}
-                                    value={filtroNome} // Vincula o valor ao estado
-                                    onChange={(e) => setFiltroNome(e.target.value)} // Atualiza o estado ao digitar
+                                    value={filtroNome}
+                                    onChange={(e) => setFiltroNome(e.target.value)}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -559,7 +537,7 @@ const Produtos = () => {
                                             subtitle={'Cadastrar'}
                                             startIcon={<Save />}
                                             onClick={handleCadastrarProduto}
-                                            disabled={isSubmitting} // Adicione esta linha
+                                            disabled={isSubmitting}
                                         />
                                     </div>
                                 </div>
@@ -703,77 +681,77 @@ const Produtos = () => {
                                 }
                             />
 
-<CentralModal
-    tamanhoTitulo={'81%'}
-    maxHeight={'90vh'}
-    top={'20%'}
-    left={'28%'}
-    width={'400px'}
-    icon={<FilterAltIcon fontSize="small" />}
-    open={filtro}
-    onClose={handleCloseFiltro}
-    title="Filtro"
->
-    <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
-        <div className='mt-4 flex gap-3 flex-wrap'>
-            <TextField
-                fullWidth
-                variant="outlined"
-                size="small"
-                label="Data Inicial"
-                value={filtroDataInicial}
-                type='date'
-                onChange={(e) => setFiltroDataInicial(e.target.value)}
-                autoComplete="off"
-                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <DateRange />
-                        </InputAdornment>
-                    ),
-                }}
-            />
-            <TextField
-                fullWidth
-                variant="outlined"
-                size="small"
-                label="Data Final"
-                type='date'
-                value={filtroDataFinal}
-                onChange={(e) => setFiltroDataFinal(e.target.value)}
-                autoComplete="off"
-                sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <DateRange />
-                        </InputAdornment>
-                    ),
-                }}
-            />
-            <SelectTextFields
-                width={'175px'}
-                icon={<CategoryIcon fontSize="small" />}
-                label={'Categoria '}
-                backgroundColor={"#D9D9D9"}
-                name={"categoria"}
-                fontWeight={500}
-                options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
-                onChange={(e) => setSelectedCategoria(e.target.value)}
-                value={selectedCategoria}
-            />
-        </div>
-        <div className='w-[95%] mt-2 flex items-end justify-end'>
-            <ButtonComponent
-                title={'Pesquisar'}
-                subtitle={'Pesquisar'}
-                startIcon={<SearchIcon />}
-                onClick={handlePesquisar}
-            />
-        </div>
-    </div>
-</CentralModal>
+                            <CentralModal
+                                tamanhoTitulo={'81%'}
+                                maxHeight={'90vh'}
+                                top={'20%'}
+                                left={'28%'}
+                                width={'400px'}
+                                icon={<FilterAltIcon fontSize="small" />}
+                                open={filtro}
+                                onClose={handleCloseFiltro}
+                                title="Filtro"
+                            >
+                                <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
+                                    <div className='mt-4 flex gap-3 flex-wrap'>
+                                        <TextField
+                                            fullWidth
+                                            variant="outlined"
+                                            size="small"
+                                            label="Data Inicial"
+                                            value={filtroDataInicial}
+                                            type='date'
+                                            onChange={(e) => setFiltroDataInicial(e.target.value)}
+                                            autoComplete="off"
+                                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <DateRange />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                        <TextField
+                                            fullWidth
+                                            variant="outlined"
+                                            size="small"
+                                            label="Data Final"
+                                            type='date'
+                                            value={filtroDataFinal}
+                                            onChange={(e) => setFiltroDataFinal(e.target.value)}
+                                            autoComplete="off"
+                                            sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <DateRange />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                        <SelectTextFields
+                                            width={'175px'}
+                                            icon={<CategoryIcon fontSize="small" />}
+                                            label={'Categoria '}
+                                            backgroundColor={"#D9D9D9"}
+                                            name={"categoria"}
+                                            fontWeight={500}
+                                            options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+                                            onChange={(e) => setSelectedCategoria(e.target.value)}
+                                            value={selectedCategoria}
+                                        />
+                                    </div>
+                                    <div className='w-[95%] mt-2 flex items-end justify-end'>
+                                        <ButtonComponent
+                                            title={'Pesquisar'}
+                                            subtitle={'Pesquisar'}
+                                            startIcon={<SearchIcon />}
+                                            onClick={handlePesquisar}
+                                        />
+                                    </div>
+                                </div>
+                            </CentralModal>
                         </div>
                     </div>
                 </div>

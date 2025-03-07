@@ -30,15 +30,16 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 const Usuario = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [cadastroUsuario, setCadastroUsuario] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [editandoUsuario, setEditandoUsuario] = useState(false);
+  const [editUser, setEditUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUnidades, setSelectedUnidades] = useState([]);
   const [cpf, setCpf] = useState('')
   const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
-  const [editandoUsuario, setEditandoUsuario] = useState(false);
-  const [editUser, setEditUser] = useState(null);
   const [users, setUsers] = useState([]);
-  const [showPassword, setShowPassword] = useState(false);
   const [newUser, setNewUser] = useState({
     nome: '',
     cpf: '',
@@ -50,18 +51,7 @@ const Usuario = () => {
       basico: false,
     },
   });
-
-
-
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, []);
+  
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -73,16 +63,12 @@ const Usuario = () => {
       administrador: false,
       basico: false,
     };
-
-
     updatedPermissoes[permissao] = true;
-
     setNewUser({
       ...newUser,
       permissoes: updatedPermissoes,
     });
   };
-
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -126,10 +112,10 @@ const Usuario = () => {
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true); // Desabilita o botão
+    setIsSubmitting(true); 
 
     try {
-        // Validações dos campos
+
         if (!newUser .nome) {
             CustomToast({ type: "error", message: "O nome é obrigatório." });
             return;
@@ -147,20 +133,19 @@ const Usuario = () => {
             return;
         }
 
-        // Verifica se o CPF já está cadastrado
+ 
         const cpfExistente = users.find(user => user.cpf === newUser .cpf);
         if (cpfExistente) {
             CustomToast({ type: "error", message: "CPF já cadastrado. Não é possível cadastrar outro." });
             return;
         }
 
-        // Verifica se a senha tem pelo menos 6 dígitos
+
         if (newUser .senha.length < 6) {
             CustomToast({ type: "error", message: "A senha deve conter pelo menos 6 dígitos." });
             return;
         }
 
-        // Prepara os dados do usuário para enviar ao backend
         const userData = {
             nome: newUser .nome,
             cpf: newUser .cpf,
@@ -172,15 +157,11 @@ const Usuario = () => {
             }).filter(id => id !== null),
         };
 
-        // Faz a chamada à API para cadastrar o usuário
         const response = await api.post('/usuario', userData);
 
         if (response.status === 201) {
-            // Atualiza a lista de usuários
             const updatedUsers = [...users, response.data];
             setUsers(updatedUsers);
-
-            // Fecha o modal de cadastro e limpa os campos
             handleCloseCadastroUsuario();
             CustomToast({ type: "success", message: "Usuário cadastrado com sucesso!" });
         } else {
@@ -198,7 +179,7 @@ const Usuario = () => {
             CustomToast({ type: "error", message: "Erro ao cadastrar usuário!" });
         }
     } finally {
-        setIsSubmitting(false); // Reabilita o botão
+        setIsSubmitting(false);
     }
 };
 
@@ -227,7 +208,6 @@ const Usuario = () => {
 
   const handleUpdateUser = async () => {
     try {
-      // Validações dos campos
       if (!newUser.nome) {
         CustomToast({ type: "error", message: "O nome é obrigatório." });
         return;
@@ -305,14 +285,11 @@ const Usuario = () => {
     }
   };
 
-
-
   const handleCPFChange = (e) => {
     const formattedCPF = formatCPF(e.target.value);
     setCpf(formattedCPF);
     setNewUser({ ...newUser, cpf: formattedCPF });
   };
-
 
   const fetchUsers = async () => {
     try {
@@ -335,14 +312,13 @@ const Usuario = () => {
   };
 
   const handleInactiveUser = async (user) => {
-    console.log("Marking user as inactive with ID:", user.id);
     try {
       const response = await api.delete(`/usuario/${user.id}`);
       if (response.status === 200) {
-        // Update the user state to mark as inactive
+ 
         const updatedUsers = users.map(u => {
           if (u.id === user.id) {
-            return { ...u, isActive: false }; // Mark user as inactive
+            return { ...u, isActive: false }; 
           }
           return u;
         });
@@ -372,7 +348,6 @@ const Usuario = () => {
   };
 
   const handleDeleteUser = async (user) => {
-    console.log("Deleting user with ID:", user.id);
     try {
       const response = await api.delete(`/usuario/${user.id}`);
       if (response.status === 200) {
@@ -423,7 +398,13 @@ const Usuario = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 300);
 
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <div className="flex w-full ">
       <Navbar />
