@@ -17,7 +17,8 @@ export default function SelectTextFields({
   options = [],
   optionFontSize = '0.875rem',
   placeholder,
-  height, 
+  height,
+  multiple = false, // Adicionando a propriedade multiple
 }) {
   return (
     <Box
@@ -32,7 +33,6 @@ export default function SelectTextFields({
         size={size}
         label={label}
         fullWidth={fullWidth}
-       
         placeholder={placeholder || 'Selecione'}
         value={value}
         onChange={onChange}
@@ -45,7 +45,7 @@ export default function SelectTextFields({
         }}
         InputLabelProps={{
           style: {
-            fontSize: '13px', 
+            fontSize: '13px',
           },
         }}
         InputProps={{
@@ -53,28 +53,39 @@ export default function SelectTextFields({
             <InputAdornment position="start">{icon}</InputAdornment>
           ),
           style: {
-            height: height || '36px', 
+            height: height || '36px',
             fontSize: '13px',
-            padding: '10px 8px', 
+            padding: '10px 8px',
             appearance: 'none',
             MozAppearance: 'textfield',
           },
         }}
+        SelectProps={{
+          multiple, // Adicionando a propriedade multiple
+        }}
       >
         {options.map((option) => (
           <MenuItem
-            key={option.value}
-            value={option.value}
-            sx={{
-              fontSize: optionFontSize,
-              padding: '4px 8px', 
-            }}
-          >
-            {option.label}
-          </MenuItem>
+          key={option.value}
+          value={option.value}
+          sx={{
+            fontSize: optionFontSize,
+            padding: '4px 8px',
+            '&:hover': {
+              backgroundColor: '#BCDA72', // Highlight color on hover
+            },
+            '&.Mui-selected': {
+              backgroundColor: '#BCDA72', // Highlight color when selected
+              '&:hover': {
+                backgroundColor: '#BCDA72', // Keep the same color on hover when selected
+              },
+            },
+          }}
+        >
+          {option.label}
+        </MenuItem>
         ))}
       </TextField>
-
     </Box>
   );
 }

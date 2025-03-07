@@ -46,7 +46,7 @@ const EntradaSaida = () => {
   const [observacao, setObservacao] = useState('');
   const [selectedTipo, setSelectedTipo] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-
+  const [selectedTipos, setSelectedTipos] = useState([]);
   const [produto, setProduto] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [tipo, setTipo] = useState('entrada');
@@ -75,15 +75,15 @@ const EntradaSaida = () => {
   const handleCadastrarRegistro = async () => {
     setDesativa(true);
     const quantidadeNumerica = parseFloat(quantidade) || 0;
-    const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0; 
+    const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0;
 
 
     const novoRegistro = {
       data: new Date().toISOString().split('T')[0],
-      movTipo: tipo === 'entrada' ? 1 : tipo === 'saida' ? 2 : 3, 
+      movTipo: tipo === 'entrada' ? 1 : tipo === 'saida' ? 2 : 3,
       quantidade: quantidadeNumerica,
       produtoId: produtoSelecionado ? produtoSelecionado.id : null,
-      observacao: observacao 
+      observacao: observacao
     };
 
     try {
@@ -100,11 +100,11 @@ const EntradaSaida = () => {
       handleCloseCadastro();
 
 
-      fetchEntradasSaidas(); 
+      fetchEntradasSaidas();
     } catch (error) {
       CustomToast({ type: "error", message: "Erro ao cadastrar registro!" });
     } finally {
-      setDesativa(false); 
+      setDesativa(false);
     }
   };
 
@@ -130,7 +130,7 @@ const EntradaSaida = () => {
 
 
   const valorTotalEstoque = entradasSaidas.reduce((acc, registro) => {
-    const valorRegistro = registro.valorTotal; 
+    const valorRegistro = registro.valorTotal;
     return acc + (registro.tipo === 'entrada' ? valorRegistro : -valorRegistro);
   }, 0);
 
@@ -147,7 +147,7 @@ const EntradaSaida = () => {
 
   const fetchCategorias = async () => {
     try {
-      const response = await api.get(`/categoria?unidade=${unidadeId}`); 
+      const response = await api.get(`/categoria?unidade=${unidadeId}`);
       const categoriasFiltradas = response.data.data.filter(categoria => categoria.unidadeId === unidadeId);
       setCategorias(categoriasFiltradas);
     } catch (error) {
@@ -161,7 +161,7 @@ const EntradaSaida = () => {
       const response = await api.get(`/movimentacao?unidade=${unidadeId}`);
       const movimentacoes = response.data.data;
       const formattedMovimentacoes = movimentacoes.map(mov => {
-        const valorTotal = mov.precoPorcao * mov.quantidade; 
+        const valorTotal = mov.precoPorcao * mov.quantidade;
         return {
           id: mov.id,
           tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === "2" ? 'saida' : 'desperdicio',
@@ -172,7 +172,7 @@ const EntradaSaida = () => {
           valorTotal: valorTotal,
           observacao: mov.observacao,
           dataCadastro: moment(mov.data).format('DD/MM/YYYY'),
-          dataISO: mov.data 
+          dataISO: mov.data
         };
       });
 
@@ -200,11 +200,12 @@ const EntradaSaida = () => {
       const matchesSearchTerm = registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase());
       const dataInicialMoment = dataInicial ? moment(dataInicial) : null;
       const dataFinalMoment = dataFinal ? moment(dataFinal) : null;
-      const registroDataMoment = moment(registro.dataISO); 
+      const registroDataMoment = moment(registro.dataISO);
       const matchesDataInicial = dataInicialMoment ? registroDataMoment.isSameOrAfter(dataInicialMoment) : true;
       const matchesDataFinal = dataFinalMoment ? registroDataMoment.isSameOrBefore(dataFinalMoment) : true;
       const matchesCategoria = selectedCategoria ? registro.categoria === selectedCategoria : true;
-      const matchesTipo = selectedTipo ? registro.tipo === selectedTipo : true;
+      const matchesTipo = selectedTipos.length > 0 ? selectedTipos.includes(registro.tipo) : true; // Verifica se o tipo está incluído
+
       return matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
     });
 
@@ -242,7 +243,7 @@ const EntradaSaida = () => {
           <AddchartIcon /> Entrada e Saída
         </h1>
         <div className={`w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
-     
+
           <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
             <label className='text-xs font-bold'>Entradas</label>
             <div className='flex items-center justify-center gap-5'>
@@ -251,12 +252,12 @@ const EntradaSaida = () => {
             </div>
           </div>
 
-       
+
           <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
             <label className='text-xs font-bold'>Saídas</label>
             <div className='flex items-center justify-center gap-5'>
               <img src={Saida} alt="Saídas" />
-              <label>{formatValor(valorTotalSaidas)}</label> 
+              <label>{formatValor(valorTotalSaidas)}</label>
             </div>
           </div>
           <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
@@ -289,7 +290,7 @@ const EntradaSaida = () => {
                   </InputAdornment>
                 ),
               }}
-              value={searchTerm} 
+              value={searchTerm}
               onChange={handlePesquisarProduto}
               autoComplete="off"
               sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '40%' } }}
@@ -358,11 +359,11 @@ const EntradaSaida = () => {
                 name={"produto"}
                 fontWeight={500}
                 options={produtos.map(produto => ({
-                  value: produto.nome, 
-                  label: `${produto.nome} - ${formatValor(produto.valorPorcao)}` 
+                  value: produto.nome,
+                  label: `${produto.nome} - ${formatValor(produto.valorPorcao)}`
                 }))}
-                value={produto} 
-                onChange={(e) => handleProdutoChange(e.target.value)} 
+                value={produto}
+                onChange={(e) => handleProdutoChange(e.target.value)}
               />
               <TextField
                 fullWidth
@@ -387,14 +388,14 @@ const EntradaSaida = () => {
                 variant="outlined"
                 size="small"
                 label="Observação"
-                value={observacao} 
+                value={observacao}
                 sx={{ width: { xs: '30%', sm: '50%', md: '40%', lg: '96%' }, }}
-                onChange={(e) => setObservacao(e.target.value)} 
+                onChange={(e) => setObservacao(e.target.value)}
                 autoComplete="off"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <ArticleIcon fontSize="small" /> 
+                      <ArticleIcon fontSize="small" />
                     </InputAdornment>
                   ),
                 }}
@@ -411,7 +412,7 @@ const EntradaSaida = () => {
                   { value: 'saida', label: 'Saída' },
                   { value: 'desperdicio', label: 'Desperdício' },
                 ]}
-                onChange={(e) => setTipo(e.target.value)} 
+                onChange={(e) => setTipo(e.target.value)}
               />
             </div>
 
@@ -421,7 +422,7 @@ const EntradaSaida = () => {
                 subtitle={'Cadastrar'}
                 startIcon={<Save />}
                 disabled={isDesativa}
-                onClick={handleCadastrarRegistro} 
+                onClick={handleCadastrarRegistro}
               />
             </div>
           </div>
@@ -495,13 +496,13 @@ const EntradaSaida = () => {
                 name={"tipo"}
                 fontWeight={500}
                 options={[
-                  { value: '', label: 'Todos' },
                   { value: 'entrada', label: 'Entrada' },
                   { value: 'saida', label: 'Saída' },
                   { value: 'desperdicio', label: 'Desperdício' },
                 ]}
-                onChange={(e) => setSelectedTipo(e.target.value)}
-                value={selectedTipo}
+                onChange={(e) => setSelectedTipos(e.target.value)}
+                value={selectedTipos}
+                multiple // Permite múltiplas seleções
               />
             </div>
             <div className='w-[95%] mt-2 flex items-end justify-end'>
