@@ -14,7 +14,7 @@ const PrivateRoute = () => {
     }, [token]);
 
     if (showMessage) {
-        return <Navigate to="/login" />;
+        return <Navigate to="/" />;
     }
 
     return <Outlet />;
