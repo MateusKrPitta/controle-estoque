@@ -4,7 +4,7 @@ import MenuMobile from '../../components/menu-mobile';
 import HeaderPerfil from '../../components/navbars/perfil';
 import ContentPasteSearchIcon from '@mui/icons-material/ContentPasteSearch';
 import { InputAdornment, TextField } from '@mui/material';
-import { AddCircleOutline, MoneySharp, Save, Search } from '@mui/icons-material';
+import { AddCircleOutline, Edit, MoneySharp, Save, Search } from '@mui/icons-material';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import SelectTextFields from '../../components/select';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -19,6 +19,9 @@ import CentralModal from '../../components/modal-central';
 import { formatCmvReal } from '../../utils/functions';
 import { useUnidade } from '../../components/unidade-context';
 import api from '../../services/api';
+import TableLoading from '../../components/loading/loading-table/loading';
+import TableComponent from '../../components/table';
+import ModalLateral from '../../components/modal-lateral';
 
 // Função de formatação
 export const formatValor = (valor) => {
@@ -39,17 +42,22 @@ const unidadeMedidaMap = {
 
 
 const FichaTecnica = () => {
+    const [isEditing, setIsEditing] = useState(false);
+const [itemToEdit, setItemToEdit] = useState(null);
     const { unidadeId } = useUnidade();
     const [produtos, setProdutos] = useState([]);
     const [produtoSelecionado, setProdutoSelecionado] = useState(null);
     const [precoPorcao, setPrecoPorcao] = useState('');
     const [quantidade, setQuantidade] = useState('');
+    const [editando, setEditando] = useState(false);
     const [nomePrato, setNomePrato] = useState('');
     const [unidade, setUnidade] = useState('');
     const [valorUtilizado, setValorUtilizado] = useState('');
     const [isVisible, setIsVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [produtosAdicionados, setProdutosAdicionados] = useState([]);
     const [custoTotal, setCustoTotal] = useState(0);
+    const [searchTerm, setSearchTerm] = useState('');
     const [produtosDaFicha, setProdutosDaFicha] = useState([]);
     const [valorVenda, setValorVenda] = useState('');
     const [lucroReal, setLucroReal] = useState(0);
@@ -61,6 +69,13 @@ const FichaTecnica = () => {
     const [pratoEmEdicao, setPratoEmEdicao] = useState(null);
     const [criarPrato, setCriarPrato] = useState(false);
 
+    const handleEditClick = (index) => {
+        const item = produtosDaFicha[index]; // Use produtosDaFicha em vez de pratos
+        setItemToEdit(item);
+        setIsEditing(true); // Abre a modal
+    };
+
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsVisible(true);
@@ -69,6 +84,13 @@ const FichaTecnica = () => {
         return () => clearTimeout(timer);
     }, []);
 
+    const handleSearch = (event) => {
+        setSearchTerm(event.target.value);
+    };
+
+    const filteredPratos = produtosDaFicha.filter(prato =>
+        prato.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     useEffect(() => {
         if (quantidade && precoPorcao) {
@@ -111,9 +133,9 @@ const FichaTecnica = () => {
         try {
             const response = await api.get(`/ficha?unidade=${unidadeId}`); // Altere aqui
             const data = response.data.data; // Acesse a propriedade 'data'
-    
+
             console.log(data); // Verifique os dados no console
-    
+
             if (Array.isArray(data)) {
                 setProdutosDaFicha(data);
             } else {
@@ -251,16 +273,21 @@ const FichaTecnica = () => {
         }
         fetchProdutosDaFicha()
     };
+    
     const handleEditPrato = (index) => {
         const prato = produtosCadastrados[index];
+        if (!prato) {
+            CustomToast({ type: "error", message: "Prato não encontrado!" });
+            return; // Retorna se o prato não for encontrado
+        }
         setPratoEmEdicao(prato);
         setNomePrato(prato.nomePrato);
         setProdutosAdicionados(prato.produtos);
         setValorVenda(prato.valorVenda);
         setCustoTotal(prato.custoTotal);
-        setRendimento(prato.rendimento); // Se você tiver um campo de rendimento
-        setCmvReal(prato.cmvReal); // Adicione isso para garantir que o CMV Real seja carregado
-        setCriarPrato(true); // Abre a modal para edição
+        setRendimento(prato.rendimento);
+        setCmvReal(prato.cmvReal);
+        setIsEditing(true); // Abre a modal lateral para edição
     };
 
 
@@ -323,15 +350,12 @@ const FichaTecnica = () => {
                                     </InputAdornment>
                                 ),
                             }}
+                            value={searchTerm}
+                            onChange={handleSearch}
                             autoComplete="off"
                             sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '30%' } }}
                         />
-                        <ButtonComponent
-                            startIcon={<Search fontSize='small' />}
-                            title={'Pesquisar'}
-                            subtitle={'Pesquisar'}
-                            buttonSize="large"
-                        />
+
                         <ButtonComponent
                             startIcon={<AddCircleOutline fontSize='small' />}
                             title={'Criar Prato'}
@@ -608,12 +632,286 @@ const FichaTecnica = () => {
                     </div>
                 </CentralModal>
                 <div className={`mr-3 sm: md:mr-11 flex flex-wrap w-[95%] p-4 gap-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
-                    <TabelaProdutos
-                        pratos={produtosDaFicha} // Passa os produtos da ficha técnica para a tabela
-                        onEditClick={handleEditPrato}
-                    />
+                    {loading ? (
+                        <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
+                            <TableLoading />
+                            <label className="text-sm">Carregando...</label>
+                        </div>
+                    ) : filteredPratos.length === 0 ? (
+                        <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
+                            <TableLoading />
+                            <label className="text-sm">Nenhum prato encontrado!</label>
+                        </div>
+                    ) : (
+                        <TabelaProdutos
+                            pratos={filteredPratos} // Passa os pratos filtrados para a tabela
+                            onEditClick={handleEditPrato}
+                        />
+                    )}
                 </div>
             </div>
+            <ModalLateral
+    open={isEditing}
+    handleClose={() => setIsEditing(false)}
+                tituloModal="Editar CMV"
+                icon={<Edit />}
+                tamanhoTitulo={'75%'}
+                conteudo={
+                    <div>
+                    <div className={` w-[94.5%] overflow-auto transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
+                        <div className='p-6 flex flex-wrap gap-2' style={{ border: '1px solid black', borderRadius: '10px' }}>
+                            <SelectTextFields
+                                width={'240px'}
+                                icon={<ArticleIcon fontSize="small" />}
+                                label={'Produto'}
+                                backgroundColor={"#D9D9D9"}
+                                name={"produto"}
+                                fontWeight={500}
+                                options={produtos.map(produto => ({ label: produto.nome, value: produto.id }))}
+                                onChange={(e) => handleProdutoChange(e.target.value)}
+                            />
+
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                size="small"
+                                label="Unidade"
+                                name="unidadeMedida"
+                                value={unidade}
+                                disabled
+                                autoComplete="off"
+                                sx={{
+                                    width: { xs: '48%', sm: '50%', md: '40%', lg: '15%' },
+                                    '& .MuiInputLabel-root': {
+                                        color: 'black',
+                                        fontWeight: 700
+                                    },
+                                    '& .MuiInputLabel-root.Mui-focused': {
+                                        color: 'black',
+                                    },
+                                }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <ScaleIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                size="small"
+                                label="Preço Porção"
+                                name="precoPorcao"
+                                value={precoPorcao}
+                                autoComplete="off"
+                                sx={{
+                                    width: { xs: '48%', sm: '50%', md: '40%', lg: '15%' },
+                                    '& .MuiInputLabel-root': {
+                                        color: 'black',
+                                        fontWeight: 700
+                                    },
+                                    '& .MuiInputLabel-root.Mui-focused': {
+                                        color: 'black',
+                                    },
+                                    '& .MuiSvgIcon-root': {
+                                        color: 'black',
+                                    },
+                                }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <MoneySharp />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                disabled
+                            />
+
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                size="small"
+                                label={`Quantidade Utilizada`}
+                                name="quantidade"
+                                value={quantidade}
+                                onChange={(e) => setQuantidade(e.target.value)}
+                                autoComplete="off"
+                                sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '15%' } }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <ScaleIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                size="small"
+                                label="Valor Utilizado"
+                                name="valorUtilizado"
+                                value={valorUtilizado}
+                                autoComplete="off"
+                                sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '19%' } }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <MoneySharp />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                disabled
+                            />
+
+                            <div className='flex items-end justify-end w-full'>
+                                <ButtonComponent
+                                    startIcon={<AddCircleOutline fontSize='small' />}
+                                    title={'Adicionar'}
+                                    subtitle={'Adicionar'}
+                                    buttonSize="large"
+                                    onClick={handleAdicionarProduto}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={`w-[95%] mt-3 p-4 border border-gray-300 rounded-lg transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
+                        <div>
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                size="small"
+                                label="Nome do Prato"
+                                value={nomePrato}
+                                onChange={(e) => setNomePrato(e.target.value)}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <LocalDiningIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                autoComplete="off"
+                                sx={{ width: { xs: '100%', sm: '50%', md: '40%', lg: '30%' } }}
+                            />
+                            <h2 className="font-bold text-xs mt-2">Produtos Adicionados:</h2>
+                            <div className='w-full items-center flex '>
+                                <label className='w-[20%]' >Produto</label>
+                                <label className='w-[13%]' >Quantidade</label>
+                                <label className='w-[13%]'>Valor Porção</label>
+                                <label className='w-[13%]'>Valor Utilizado</label>
+                            </div>
+                            <div className='flex gap-4 w-full flex-wrap'>
+                                <div className='w-[100%]  md:w-[66%]'>
+                                    {produtosAdicionados.map((produto, index) => (
+                                        <div key={index} className="flex justify-between items-center border-black py-2 w-full">
+                                            <div style={{ border: '1px solid black', borderRadius: '10px' }} className='w-[100%] flex items-center p-1'>
+                                                <label className='text-xs w-[95%] items-center flex gap-2 flex-wrap'>
+                                                    <FlatwareIcon />
+                                                    <p className='w-[40%] md:w-[25%] text-xs'>{produto.nome}</p>
+                                                    <p className=' w-[30%] md:w-[18%]' style={{ display: 'flex', textAlign: 'center', justifyContent: 'center', backgroundColor: '#BCDA72', color: 'black', padding: '5px', borderRadius: '5px', fontWeight: '700' }}> {produto.quantidade} - {produto.unidade}</p>
+
+                                                    <p className=' w-[50%] ml-2 md:w-[20%] md:ml-0' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#d9d9d9', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.precoPorcao}</p>
+
+                                                    <p className=' w-[50%] md:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#b0d847', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.valorUtilizado}</p>
+                                                </label>
+                                                <ButtonClose
+                                                    funcao={() => handleRemoveProduto(index)}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className='w-[100%] md:w-[32%] p-2 flex flex-col gap-2' style={{ border: '1px solid black', borderRadius: '10px' }}>
+                                    <div className='flex items-center w-full '>
+                                        <label className='text-xs font-bold w-[60%]'>Custo Total: </label>
+                                        <label className='text-xs font-bold w-[40%] p-1 pl- items-start justify-start' style={{ backgroundColor: '#b0d847', borderRadius: '10px', }}>
+                                            {formatValor(custoTotal)}
+                                        </label>
+                                    </div>
+                                    <div className='flex items-center w-full '>
+                                        <label className='text-xs font-bold w-[60%]'>Quantidade de Rendimento: </label>
+                                        <input
+                                            type="text"
+                                            value={rendimento} // Evita NaN
+                                            onChange={(e) => setRendimento(e.target.value)}
+                                            style={{
+                                                backgroundColor: "#d9d9d9",
+                                                color: 'black',
+                                                borderRadius: '10px',
+                                                fontSize: '12px',
+                                                fontWeight: '700',
+                                                width: '40%',
+                                                padding: '2px',
+                                                border: '1px solid #ccc',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
+                                    <div className='flex items-center w-full '>
+                                        <label className='text-xs font-bold w-[60%]'>Valor do Rendimento(Kg/Ml/Uni): </label>
+                                        <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
+                                            {formatValor((custoTotal / (parseFloat(rendimento) || 1)) * 1000)} {/* Cálculo do valor do rendimento */}
+                                        </label>
+                                    </div>
+                                    <div className='flex items-center w-full '>
+                                        <label className='text-xs font-bold w-[60%]'>Valor Venda: </label>
+                                        <NumericFormat
+                                            value={valorVenda}
+                                            onValueChange={(values) => {
+                                                const { formattedValue, value } = values;
+                                                setValorVenda(formattedValue); // Armazena o valor formatado
+                                                // Você pode armazenar o valor numérico se precisar
+                                            }}
+                                            thousandSeparator={true}
+                                            decimalScale={2}
+                                            fixedDecimalScale={true}
+                                            prefix={'R$ '}
+                                            className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start'
+                                            style={{
+                                                backgroundColor: '#BCDA72',
+                                                borderRadius: '10px',
+                                                border: '1px solid #ccc',
+                                                outline: 'none',
+                                                padding: '5px',
+                                            }}
+                                        />
+                                    </div>
+                                    <div className='flex items-center w-full '>
+                                        <label className='text-xs font-bold w-[60%]'>CMV Real: </label>
+                                        <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
+                                            {formatCmvReal(cmvReal)}
+                                        </label>
+                                    </div>
+                                    <div className='flex items-center w-full '>
+                                        <label className='text-xs font-bold w-[60%]'>Lucro Real: </label>
+                                        <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#d9d9d9', borderRadius: '10px', }}>
+                                            {formatValor(lucroReal)}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className='w-full flex items-end justify-end mt-2'>
+                                <ButtonComponent
+                                    startIcon={<Save fontSize='small' />}
+                                    title={'Cadastrar'}
+                                    subtitle={'Cadastrar'}
+                                    buttonSize="large"
+                                    onClick={handleCadastrar}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                }
+            />
+
         </div>
     );
 }

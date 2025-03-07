@@ -28,6 +28,7 @@ import TableLoading from '../../components/loading/loading-table/loading.js';
 import moment from 'moment';
 
 const EntradaSaida = () => {
+  const [isDesativa, setDesativa] = useState(false);
   const { unidadeId } = useUnidade();
   const [cadastro, setCadastro] = useState(false);
   const [categorias, setCategorias] = useState([]);
@@ -71,16 +72,7 @@ const EntradaSaida = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-    setProdutos(produtosSalvos);
 
-    const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
-    setCategorias(categoriasSalvas);
-
-    const entradasSaidasSalvas = JSON.parse(localStorage.getItem('entradasSaidas')) || [];
-    setEntradasSaidas(entradasSaidasSalvas);
-  }, []);
 
   const handleCadastro = () => setCadastro(true);
   const handleCloseCadastro = () => setCadastro(false);
@@ -95,6 +87,7 @@ const EntradaSaida = () => {
   };
 
   const handleCadastrarRegistro = async () => {
+    setDesativa(true);
     const quantidadeNumerica = parseFloat(quantidade) || 0; // Converte a quantidade para número
     const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0; // Calcule o valor total
 
@@ -127,6 +120,8 @@ const EntradaSaida = () => {
       fetchEntradasSaidas(); // Chame a função para buscar os dados novamente
     } catch (error) {
       CustomToast({ type: "error", message: "Erro ao cadastrar registro!" });
+    } finally {
+      setDesativa(false); // Reabilita o botão
     }
   };
 
@@ -189,7 +184,7 @@ const EntradaSaida = () => {
     try {
       const response = await api.get(`/movimentacao?unidade=${unidadeId}`);
       const movimentacoes = response.data.data;
-  
+
       // Formatar as movimentações
       const formattedMovimentacoes = movimentacoes.map(mov => {
         const valorTotal = mov.precoPorcao * mov.quantidade; // Calcule o valor total
@@ -206,7 +201,7 @@ const EntradaSaida = () => {
           dataISO: mov.data // Armazena a data original em formato ISO para comparação
         };
       });
-  
+
       setEntradasSaidas(formattedMovimentacoes);
       setEntradasSaidasOriginais(formattedMovimentacoes);
     } catch (error) {
@@ -230,24 +225,24 @@ const EntradaSaida = () => {
   const handlePesquisar = () => {
     const filteredData = entradasSaidasOriginais.filter((registro) => {
       const matchesSearchTerm = registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase());
-  
+
       // Converte as datas inicial e final para objetos Moment
       const dataInicialMoment = dataInicial ? moment(dataInicial) : null;
       const dataFinalMoment = dataFinal ? moment(dataFinal) : null;
-  
+
       // Converte a data do registro para um objeto Moment
       const registroDataMoment = moment(registro.dataISO); // Usando a data original em formato ISO
-  
+
       // Verifica se a data do registro está dentro do intervalo
       const matchesDataInicial = dataInicialMoment ? registroDataMoment.isSameOrAfter(dataInicialMoment) : true;
       const matchesDataFinal = dataFinalMoment ? registroDataMoment.isSameOrBefore(dataFinalMoment) : true;
-  
+
       const matchesCategoria = selectedCategoria ? registro.categoria === selectedCategoria : true;
       const matchesTipo = selectedTipo ? registro.tipo === selectedTipo : true;
-  
+
       return matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
     });
-  
+
     setEntradasSaidas(filteredData);
     handleCloseFiltro();
   };
@@ -456,6 +451,7 @@ const EntradaSaida = () => {
                 title={'Cadastrar'}
                 subtitle={'Cadastrar'}
                 startIcon={<Save />}
+                disabled={isDesativa}
                 onClick={handleCadastrarRegistro} // Chama a função para cadastrar
               />
             </div>
@@ -475,42 +471,42 @@ const EntradaSaida = () => {
         >
           <div>
             <div className='mt-4 flex gap-3 flex-wrap'>
-            <TextField
-  fullWidth
-  variant="outlined"
-  size="small"
-  label="Data Inicial"
-  value={dataInicial}
-  type='date'
-  onChange={(e) => setDataInicial(e.target.value)}
-  autoComplete="off"
-  sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
-  InputProps={{
-    startAdornment: (
-      <InputAdornment position="start">
-        <DateRange />
-      </InputAdornment>
-    ),
-  }}
-/>
-<TextField
-  fullWidth
-  variant="outlined"
-  size="small"
-  label="Data Final"
-  type='date'
-  value={dataFinal}
-  onChange={(e) => setDataFinal(e.target.value)}
-  autoComplete="off"
-  sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
-  InputProps={{
-    startAdornment: (
-      <InputAdornment position="start">
-        <DateRange />
-      </InputAdornment>
-    ),
-  }}
-/>
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Data Inicial"
+                value={dataInicial}
+                type='date'
+                onChange={(e) => setDataInicial(e.target.value)}
+                autoComplete="off"
+                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DateRange />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Data Final"
+                type='date'
+                value={dataFinal}
+                onChange={(e) => setDataFinal(e.target.value)}
+                autoComplete="off"
+                sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DateRange />
+                    </InputAdornment>
+                  ),
+                }}
+              />
               <SelectTextFields
                 width={'170px'}
                 icon={<CategoryIcon fontSize="small" />}

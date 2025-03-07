@@ -19,23 +19,25 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EditIcon from "@mui/icons-material/Edit";
 
 const Unidades = () => {
+  const [isDesativa, setDesativa] = useState(false);
   const [cadastrarUnidade, setCadastrarUnidade] = useState(false);
   const [unidades, setUnidades] = useState([]);
-  const [filtroNome, setFiltroNome] = useState(""); 
-  const [unidadesFiltradas, setUnidadesFiltradas] = useState([]); 
+  const [filtroNome, setFiltroNome] = useState("");
+  const [unidadesFiltradas, setUnidadesFiltradas] = useState([]);
   const navigate = useNavigate();
   const [unidadeEditando, setUnidadeEditando] = useState(null);
-  const [nomeUnidade, setNomeUnidade] = useState(""); 
+  const [nomeUnidade, setNomeUnidade] = useState("");
   const [editandoUnidade, setEditandoUnidade] = useState(false);
   const [unidadeEditada, setUnidadeEditada] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
   const [mensagemErro, setMensagemErro] = useState('');
 
   const handleCadastroUnidade = () => {
+    
     setCadastrarUnidade(true);
     setUnidadeEditando(null);
-    setNomeUnidade(""); 
+    setNomeUnidade("");
   };
 
   const handleCloseCadastroUnidade = () => {
@@ -43,11 +45,11 @@ const Unidades = () => {
   };
 
   const carregarUnidades = async () => {
-    setLoading(true); 
+    setLoading(true);
     try {
       const response = await api.get("/unidade");
       setUnidades(response.data.data);
-      setUnidadesFiltradas(response.data.data); 
+      setUnidadesFiltradas(response.data.data);
       setMensagemErro(''); // Clear error message on success
     } catch (error) {
       setMensagemErro("Erro ao carregar as unidades!"); // Set error message
@@ -67,24 +69,27 @@ const Unidades = () => {
   };
 
   const handleSalvarUnidade = async () => {
+    setDesativa(true);
     if (!nomeUnidade.trim()) {
-      alert("O nome da unidade é obrigatório.");
+      CustomToast({ type: "error", message: "O nome da unidade é obrigatório!" });
       return;
     }
 
     try {
       const novaUnidade = { nome: nomeUnidade };
       const response = await api.post("/unidade", novaUnidade);
-    
+
       if (response.status === 201) {
         CustomToast({ type: "success", message: "Unidade cadastrada com sucesso!" });
         setNomeUnidade("");
         setCadastrarUnidade(false);
-        await carregarUnidades(); 
+        await carregarUnidades();
       }
     } catch (error) {
       console.log("Erro completo:", error);
-    }
+    } finally {
+      setDesativa(false); // Reabilita o botão
+  }
   };
 
   const handleSaveEdit = async () => {
@@ -93,12 +98,12 @@ const Unidades = () => {
         CustomToast({ type: "error", message: "O nome da unidade é obrigatório!" });
         return;
       }
-  
+
       setEditandoUnidade(false);
-  
+
       try {
         const response = await api.put(`/unidade/${unidadeEditada.id}`, unidadeEditada);
-  
+
         CustomToast({ type: "success", message: "Unidade editada com sucesso!" });
         carregarUnidades();
         if (response.status === 200) {
@@ -122,7 +127,7 @@ const Unidades = () => {
   const handleDeleteUnidade = async (unidade) => {
     try {
       const response = await api.delete(`/unidade/${unidade.id}`);
-      
+
       if (response.status === 200) {
         const updatedUnidades = unidades.filter((cat) => cat.id !== unidade.id);
         setUnidades(updatedUnidades);
@@ -145,7 +150,7 @@ const Unidades = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 300); 
+    }, 300);
 
     return () => clearTimeout(timer);
   }, []);
@@ -164,9 +169,8 @@ const Unidades = () => {
           Cadastro Unidades
         </h1>
         <div
-          className={` items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start transition-opacity duration-500 ${
-            isVisible ? "opacity-100" : "opacity-0 translate-y-4"
-          }`}
+          className={` items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start transition-opacity duration-500 ${isVisible ? "opacity-100" : "opacity-0 translate-y-4"
+            }`}
         >
           <div className="hidden md:w-[14%] md:flex ">
             <HeaderCadastro />
@@ -179,8 +183,8 @@ const Unidades = () => {
                 size="small"
                 label="Buscar unidade"
                 autoComplete="off"
-                value={filtroNome} 
-                onChange={(e) => setFiltroNome(e.target.value)} 
+                value={filtroNome}
+                onChange={(e) => setFiltroNome(e.target.value)}
                 sx={{ width: { xs: "90%", sm: "50%", md: "40%", lg: "40%" } }}
                 InputProps={{
                   startAdornment: (
@@ -190,7 +194,7 @@ const Unidades = () => {
                   ),
                 }}
               />
-             
+
               <ButtonComponent
                 startIcon={<AddCircleOutlineIcon fontSize="small" />}
                 title={"Cadastrar"}
@@ -215,7 +219,7 @@ const Unidades = () => {
                   <TableComponent
                     headers={headerUnidade}
                     actionsLabel={"Ações"}
-                    rows={unidadesFiltradas} 
+                    rows={unidadesFiltradas}
                     actionCalls={{
                       edit: handleEditUnidade,
                       delete: handleDeleteUnidade,
@@ -245,8 +249,8 @@ const Unidades = () => {
                     size="small"
                     label="Nome da Unidade"
                     autoComplete="off"
-                    value={nomeUnidade} 
-                    onChange={(e) => setNomeUnidade(e.target.value)} 
+                    value={nomeUnidade}
+                    onChange={(e) => setNomeUnidade(e.target.value)}
                     sx={{ width: { xs: "95%", sm: "50%", md: "40%", lg: "95%" } }}
                     InputProps={{
                       startAdornment: (
@@ -264,6 +268,7 @@ const Unidades = () => {
                       subtitle={"Cadastrar"}
                       buttonSize="large"
                       onClick={handleSalvarUnidade}
+                      disabled={isDesativa} 
                     />
                   </div>
                 </div>
@@ -288,7 +293,7 @@ const Unidades = () => {
                       value={unidadeEditada ? unidadeEditada.nome : ""}
                       onChange={(e) =>
                         setUnidadeEditada({ ...unidadeEditada, nome: e.target.value })
-                      } 
+                      }
                       sx={{ width: "100%" }}
                       InputProps={{
                         startAdornment: (

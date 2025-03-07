@@ -21,7 +21,7 @@ import MenuMobile from '../../../components/menu-mobile/index.js';
 import { headerProdutos } from '../../../entities/headers/header-produtos.js';
 
 import { AddCircleOutline, DateRange, Edit, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
-import { IconButton, InputAdornment, TextField,  } from '@mui/material'; 
+import { IconButton, InputAdornment, TextField, } from '@mui/material';
 import AddchartIcon from '@mui/icons-material/Addchart';
 import ArticleIcon from '@mui/icons-material/Article';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -40,6 +40,7 @@ const Produtos = () => {
     const [produtosOriginais, setProdutosOriginais] = useState([]);
     const [produtosFiltrados, setProdutosFiltrados] = useState([]);
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
     const [filtro, setFiltro] = useState(false);
     const [editandoCategoria, setEditandoCategoria] = useState(false);
@@ -59,7 +60,7 @@ const Produtos = () => {
     const [filtroDataFinal, setFiltroDataFinal] = useState('');
     const [valorReajuste, setValorReajuste] = useState('');
     const [dataReajuste, setDataReajuste] = useState('');
-    const [mensagemErro, setMensagemErro] = useState(''); 
+    const [mensagemErro, setMensagemErro] = useState('');
     const quantidadeProdutosCadastrados = produtos.length;
     const userOptionsUnidade = [
         { value: 1, label: 'Kilograma' },
@@ -98,13 +99,15 @@ const Produtos = () => {
     const handleCadastroProdutos = () => setCadastroAdicionais(true);
     const handleCloseCadastroProdutos = () => {
         setCadastroAdicionais(false);
-        clearCadastroFields(); 
+        clearCadastroFields();
     };
 
 
     const handleCloseFiltro = () => setFiltro(false);
 
     const handleCadastrarProduto = async () => {
+        setIsSubmitting(true); // Desabilita o botão
+
         const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
         const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0;
         const rendimentoNumerico = parseFloat(rendimento) || 0;
@@ -116,17 +119,19 @@ const Produtos = () => {
             rendimento: rendimentoNumerico,
             valor: precoNumerico,
             unidadeMedida: selectedUnidade,
-            unidadeId, 
+            unidadeId,
             categoriaId: selectedCategoria,
         };
 
         try {
             const response = await api.post('/produto', novoProduto);
-            await carregaProdutos(unidadeId); 
+            await carregaProdutos(unidadeId);
             handleCloseCadastroProdutos();
             CustomToast({ type: "success", message: "Produto cadastrado com sucesso!" });
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao cadastrar produto!" });
+        } finally {
+            setIsSubmitting(false); // Reabilita o botão
         }
     };
 
@@ -140,7 +145,7 @@ const Produtos = () => {
                 const mappedProdutos = produtosFiltrados.map(produto => {
                     const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
                     const valorFormatado = formatValor(produto.valorReajuste || produto.valor);
-                
+
                     return {
                         id: produto.id,
                         nome: produto.nome,
@@ -152,7 +157,7 @@ const Produtos = () => {
                         valorFormatado: valorFormatado,
                         qtdMin: produto.qtdMin,
                         categoriaId: produto.categoriaId,
-                        createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'), 
+                        createdAt: new Date(produto.createdAt).toLocaleDateString('pt-BR'),
                         categoriaNome: produto.categoriaNome
                     };
                 });
@@ -164,7 +169,7 @@ const Produtos = () => {
             }
         } catch (error) {
             console.error('Erro ao buscar produtos:', error);
-        
+
         } finally {
             setLoading(false);
         }
@@ -173,22 +178,22 @@ const Produtos = () => {
     const handlePesquisar = () => {
         const produtosFiltrados = produtosOriginais.filter(produto => {
             const nomeMatch = produto.nome.toLowerCase().includes(filtroNome.toLowerCase());
-            
+
             const dataProduto = new Date(produto.createdAt).getTime(); // Converte para timestamp
             const dataInicial = filtroDataInicial ? new Date(filtroDataInicial).setHours(0, 0, 0, 0) : null; // Início do dia
             const dataFinal = filtroDataFinal ? new Date(filtroDataFinal).setHours(23, 59, 59, 999) : null; // Fim do dia
-    
+
             const dataInicialMatch = dataInicial ? dataProduto >= dataInicial : true;
             const dataFinalMatch = dataFinal ? dataProduto <= dataFinal : true;
-    
+
             const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
-    
+
             return nomeMatch && dataInicialMatch && dataFinalMatch && categoriaMatch;
         });
-    
+
         setProdutosFiltrados(produtosFiltrados);
         handleCloseFiltro();
-    
+
         if (produtosFiltrados.length === 0) {
             setMensagemErro('Nenhum produto encontrado com os critérios de pesquisa.');
             CustomToast({ type: "error", message: "Nenhum produto encontrado com os critérios de pesquisa." });
@@ -200,10 +205,10 @@ const Produtos = () => {
 
     const handleDeleteProduto = async (produtoId) => {
         try {
-          
+
             await api.delete(`/produto/${produtoId}`);
 
-     
+
             const produtosAtualizados = produtos.filter((produto) => produto.id !== produtoId);
             setProdutos(produtosAtualizados);
 
@@ -226,7 +231,7 @@ const Produtos = () => {
         const unidadeSelecionada = userOptionsUnidade.find(unit => unit.label === produto.unidadeMedida);
         setSelectedUnidade(unidadeSelecionada ? unidadeSelecionada.value : "");
         setSelectedCategoria(produto.categoriaId);
-        setEditandoCategoria(true); 
+        setEditandoCategoria(true);
     };
 
     const handleSalvarProduto = async () => {
@@ -264,13 +269,13 @@ const Produtos = () => {
             dataReajuste: dataReajusteFormatada,
             valorReajuste: valorReajusteNumerico,
             unidadeMedida: selectedUnidade,
-            unidadeId, 
+            unidadeId,
             categoriaId: selectedCategoria,
         };
 
         try {
             const response = await api.put(`/produto/${produtoEditado.id}`, produtoAtualizado);
-            await carregaProdutos(unidadeId); 
+            await carregaProdutos(unidadeId);
             setEditandoCategoria(false);
             clearEditFields();
             CustomToast({ type: "success", message: "Produto atualizado com sucesso!" });
@@ -282,11 +287,11 @@ const Produtos = () => {
     const carregaCategorias = async (unidadeId) => {
         if (!unidadeId) {
             console.error('unidadeId não está definido');
-            return; 
+            return;
         }
 
         try {
-            const response = await api.get(`/categoria?unidadeId=${unidadeId}`); 
+            const response = await api.get(`/categoria?unidadeId=${unidadeId}`);
             if (Array.isArray(response.data.data)) {
                 const categoriasFiltradas = response.data.data.filter(categoria => categoria.unidadeId === unidadeId);
                 setCategorias(categoriasFiltradas);
@@ -300,7 +305,7 @@ const Produtos = () => {
 
     useEffect(() => {
         if (unidadeId) {
-            carregaProdutos(unidadeId); 
+            carregaProdutos(unidadeId);
         }
     }, [unidadeId]);
 
@@ -323,7 +328,7 @@ const Produtos = () => {
     useEffect(() => {
         const carregarDados = async () => {
             if (unidadeId) {
-                await carregaCategorias(unidadeId); 
+                await carregaCategorias(unidadeId);
                 await carregaProdutos(unidadeId);
             }
         };
@@ -404,11 +409,11 @@ const Produtos = () => {
                                     </div>
                                 ) : (
                                     <>
-                                        {produtosFiltrados.length === 0 ? ( 
+                                        {produtosFiltrados.length === 0 ? (
                                             <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
-                                            <TableLoading />
-                                            <label className="text-sm">Não foi encontrado nenhum produto!</label>
-                                        </div>
+                                                <TableLoading />
+                                                <label className="text-sm">Não foi encontrado nenhum produto!</label>
+                                            </div>
                                         ) : (
                                             <TableComponent
                                                 headers={headerProdutos}
@@ -468,7 +473,7 @@ const Produtos = () => {
                                             autoComplete="off"
                                             sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '23%' } }}
                                             InputProps={{
- startAdornment: (
+                                                startAdornment: (
                                                     <InputAdornment position="start">
                                                         <ScaleIcon />
                                                     </InputAdornment>
@@ -546,6 +551,7 @@ const Produtos = () => {
                                             subtitle={'Cadastrar'}
                                             startIcon={<Save />}
                                             onClick={handleCadastrarProduto}
+                                            disabled={isSubmitting} // Adicione esta linha
                                         />
                                     </div>
                                 </div>
@@ -565,8 +571,8 @@ const Produtos = () => {
                                             size="small"
                                             label="Quantidade Mínima"
                                             name="quantidadeMinima"
-                                            value={qtdMin} 
-                                            onChange={(e) => setQtdMin(e.target.value)} 
+                                            value={qtdMin}
+                                            onChange={(e) => setQtdMin(e.target.value)}
                                             sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '47%' } }}
                                             InputProps={{
                                                 startAdornment: (
@@ -582,7 +588,7 @@ const Produtos = () => {
                                             size="small"
                                             label="Rendimento"
                                             name="rendimento"
-                                            value={rendimento} 
+                                            value={rendimento}
                                             onChange={(e) => setRendimento(e.target.value)}
                                             sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
                                             InputProps={{
@@ -624,7 +630,7 @@ const Produtos = () => {
                                             label="Valor Reajuste"
                                             sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '47%' }, }}
                                             value={valorReajuste}
-                                            onValueChange={(values) => setValorReajuste(values.value)} 
+                                            onValueChange={(values) => setValorReajuste(values.value)}
                                             thousandSeparator="."
                                             decimalSeparator=","
                                             prefix="R$ "
@@ -664,7 +670,7 @@ const Produtos = () => {
                                             fontWeight={500}
                                             options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
                                             onChange={(e) => setSelectedCategoria(e.target.value)}
-                                            value={selectedCategoria} 
+                                            value={selectedCategoria}
                                         />
                                         <SelectTextFields
                                             width="330px"
@@ -675,7 +681,7 @@ const Produtos = () => {
                                             fontWeight={500}
                                             options={userOptionsUnidade}
                                             onChange={handleUnidadeChange}
-                                            value={selectedUnidade} 
+                                            value={selectedUnidade}
                                         />
                                         <div className="w-[95%] mt-2 flex items-end justify-end">
                                             <ButtonComponent

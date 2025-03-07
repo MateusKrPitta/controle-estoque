@@ -3,17 +3,13 @@ import Navbar from '../../components/navbars/header';
 import HeaderPerfil from '../../components/navbars/perfil/index.js';
 import MenuMobile from '../../components/menu-mobile/index.js';
 import ButtonComponent from '../../components/button';
-import { IconButton, InputAdornment, TextField } from '@mui/material';
-import { Print, FilterAlt, DateRange, DataObject } from '@mui/icons-material';
+import { InputAdornment, TextField } from '@mui/material';
+import { Save } from '@mui/icons-material';
 import TableComponent from '../../components/table/index.js';
 import { headerCmv } from '../../entities/headers/header-cmv.js';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
 import NumbersIcon from '@mui/icons-material/Numbers';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import CentralModal from '../../components/modal-central/index.js';
-import SelectTextFields from '../../components/select/index.js';
-import CategoryIcon from '@mui/icons-material/Category';
-import SearchIcon from '@mui/icons-material/Search';
 import PercentIcon from '@mui/icons-material/Percent';
 import { NumericFormat } from 'react-number-format';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -21,6 +17,8 @@ import { useUnidade } from '../../components/unidade-context/index.js';
 import api from '../../services/api.js';
 import { formatValor } from '../../utils/functions.js';
 import TopicIcon from '@mui/icons-material/Topic';
+import CustomToast from '../../components/toast/index.js';
+import { headerCmv2 } from '../../entities/headers/header-cmv2.js';
 
 const CMV = () => {
   const { unidadeId } = useUnidade();
@@ -29,16 +27,15 @@ const CMV = () => {
   const [totals, setTotals] = useState({ totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0, totalUtilizado: 0 });
   const [filtro, setFiltro] = useState(false);
   const [cadastro, setCadastro] = useState(false);
-  const [dataInicial, setDataInicial] = useState('');
-  const [dataFinal, setDataFinal] = useState('');
   const [categorias, setCategorias] = useState([]);
   const [nome, setNome] = useState('');
-  const [selectedCategoria, setSelectedCategoria] = useState('');
+  const [lista, setLista] = useState([]);
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [faturamento, setFaturamento] = useState('');
   const [produtosOriginais, setProdutosOriginais] = useState([]);
   const [cmv, setCmv] = useState(0);
+
   const userOptionsUnidade = [
     { value: 1, label: 'Kilograma' },
     { value: 2, label: 'Grama' },
@@ -55,11 +52,6 @@ const CMV = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    const produtosSalvos = JSON.parse(localStorage.getItem('produtos')) || [];
-    setProdutos(calculateUtilizado(produtosSalvos));
-    calculateTotals(produtosSalvos);
-  }, []);
 
   const calculateUtilizado = (rows) => {
     return rows.map((row) => {
@@ -68,9 +60,19 @@ const CMV = () => {
       const entradas = Number(row.entradas || 0);
       const preco = Number(row.preco || 0);
 
-
       const utilizado = estoqueInicial + entradas - estoqueFinal;
 
+      // Verifica se o valor utilizado é negativo
+      if (utilizado < 0) {
+        // Exibe um toast de erro
+        CustomToast({ type: "error", message: "O valor da coluna utilizado não pode ser negativo!" });
+
+        return {
+          ...row,
+          utilizado: 0, // Define como zero se for negativo
+          valorUtilizado: formatCurrency(0), // Atualiza o valor utilizado
+        };
+      }
 
       const valorTotal = ((estoqueInicial + entradas + estoqueFinal) * preco).toFixed(2);
 
@@ -108,11 +110,11 @@ const CMV = () => {
   };
 
 
-  const handleCadastro = () => setCadastro(true);
+  const handleCadastro = () => {
+    setCadastro(true);
+    carregaProdutos(unidadeId); // Carrega os produtos ao abrir a modal
+  };
   const handleCloseCadastro = () => setCadastro(false);
-
-  const handleFiltro = () => setFiltro(true);
-  const handleCloseFiltro = () => setFiltro(false);
 
   const handleRowChange = (updatedRows) => {
     const updatedWithUtilizado = calculateUtilizado(updatedRows);
@@ -205,9 +207,111 @@ const CMV = () => {
     }
   };
 
+  const handleSubmit = async () => {
+    // Validação dos campos obrigatórios
+    if (!nome || !faturamento || produtos.length === 0) {
+      CustomToast({ type: "error", message: "Por favor, preencha todos os campos obrigatórios!" });
+      return;
+    }
+
+    const cmvData = {
+      cmv: {
+        unidadeId,
+        nome,
+        faturamento: Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')),
+        valorCMV: cmv,
+      },
+      produtos: produtos.map(produto => ({
+        estoqueInicial: produto.estoqueInicial,
+        valorInicial: produto.valorInicial,
+        entrada: produto.entradas,
+        valorEntrada: produto.valorEntrada,
+        estoqueFinal: produto.estoqueFinal,
+        valorEstoqueFinal: produto.valorEstoqueFinal,
+        utilizado: produto.utilizado,
+        valorUtilizado: produto.valorUtilizado,
+        produtoId: produto.id,
+      })),
+    };
+
+    try {
+      const response = await api.post('/cmv', cmvData);
+      if (response.data.status) {
+        CustomToast({ type: "success", message: response.data.message });
+        handleCloseCadastro(); // Fecha a modal
+        fetchCMVData();
+        clearFields(); // Limpa os campos
+      } else {
+        CustomToast({ type: "error", message: "Erro ao cadastrar CMV." });
+      }
+    } catch (error) {
+      console.error('Erro ao cadastrar CMV:', error);
+      CustomToast({ type: "error", message: "Erro ao cadastrar CMV." });
+    }
+  };
+
+  // Função para limpar os campos
+  const clearFields = () => {
+    setNome('');
+    setFaturamento('');
+    setProdutos([]);
+    setTotals({ totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0, totalUtilizado: 0 });
+    setCmv(0);
+  };
+  const handleDelete = (rowIndex) => {
+    // Filtra o produto a ser excluído
+    const updatedRows = produtos.filter((_, index) => index !== rowIndex);
+
+    // Atualiza o estado com os produtos restantes
+    setProdutos(updatedRows);
+
+    // Recalcula os totais após a exclusão
+    calculateTotals(updatedRows);
+
+    // Exibe um toast de sucesso
+    CustomToast({ type: "success", message: "Produto excluído com sucesso!" });
+  };
+
+  const handleApagar = async (id) => {
+    console.log("ID a ser deletado:", id); // Verifique o valor de `id` no console
+    setLoading(true);
+    try {
+      const response = await api.delete(`/cmv/${id}`);
+      if (response.data.status) {
+        CustomToast({ type: "success", message: "CMV deletado com sucesso!" });
+        fetchCMVData();
+      } else {
+        CustomToast({ type: "error", message: response.data.message });
+      }
+    } catch (error) {
+      console.error('Erro ao deletar CMV:', error);
+      CustomToast({ type: "error", message: "Erro ao deletar CMV." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCMVData = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/cmv?unidade_id=${unidadeId}`); // unidadeId deve ser um número ou string
+      if (response.data.status) {
+        setLista(response.data.data); // Armazena os dados buscados no estado
+      } else {
+        CustomToast({ type: "error", message: response.data.message });
+      }
+    } catch (error) {
+      console.error('Erro ao buscar CMV:', error);
+      CustomToast({ type: "error", message: "Erro ao buscar CMV." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (unidadeId) {
-      carregaProdutos(unidadeId);
+    console.log("unidadeId:", unidadeId); // Verifique o valor de unidadeId no console
+    if (unidadeId && typeof unidadeId === 'number') { // Verifica se unidadeId é um número
+      fetchCMVData();
     }
   }, [unidadeId]);
 
@@ -244,6 +348,13 @@ const CMV = () => {
     }
   }, [faturamento, totals]);
 
+  useEffect(() => {
+    if (unidadeId) {
+      carregaProdutos();
+      fetchCMVData(unidadeId);
+    }
+  }, [unidadeId]);
+
   return (
     <div className="flex w-full ">
       <Navbar />
@@ -264,32 +375,21 @@ const CMV = () => {
                 onClick={handleCadastro}
               />
 
-              <ButtonComponent
-                startIcon={<Print fontSize='small' />}
-                title={'Imprimir'}
-                subtitle={'Imprimir'}
-                buttonSize="large"
-                onClick={handlePrint}
-              />
-              <IconButton title="Filtro"
-                onClick={() => setFiltro(true)}
-                className='view-button w-10 h-10 '
-                sx={{
-                  color: 'black',
-                  border: '1px solid black',
-                  '&:hover': {
-                    color: '#fff',
-                    backgroundColor: '#BCDA72',
-                    border: '1px solid black'
-                  }
-                }} >
 
-                <FilterAlt fontSize={"small"} />
 
-              </IconButton>
 
             </div>
-
+            <div className='mt-2 w-[90%]'>
+              <TableComponent
+                headers={headerCmv2}
+                rows={lista} // Pass the fetched data to the TableComponent
+                actionCalls={{
+                  edit: '',
+                  delete: (row) => handleApagar(row.id),
+                  print: handlePrint,
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -438,9 +538,12 @@ const CMV = () => {
             headers={headerCmv}
             rows={produtos}
             onRowChange={handleRowChange}
+            actionCalls={{
+              tirar: handleDelete,
+            }}
           />
-          <div className='w-full flex items-center gap-5'>
-            <label className='w-[23%] flex items-center justify-end mr-3 font-bold text-sm'>Total:</label>
+          <div className='w-full flex items-center mt-3'>
+            <label className='w-[22%] flex items-center justify-end mr-3  font-bold text-sm'>Total:</label>
             <div className=' md:flex flex-wrap items-center w-[70%] '>
               <span
                 className=' w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-12'
@@ -466,84 +569,18 @@ const CMV = () => {
               </span>
             </div>
           </div>
-          <div className='flex justify-center w-[100%]'>
+          <div className='flex justify-center w-[100%] mt-10'>
             <ButtonComponent
               title={'Cadastrar'}
               subtitle={'Cadastrar'}
-              startIcon={<SearchIcon />}
+              startIcon={<Save />}
+              onClick={handleSubmit} // Chama a função de submit
             />
           </div>
         </>
       </CentralModal>
-      <CentralModal
-        tamanhoTitulo={'81%'}
-        maxHeight={'100vh'}
-        top={'20%'}
-        left={'28%'}
-        width={'400px'}
-        icon={<FilterAltIcon fontSize="small" />}
-        open={filtro}
-        onClose={handleCloseFiltro}
-        title="Filtro"
-      >
-        <div >
-          <div className='mt-4 flex gap-3 flex-wrap'>
 
-            <TextField
-              fullWidth
-              variant="outlined"
-              size="small"
-              label="Data Inicial"
-              value={dataInicial}
-              type='date'
-              autoComplete="off"
-              sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <DateRange />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              fullWidth
-              variant="outlined"
-              size="small"
-              label="Data Final"
-              type='date'
-              value={dataFinal}
-              autoComplete="off"
-              sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <DateRange />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <SelectTextFields
-              width={'175px'}
-              icon={<CategoryIcon fontSize="small" />}
-              label={'Categoria'}
-              backgroundColor={"#D9D9D9"}
-              name={"categoria"}
-              fontWeight={500}
-              options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
-              onChange={(e) => setSelectedCategoria(e.target.value)}
-              value={selectedCategoria}
-            />
-          </div>
-          <div className='w-[95%] mt-2 flex items-end justify-end'>
-            <ButtonComponent
-              title={'Pesquisar'}
-              subtitle={'Pesquisar'}
-              startIcon={<SearchIcon />}
-            />
-          </div>
-        </div>
-      </CentralModal>
+
     </div>
   );
 };

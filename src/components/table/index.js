@@ -7,6 +7,8 @@ import { maskCPF } from '../../utils/formatCPF';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import EditIcon from '@mui/icons-material/Edit';
+import CloseIcon from '@mui/icons-material/Close';
+import { Print } from '@mui/icons-material';
 
 const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowChange, rowStyle }) => {
     const [pageList, setPageList] = useState([]);
@@ -47,7 +49,7 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
     }, [rows]);
 
 
-    const renderActions = (row) => {
+    const renderActions = (row, rowIndex) => {
         let actions = {
             confirm: (
                 row.status !== "Cadastrado" && (
@@ -113,6 +115,21 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                     </IconButton>
                 )
             ),
+            tirar: (
+                <IconButton onClick={() => actionCalls.tirar(rowIndex)} title="Excluir Registro"
+                    className='delete-button'
+                    sx={{
+                        color: '#9a0000',
+                        border: '1px solid #9a0000',
+                        '&:hover': {
+                            color: '#fff',
+                            backgroundColor: '#9a0000',
+                            border: '1px solid #b22222'
+                        }
+                    }} >
+                    <CloseIcon fontSize={"small"} />
+                </IconButton>
+            ),
             inactivate: (
                 <IconButton onClick={() => actionCalls.inactivate(row)} title="Inativar Registro"
                     className='inactivate-button'
@@ -126,6 +143,21 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                         }
                     }} >
                     <BlockOutlinedIcon fontSize={"small"} />
+                </IconButton>
+            ),
+            print: (
+                <IconButton onClick={() => actionCalls.print(row)} title="Imprimir"
+                    className='inactivate-button'
+                    sx={{
+                        color: 'black',
+                        border: '1px solid black',
+                        '&:hover': {
+                            color: '#fff',
+                            backgroundColor: '#ff9800',
+                            border: '1px solid #e68a00'
+                        }
+                    }} >
+                    <Print fontSize={"small"} />
                 </IconButton>
             ),
             option: (
@@ -176,14 +208,14 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                 </TableHead>
 
                 <TableBody>
-                    {pageList.map((row, rowIndex) => (
-                        <TableRow key={rowIndex} style={rowStyle ? rowStyle(row) : {}}>
-                            {headersList.map(({ key, label, sort, type }) => (
-                                sort !== false && (
-                                    key === "actions" && hasActions ? (
-                                        <TableCell key={key} style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
-                                            {renderActions(row)}
-                                        </TableCell>
+    {pageList.map((row, rowIndex) => (
+        <TableRow key={rowIndex} style={rowStyle ? rowStyle(row) : {}}>
+            {headersList.map(({ key, label, sort, type }) => (
+                sort !== false && (
+                    key === "actions" && hasActions ? (
+                        <TableCell key={key} style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
+                            {renderActions(row, rowIndex)} {/* Pass rowIndex here */}
+                        </TableCell>
                                     ) : type === 'checkbox' ? ( 
                                         <TableCell key={key}>
                                             <input

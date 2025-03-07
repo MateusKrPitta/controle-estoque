@@ -21,6 +21,7 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import Logo from '../../../assets/png/logo_preta.png';
 import api from '../../../services/api';
 import CustomToast from '../../../components/toast';
+import moment from 'moment';
 import { useUnidade } from '../../../components/unidade-context';
 
 const EstoqueReal = () => {
@@ -49,15 +50,15 @@ const EstoqueReal = () => {
         try {
             const response = await api.get('/movimentacao');
             const movimentacoes = response.data.data;
-
+    
             const movimentacoesFiltradas = movimentacoes.filter(mov => {
                 const produto = produtos.find(prod => prod.nome === mov.produtoNome);
                 return produto && produto.unidadeId === unidadeId;
             });
-
+    
             const formattedMovimentacoes = await Promise.all(movimentacoesFiltradas.map(async (mov) => {
                 const valorTotal = mov.precoPorcao * mov.quantidade;
-
+    
                 return {
                     tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === '2' ? 'saida' : 'desperdicio',
                     produtoNome: mov.produtoNome,
@@ -70,7 +71,7 @@ const EstoqueReal = () => {
                     id: mov.id
                 };
             }));
-
+    
             setEntradasSaidas(formattedMovimentacoes);
             setEntradasSaidasOriginais(formattedMovimentacoes);
         } catch (error) {
@@ -178,20 +179,19 @@ const EstoqueReal = () => {
         const produtosFiltrados = produtos.filter(produto => {
             const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
     
-
-            const dataCriacaoProduto = new Date(produto.createdAt); 
-            const dataInicioFiltro = new Date(dataInicio);
-            const dataFimFiltro = new Date(dataFim);
+            // Usando moment para manipular as datas
+            const dataCriacaoProduto = moment(produto.createdAt);
+            const dataInicioFiltro = moment(dataInicio).startOf('day'); // Começo do dia
+            const dataFimFiltro = moment(dataFim).endOf('day'); // Fim do dia
     
-            // Ajuste para incluir o dia inteiro da data final
-            dataFimFiltro.setHours(23, 59, 59, 999);
+            console.log("Data de Criação do Produto:", dataCriacaoProduto.format());
+            console.log("Data Início Filtro:", dataInicioFiltro.format());
+            console.log("Data Fim Filtro:", dataFimFiltro.format());
     
-            console.log("Data Início Filtro:", dataInicioFiltro);
-            console.log("Data Fim Filtro:", dataFimFiltro);
-            console.log("Data Criação Produto:", dataCriacaoProduto);
+            const dataMatch = (dataInicio && dataFim) ?
+                dataCriacaoProduto.isBetween(dataInicioFiltro, dataFimFiltro, null, '[]') : true;
     
-            const dataMatch = dataInicio && dataFim ?
-                dataCriacaoProduto >= dataInicioFiltro && dataCriacaoProduto <= dataFimFiltro : true;
+            console.log("Data Match:", dataMatch);
     
             return categoriaMatch && dataMatch;
         });

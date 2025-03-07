@@ -26,6 +26,7 @@ const Categoria = () => {
     const navigate = useNavigate();
     const { unidadeId } = useUnidade();
 
+      const [isDesativa, setDesativa] = useState(false);
     const [cadastroCategoria, setCadastroCategoria] = useState(false);
     const [loading, setLoading] = useState(false);
     const [editandoCategoria, setEditandoCategoria] = useState(false);
@@ -68,6 +69,7 @@ const Categoria = () => {
     };
 
     const handleCadastrarCategoria = async () => {
+        setDesativa(true);
         try {
             const novaCategoria = {
                 nome: categoria.nome,
@@ -80,6 +82,8 @@ const Categoria = () => {
             CustomToast({ type: "success", message: "Categoria cadastrada com sucesso!" });
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao cadastrar categoria." });
+        } finally {
+            setDesativa(false); // Reabilita o botão
         }
     };
 
@@ -273,6 +277,7 @@ const Categoria = () => {
                             subtitle={'Cadastrar'}
                             startIcon={<Save />}
                             onClick={handleCadastrarCategoria}
+                            disabled={isDesativa} 
                         />
                     </div>
                 </div>
