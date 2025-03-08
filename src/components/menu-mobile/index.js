@@ -13,12 +13,10 @@ import AddchartIcon from '@mui/icons-material/Addchart';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import Estoque from '../../assets/png/logo.png';
 import SelectTextFields from '../select';
-import api from '../../services/api';
 import { useUnidade } from "../unidade-context";
 
 const MenuMobile = () => {
      const { unidades, setUnidadeId, setUnidadeNome, unidadeId } = useUnidade();
-    const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
     const [selectedUnidade, setSelectedUnidade] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
@@ -68,10 +66,10 @@ const MenuMobile = () => {
 
     return (
         <div className='w-[100%]  flex items-center justify-center p-3 gap-10  z-30  lg:hidden' style={{ backgroundColor: 'black' }}>
-            <div className='flex items-start w-[30%]'>
+            <div className='flex items-start w-[30%] md:mr-8'>
                 <img style={{ width: '100%', marginRight: '150px', padding:'10px' }} src={Estoque} alt="Total de Produtos" />
             </div>
-            <div className='flex items-start w-[30%]'>
+            <div className="w-[42%] md:w-[25%] sm:mr-0 lg:w-[25%] md:mr-6 justify-center flex p-2 bg-white rounded-md"> 
             
                 <SelectTextFields
                     width={'150px'}
@@ -85,14 +83,14 @@ const MenuMobile = () => {
                     onChange={handleUnidadeChange}
                 />
             </div>
-            <div className='flex items-start w-[15%] sm:w-[10%] md:w-[10%] ml-7'>
+            <div className='flex items-start w-[20%] sm:w-[10%] md:w-[15%] '>
                 <button
                     id="basic-button"
                     aria-controls={open ? 'basic-menu' : undefined}
                     aria-haspopup="true"
                     aria-expanded={open ? 'true' : undefined}
                     onClick={handleClick}
-                    style={{ backgroundColor: '#ffff', color: '#BCDA72', borderRadius: '5px', width: '100%' }}
+                    style={{ backgroundColor: '#BCDA72', color: 'black', borderRadius: '5px', width: '100%' }}
                 >
                     <MenuIcon fontSize='small' />
                 </button>
@@ -117,16 +115,17 @@ const MenuMobile = () => {
                 <MenuItem onClick={() => handleNavigate("/ficha-tecnica")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
                     <ContentPasteSearchIcon style={{ color: '#BCDA72' }} fontSize='small' />Ficha Técnica
                 </MenuItem>
-                <MenuItem onClick={() => handleNavigate("/relatorios")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
-                    <DataThresholdingIcon style={{ color: '#BCDA72' }} fontSize='small' />Relatório
-                </MenuItem>
+                
                 <MenuItem onClick={() => handleNavigate("/entrada-saida")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
                     <AddchartIcon style={{ color: '#BCDA72' }} fontSize='small' />Entrada/Saída
+                </MenuItem>
+                <MenuItem onClick={() => handleNavigate("/relatorios")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
+                    <DataThresholdingIcon style={{ color: '#BCDA72' }} fontSize='small' />Relatório
                 </MenuItem>
                 <MenuItem onClick={() => handleNavigate("/cadastro")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
                     <MiscellaneousServicesIcon style={{ color: '#BCDA72' }} fontSize='small' />Cadastro
                 </MenuItem>
-                <MenuItem onClick={() => handleNavigate("/sair")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
+                <MenuItem onClick={() => handleNavigate("/")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
                     <ExitToApp style={{ color: '#BCDA72' }} fontSize='small' />Sair
                 </MenuItem>
             </Menu>

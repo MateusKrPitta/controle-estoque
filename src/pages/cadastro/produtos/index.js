@@ -326,19 +326,19 @@ const Produtos = () => {
     return (
         <div className="flex w-full ">
             <Navbar />
-            <div className='flex ml-0 flex-col gap-3 w-full items-end md:ml-2'>
+            <div className='flex ml-0 flex-col gap-3 w-full items-end md:ml-0 lg:ml-2'>
                 <MenuMobile />
                 <HeaderPerfil />
-                <h1 className='flex justify-center text-base items-center gap-2 sm:ml-1  md:text-2xl  font-bold  w-full md:justify-start   '>
+                <h1 className='justify-center  md:justify-center lg:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
                     <ProductionQuantityLimitsTwoTone /> Produtos
                 </h1>
-                <div className={` items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
-                    <div className="hidden md:w-[14%] md:flex ">
+                <div className=" items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start">
+                    <div className="hidden lg:w-[14%] lg:flex  ">
                         <HeaderCadastro />
                     </div>
-                    <div className="w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col md:w-[80%]">
+                    <div className="w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col lg:w-[80%]">
                         <div className={`w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
-                            <div className='w-[80%] md:w-[20%] p-2  bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+                            <div className='w-[80%] md:w-[30%] lg:w-[20%] p-2  bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
                                 <label className='text-xs font-bold'>Produtos Cadastrados</label>
                                 <div className='flex items-center justify-center gap-5'>
                                     <img src={Caixa} alt="Caixa" />
@@ -353,7 +353,7 @@ const Produtos = () => {
                                     variant="outlined"
                                     size="small"
                                     label="Buscar Produto"
-                                    sx={{ width: { xs: '90%', sm: '50%', md: '40%', lg: '40%' }, }}
+                                    sx={{ width: { xs: '62%', sm: '50%', md: '40%', lg: '40%' }, }}
                                     value={filtroNome}
                                     onChange={(e) => setFiltroNome(e.target.value)}
                                     InputProps={{
@@ -436,7 +436,7 @@ const Produtos = () => {
                                             name="nome"
                                             value={nome}
                                             onChange={(e) => setNome(e.target.value)}
-                                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '40%' } }}
+                                            sx={{ width: { xs: '50%', sm: '43%', md: '40%', lg: '40%' } }}
                                             autoComplete="off"
                                             InputProps={{
                                                 startAdornment: (
@@ -491,7 +491,7 @@ const Produtos = () => {
                                             variant="outlined"
                                             size="small"
                                             label="Preço"
-                                            sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '25%' }, }}
+                                            sx={{ width: { xs: '45%', sm: '43%', md: '40%', lg: '25%' }, }}
                                             value={preco}
                                             onValueChange={(values) => setPreco(values.value)}
                                             thousandSeparator="."
@@ -576,7 +576,7 @@ const Produtos = () => {
                                             name="rendimento"
                                             value={rendimento}
                                             onChange={(e) => setRendimento(e.target.value)}
-                                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
+                                            sx={{ width: { xs: '50%', sm: '45%', md: '40%', lg: '50%' } }}
                                             InputProps={{
                                                 startAdornment: (
                                                     <InputAdornment position="start">
@@ -614,7 +614,7 @@ const Produtos = () => {
                                             variant="outlined"
                                             size="small"
                                             label="Valor Reajuste"
-                                            sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '47%' }, }}
+                                            sx={{ width: { xs: '45%', sm: '45%', md: '40%', lg: '47%' }, }}
                                             value={valorReajuste}
                                             onValueChange={(values) => setValorReajuste(values.value)}
                                             thousandSeparator="."
@@ -721,7 +721,7 @@ const Produtos = () => {
                                             value={filtroDataFinal}
                                             onChange={(e) => setFiltroDataFinal(e.target.value)}
                                             autoComplete="off"
-                                            sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
+                                            sx={{ width: { xs: '42%', sm: '43%', md: '40%', lg: '43%' } }}
                                             InputProps={{
                                                 startAdornment: (
                                                     <InputAdornment position="start">

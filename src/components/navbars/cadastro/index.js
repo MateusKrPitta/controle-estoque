@@ -32,21 +32,21 @@ const HeaderCadastro = () => {
 
 
     return (
-        <div className="w-[100%] items-center justify-center flex flex-wrap  sm:justify-start md: gap-1 ">
+        <div className="w-[100%] items-center justify-center flex flex-wrap  lg:justify-start md: gap-1 ">
             <ButtonComponent
                 startIcon={<AccountCircleIcon fontSize="small" />}
                 title="Usuário"
                 buttonSize="large"
                 onClick={() => handleNavigation('usuarios')}
-                className="w-[35%] sm:w-[50%] md:w-[100%]"
+                className="w-[35%] sm:w-[50%] md:w-[40%]  lg:w-[100%]"
 
             />
-             <ButtonComponent
+            <ButtonComponent
                 startIcon={<ProductionQuantityLimitsTwoTone fontSize="small" />}
                 title="Produtos"
                 buttonSize="large"
                 onClick={() => handleNavigation('produtos')}
-                className="w-[35%] sm:w-[50%] md:w-[100%]"
+                className="w-[35%] sm:w-[50%] md:w-[40%] lg:w-[100%]"
 
             />
             <ButtonComponent
@@ -54,7 +54,7 @@ const HeaderCadastro = () => {
                 title="Unidades"
                 buttonSize="large"
                 onClick={() => handleNavigation('unidades')}
-                className="w-[35%] sm:w-[50%] md:w-[100%]"
+                className="w-[35%] sm:w-[50%] md:w-[40%]  lg:w-[100%]"
 
             />
             <ButtonComponent
@@ -62,7 +62,7 @@ const HeaderCadastro = () => {
                 title="Categorias"
                 buttonSize="large"
                 onClick={() => handleNavigation('categoria')}
-                className="w-[35%] sm:w-[50%] md:w-[100%]"
+                className="w-[35%] sm:w-[50%] md:w-[40%]  lg:w-[100%]"
 
             />
 

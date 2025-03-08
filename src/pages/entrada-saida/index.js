@@ -236,15 +236,15 @@ const EntradaSaida = () => {
   return (
     <div className="flex w-full ">
       <Navbar />
-      <div className='flex ml-0 flex-col gap-3 w-full items-end md:ml-2'>
+      <div className='flex ml-0 flex-col gap-3 w-full items-end sm:m-0 lg:ml-2'>
         <MenuMobile />
         <HeaderPerfil />
-        <h1 className='flex justify-center items-center gap-2 sm: md:text-2xl font-bold w-full md:justify-start'>
+        <h1 className='justify-center  md:justify-center lg:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
           <AddchartIcon /> Entrada e Saída
         </h1>
         <div className={`w-[99%] justify-center flex-wrap mt-4 mb-4 flex items-center gap-4 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
 
-          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+          <div className='w-[80%] md:w-[23%] lg:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
             <label className='text-xs font-bold'>Entradas</label>
             <div className='flex items-center justify-center gap-5'>
               <img src={Entradas} alt="Entradas" />
@@ -253,14 +253,14 @@ const EntradaSaida = () => {
           </div>
 
 
-          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+          <div className='w-[80%] md:w-[23%] lg:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
             <label className='text-xs font-bold'>Saídas</label>
             <div className='flex items-center justify-center gap-5'>
               <img src={Saida} alt="Saídas" />
               <label>{formatValor(valorTotalSaidas)}</label>
             </div>
           </div>
-          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+          <div className='w-[80%] md:w-[23%] lg:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
             <label className='text-xs font-bold'>Desperdício</label>
             <div className='flex items-center justify-center gap-5'>
               <img src={Desperdicio} alt="Desperdício" />
@@ -268,7 +268,7 @@ const EntradaSaida = () => {
             </div>
           </div>
 
-          <div className='w-[80%] md:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
+          <div className='w-[80%] md:w-[23%] lg:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
             <label className='text-xs font-bold'>Valor total em estoque</label>
             <div className='flex items-center justify-center gap-5'>
               <img src={Valor} alt="Valor Total em Estoque" />
@@ -276,7 +276,7 @@ const EntradaSaida = () => {
             </div>
           </div>
         </div>
-        <div className={`ml-0 flex flex-col w-[98%] md:ml-2 mr-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
+        <div className={`ml-0 flex flex-col w-[98%] md:ml-0 lg:ml-2 mr-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
           <div className='flex gap-2 justify-center flex-wrap md:justify-start items-center md:items-start'>
             <TextField
               fullWidth
@@ -293,7 +293,7 @@ const EntradaSaida = () => {
               value={searchTerm}
               onChange={handlePesquisarProduto}
               autoComplete="off"
-              sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '40%' } }}
+              sx={{ width: { xs: '60%', sm: '50%', md: '40%', lg: '40%' } }}
             />
 
             <ButtonComponent
@@ -318,7 +318,7 @@ const EntradaSaida = () => {
               <FilterAltIcon fontSize={"small"} />
             </IconButton>
           </div>
-          <div className="tamanho-tabela">
+          <div className="w-[100%]">
             {loading ? (
               <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
                 <TableLoading />
@@ -342,8 +342,8 @@ const EntradaSaida = () => {
           tamanhoTitulo={'81%'}
           maxHeight={'90vh'}
           top={'20%'}
-          left={'28%'}
-          width={'500px'}
+          left={'5%'}
+          width={'400px'}
           icon={<AddCircleOutline fontSize="small" />}
           open={cadastro}
           onClose={handleCloseCadastro}
@@ -352,7 +352,7 @@ const EntradaSaida = () => {
           <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
             <div className='mt-4 flex gap-3 flex-wrap'>
               <SelectTextFields
-                width={'285px'}
+                width={'200px'}
                 icon={<ArticleIcon fontSize="small" />}
                 label={'Produto'}
                 backgroundColor={"#D9D9D9"}
@@ -374,7 +374,7 @@ const EntradaSaida = () => {
                 value={quantidade}
                 onChange={(e) => setQuantidade(e.target.value)}
                 autoComplete="off"
-                sx={{ width: { xs: '30%', sm: '50%', md: '40%', lg: '30%' }, }}
+                sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '35%' }, }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -389,7 +389,7 @@ const EntradaSaida = () => {
                 size="small"
                 label="Observação"
                 value={observacao}
-                sx={{ width: { xs: '30%', sm: '50%', md: '40%', lg: '96%' }, }}
+                sx={{ width: { xs: '45%', sm: '93%', md: '40%', lg: '96%' }, }}
                 onChange={(e) => setObservacao(e.target.value)}
                 autoComplete="off"
                 InputProps={{
@@ -401,7 +401,7 @@ const EntradaSaida = () => {
                 }}
               />
               <SelectTextFields
-                width={'185px'}
+                width={'320px'}
                 icon={<AddchartIcon fontSize="small" />}
                 label={'Tipo'}
                 backgroundColor={"#D9D9D9"}
@@ -468,7 +468,7 @@ const EntradaSaida = () => {
                 value={dataFinal}
                 onChange={(e) => setDataFinal(e.target.value)}
                 autoComplete="off"
-                sx={{ width: { xs: '42%', sm: '50%', md: '40%', lg: '43%' } }}
+                sx={{ width: { xs: '42%', sm: '43%', md: '40%', lg: '43%' } }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">

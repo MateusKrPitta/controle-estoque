@@ -59,7 +59,7 @@ const CMV = () => {
 
         return {
           ...row,
-          utilizado: 0, 
+          utilizado: 0,
           valorUtilizado: formatCurrency(0),
         };
       }
@@ -102,7 +102,7 @@ const CMV = () => {
 
   const handleCadastro = () => {
     setCadastro(true);
-    carregaProdutos(unidadeId); 
+    carregaProdutos(unidadeId);
   };
 
   const handleEditar = () => setEditar(true);
@@ -178,8 +178,8 @@ const CMV = () => {
             unidadeMedida: unidade ? unidade.label : 'N/A',
             categoria: produto.categoriaNome,
             valorPorcao: formatValor(produto.valorPorcao),
-            valor: formatValor(produto.valorReajuste || produto.valor), 
-            preco: produto.valorReajuste || produto.valor, 
+            valor: formatValor(produto.valorReajuste || produto.valor),
+            preco: produto.valorReajuste || produto.valor,
             valorFormatado: valorFormatado,
             qtdMin: produto.qtdMin,
             categoriaId: produto.categoriaId,
@@ -232,7 +232,7 @@ const CMV = () => {
         CustomToast({ type: "success", message: response.data.message });
         handleCloseCadastro();
         fetchCMVData();
-        clearFields(); 
+        clearFields();
       } else {
         CustomToast({ type: "error", message: "Erro ao cadastrar CMV." });
       }
@@ -277,9 +277,9 @@ const CMV = () => {
   const fetchCMVData = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/cmv?unidade_id=${unidadeId}`); 
+      const response = await api.get(`/cmv?unidade_id=${unidadeId}`);
       if (response.data.status) {
-        setLista(response.data.data); 
+        setLista(response.data.data);
       } else {
         CustomToast({ type: "error", message: response.data.message });
       }
@@ -292,14 +292,14 @@ const CMV = () => {
   };
 
   useEffect(() => {
-    if (unidadeId && typeof unidadeId === 'number') { 
+    if (unidadeId && typeof unidadeId === 'number') {
       fetchCMVData();
     }
   }, [unidadeId]);
 
   const calculateCmv = () => {
     const totalUtilizado = totals.totalUtilizado;
-    const faturamentoValue = Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')) || 1; 
+    const faturamentoValue = Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')) || 1;
     if (faturamentoValue === 0) {
       setCmv(0);
       return;
@@ -348,7 +348,7 @@ const CMV = () => {
       <div className='flex flex-col gap-3 w-full items-end'>
         <MenuMobile />
         <HeaderPerfil />
-        <h1 className='justify-center  sm:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
+        <h1 className='justify-center  md:justify-center lg:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2  lg:w-[98%]'>
           <AddToQueueIcon /> CMV
         </h1>
         <div className={`mt-2 sm:mt-2 md:mt-9 flex flex-col w-full  transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
@@ -363,10 +363,10 @@ const CMV = () => {
               />
 
             </div>
-            <div className='mt-2 w-[90%]'>
+            <div className='mt-2 w-[95%]'>
               <TableComponent
                 headers={headerCmv2}
-                rows={lista} 
+                rows={lista}
                 actionCalls={{
                   edit: handleEditar,
                   delete: (row) => handleApagar(row.id),
@@ -380,7 +380,7 @@ const CMV = () => {
 
 
       <CentralModal
-        tamanhoTitulo={'84%'}
+        tamanhoTitulo={'82%'}
         maxHeight={'100vh'}
         top={'5%'}
         left={'5%'}
@@ -393,15 +393,15 @@ const CMV = () => {
         <>
           <div className='flex items-center gap-3'>
 
-            <div className='w-[90%] flex items-end gap-3 '>
+            <div className=' w-[100%] md:w-[100%] lg:w-[100%] mt-5 md:mt-0 flex justify-center md:justify-start items-end gap-3 flex-wrap '>
               <TextField
                 fullWidth
                 variant="outlined"
                 size="small"
                 label="Nome do CMV"
-                sx={{ width: { xs: '90%', sm: '50%', md: '40%', lg: '30%' }, }}
+                sx={{ width: { xs: '100%', sm: '40%', md: '10%', lg: '30%' }, }}
                 value={nome}
-                onChange={(e) => setNome(e.target.value)} 
+                onChange={(e) => setNome(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -411,9 +411,8 @@ const CMV = () => {
                 }}
                 autoComplete="off"
               />
-              <div className='w-[70%] flex justify-end'>
-                <div className='w-[100%] md:w-[30%] p-5 ' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
-
+              <div className=' w-[70%] md:w-[28%] lg:ml-[250px] flex justify-end'>
+                <div className='w-[100%] sm:ml-0 md:w-[100%] lg:w-[60%] lg:first-letter: p-5 ' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
                   <TextField
                     fullWidth
                     variant="outlined"
@@ -430,7 +429,7 @@ const CMV = () => {
                       ),
                     }}
                     sx={{
-                      width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
+                      width: { xs: '100%', sm: '100%', md: '100%', lg: '100%' },
                       fontSize: '20px',
                       backgroundColor: '#ffffff',
                       borderRadius: '8px',
@@ -460,7 +459,7 @@ const CMV = () => {
                   />
                 </div>
               </div>
-              <div className='w-[70%] md:w-[20%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
+              <div className='w-[70%] md:w-[28%] lg:w-[18%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
                 <NumericFormat
                   fullWidth
                   variant="outlined"
@@ -487,7 +486,7 @@ const CMV = () => {
                     ),
                   }}
                   sx={{
-                    width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
+                    width: { xs: '100%', sm: '100%', md: '100%', lg: '100%' },
                     fontSize: '20px',
                     backgroundColor: '#ffffff',
                     borderRadius: '8px',
@@ -530,24 +529,24 @@ const CMV = () => {
             <label className='w-[22%] flex items-center justify-end mr-3  font-bold text-sm'>Total:</label>
             <div className=' md:flex flex-wrap items-center w-[70%] '>
               <span
-                className=' w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-12'
+                className=' w-[80%] md:w-[45%] lg:w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-12'
                 style={{ backgroundColor: '#1a894f', borderRadius: '10px', color: 'white' }}>
                 {formatCurrency(totals.estoqueInicial)}
               </span>
 
               <span
-                className='w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center  mr-12 p-2'
+                className='w-[80%] md:w-[45%] lg:w-[20%] flex items-center text-sm font-bold justify-center  mr-12 p-2'
                 style={{ backgroundColor: '#2563eb', borderRadius: '10px', color: 'white' }}>
                 {formatCurrency(totals.totalEntradas)}
               </span>
 
               <span
-                className='w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-5 '
+                className='w-[80%] md:w-[45%] lg:w-[20%] flex items-center text-sm font-bold justify-center p-2 md:mr-12 lg:mr-5 '
                 style={{ backgroundColor: '#69706c', borderRadius: '10px', color: 'white' }}>
                 {formatCurrency(totals.estoqueFinal)}
               </span>
               <span
-                className='w-[80%] md:w-[15%] flex items-center text-sm font-bold justify-center p-2 '
+                className='w-[80%] md:w-[45%] lg:w-[15%] flex items-center text-sm font-bold justify-center p-2 '
                 style={{ backgroundColor: '#BCDA72', borderRadius: '10px', color: 'white' }}>
                 {formatCurrency(totals.totalUtilizado)} {/* Exibe o total utilizado formatado */}
               </span>
@@ -558,7 +557,7 @@ const CMV = () => {
               title={'Cadastrar'}
               subtitle={'Cadastrar'}
               startIcon={<Save />}
-              onClick={handleSubmit} 
+              onClick={handleSubmit}
             />
           </div>
         </>
@@ -578,13 +577,13 @@ const CMV = () => {
         <>
           <div className='flex items-center gap-3'>
 
-            <div className='w-[90%] flex items-end gap-3 '>
+            <div className=' w-[100%] md:w-[100%] lg:w-[100%] mt-5 md:mt-0 flex justify-center md:justify-start items-end gap-3 flex-wrap '>
               <TextField
                 fullWidth
                 variant="outlined"
                 size="small"
                 label="Nome do CMV"
-                sx={{ width: { xs: '90%', sm: '50%', md: '40%', lg: '30%' }, }}
+                sx={{ width: { xs: '100%', sm: '40%', md: '10%', lg: '30%' }, }}
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 InputProps={{
@@ -596,9 +595,8 @@ const CMV = () => {
                 }}
                 autoComplete="off"
               />
-              <div className='w-[70%] flex justify-end'>
-                <div className='w-[100%] md:w-[30%] p-5 ' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
-
+              <div className=' w-[70%] md:w-[28%] lg:ml-[250px] flex justify-end'>
+                <div className='w-[100%] sm:ml-0 md:w-[100%] lg:w-[60%] lg:first-letter: p-5 ' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
                   <TextField
                     fullWidth
                     variant="outlined"
@@ -615,7 +613,7 @@ const CMV = () => {
                       ),
                     }}
                     sx={{
-                      width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
+                      width: { xs: '100%', sm: '100%', md: '100%', lg: '100%' },
                       fontSize: '20px',
                       backgroundColor: '#ffffff',
                       borderRadius: '8px',
@@ -645,7 +643,7 @@ const CMV = () => {
                   />
                 </div>
               </div>
-              <div className='w-[70%] md:w-[20%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
+              <div className='w-[70%] md:w-[28%] lg:w-[18%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
                 <NumericFormat
                   fullWidth
                   variant="outlined"
@@ -672,7 +670,7 @@ const CMV = () => {
                     ),
                   }}
                   sx={{
-                    width: { xs: '100%', sm: '50%', md: '40%', lg: '100%' },
+                    width: { xs: '100%', sm: '100%', md: '100%', lg: '100%' },
                     fontSize: '20px',
                     backgroundColor: '#ffffff',
                     borderRadius: '8px',
@@ -715,24 +713,24 @@ const CMV = () => {
             <label className='w-[22%] flex items-center justify-end mr-3  font-bold text-sm'>Total:</label>
             <div className=' md:flex flex-wrap items-center w-[70%] '>
               <span
-                className=' w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-12'
+                className=' w-[80%] md:w-[45%] lg:w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-12'
                 style={{ backgroundColor: '#1a894f', borderRadius: '10px', color: 'white' }}>
                 {formatCurrency(totals.estoqueInicial)}
               </span>
 
               <span
-                className='w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center  mr-12 p-2'
+                className='w-[80%] md:w-[45%] lg:w-[20%] flex items-center text-sm font-bold justify-center  mr-12 p-2'
                 style={{ backgroundColor: '#2563eb', borderRadius: '10px', color: 'white' }}>
                 {formatCurrency(totals.totalEntradas)}
               </span>
 
               <span
-                className='w-[80%] md:w-[20%] flex items-center text-sm font-bold justify-center p-2 mr-5 '
+                className='w-[80%] md:w-[45%] lg:w-[20%] flex items-center text-sm font-bold justify-center p-2 md:mr-12 lg:mr-5 '
                 style={{ backgroundColor: '#69706c', borderRadius: '10px', color: 'white' }}>
                 {formatCurrency(totals.estoqueFinal)}
               </span>
               <span
-                className='w-[80%] md:w-[15%] flex items-center text-sm font-bold justify-center p-2 '
+                className='w-[80%] md:w-[45%] lg:w-[15%] flex items-center text-sm font-bold justify-center p-2 '
                 style={{ backgroundColor: '#BCDA72', borderRadius: '10px', color: 'white' }}>
                 {formatCurrency(totals.totalUtilizado)} {/* Exibe o total utilizado formatado */}
               </span>
@@ -740,9 +738,10 @@ const CMV = () => {
           </div>
           <div className='flex justify-center w-[100%] mt-10'>
             <ButtonComponent
-              title={'Salvar'}
-              subtitle={'Salvar'}
+              title={'Cadastrar'}
+              subtitle={'Cadastrar'}
               startIcon={<Save />}
+              onClick={handleSubmit}
             />
           </div>
         </>

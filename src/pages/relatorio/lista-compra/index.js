@@ -254,18 +254,18 @@ const ListaCompra = () => {
     return (
         <div className="flex w-full ">
             <Navbar />
-            <div className='flex ml-0 flex-col gap-3 w-full items-end md:ml-2'>
+            <div className='flex ml-0 flex-col gap-3 w-full items-end md:ml-0 lg:ml-2'>
                 <MenuMobile />
                 <HeaderPerfil />
-                <h1 className='flex justify-center text-base items-center gap-2 sm:ml-1  md:text-2xl  font-bold  w-full md:justify-start'>
+                <h1 className='justify-center  md:justify-center lg:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
                     <AssignmentIcon /> Lista de Compra
                 </h1>
 
                 <div className=" items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start">
-                    <div className="hidden md:w-[14%] md:flex ">
+                    <div className="hidden lg:w-[14%] lg:flex  ">
                         <HeaderRelatorio />
                     </div>
-                    <div className={`w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col md:w-[80%] transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
+                    <div className={`w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col lg:w-[80%] transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                         <div className="flex gap-2 flex-wrap w-full justify-center md:justify-start">
                             <div className='flex items-center gap-2'>
                                 <TextField
@@ -298,7 +298,7 @@ const ListaCompra = () => {
                                     onClick={handleCadastroProdutos}
                                 />
                             </div>
-                            <div className='w-[95%] flex flex-col' >
+                            <div className=' sm:w-[100%] lg:w-[95%] flex flex-col' >
                                 <TableComponent
                                     headers={headers}
                                     rows={rows}

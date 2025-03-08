@@ -80,23 +80,26 @@ const HeaderPerfil = () => {
     <>
       <div className="hidden lg:flex justify-end w-full h-8">
         <div
-          className="flex items-center justify-between pl-3 pr-4 w-[35%] h-20 bg-cover bg-no-repeat rounded-bl-lg"
+          className="flex items-center justify-between pl-3 pr-4 w-[40%] h-20 bg-cover bg-no-repeat rounded-bl-lg"
           style={{ backgroundColor: '#BCDA72' }}
         >
-          <div className="w-[100%] items-star flex flex-wrap gap-4">
-            <SelectTextFields
-              width={'150px'}
-              icon={<LocationOnIcon fontSize="small" />}
-              label={'Unidades'}
-              backgroundColor={"#D9D9D9"}
-              borderRadius={'5px'}
-              name={"Unidades"}
-              fontWeight={500}
-              options={unidades.map(unidade => ({ value: unidade.id, label: unidade.nome }))}
-              value={selectedUnidade}
-              onChange={handleUnidadeChange}
-            />
-            <div className="flex items-center justify-start text-black gap-2">
+          <div className="w-[100%] items-star flex flex-wrap gap-4 p-2">
+            <div className="w-[53%] p-2 bg-white rounded-md"> 
+              <SelectTextFields
+                width={'150px'}
+                icon={<LocationOnIcon fontSize="small" />}
+                label={'Unidades'}
+                backgroundColor={"#D9D9D9"}
+                borderRadius={'5px'}
+                name={"Unidades"}
+                fontWeight={500}
+                options={unidades.map(unidade => ({ value: unidade.id, label: unidade.nome }))}
+                value={selectedUnidade}
+                onChange={handleUnidadeChange}
+              />
+            </div>
+
+            <div className=" w-[30%]flex items-center mt-3 justify-start text-black gap-2">
               <a className="cursor-pointer p-1">
                 <AccountCircleIcon />
               </a>

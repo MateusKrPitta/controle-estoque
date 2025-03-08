@@ -235,42 +235,42 @@ const Dashboard = () => {
             <Navbar />
             <div className='flex flex-col gap-2 w-full items-end'>
                 <HeaderPerfil />
-                <h1 className='flex items-center justify-center mt-6 md:mt-0 md:justify-start ml-3 text-2xl font-bold text-primary w-[95%]'>
+                <h1 className='flex items-center md:justify-center md:mt-16  lg:mt-0  justify-center mt-6  lg:justify-start ml-3 text-2xl font-bold text-primary w-[95%] lg:w-[98%]'>
                     Dashboard
                 </h1>
 
                 <div className={`w-full mt-8 flex-wrap p-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                     <div className='w-full flex gap-6 flex-wrap items-center justify-center'>
-                        {/* Cards de informações */}
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[18%] flex-col gap-2 flex items-center justify-center'>
+
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[90%] lg:w-[18%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Total de Produtos</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Estoque} alt="Total de Produtos" />
                                 <label className='text-black font-semibold w-full'>{totalProdutos}</label>
                             </div>
                         </div>
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[18%] flex-col gap-2 flex items-center justify-center'>
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[18%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Itens em Estoque</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Produtos} alt="Itens em Estoque" />
                                 <label className='text-black font-semibold w-full'>{itensEmEstoque}</label>
                             </div>
                         </div>
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[18%] flex-col gap-2 flex items-center justify-center'>
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[18%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Valor Total</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Dinheiro} alt="Valor Total" />
                                 <label className='text-black font-semibold w-full'>R$ {valorTotal.toFixed(2).replace('.', ',')}</label>
                             </div>
                         </div>
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[18%] flex-col gap-2 flex items-center justify-center'>
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[18%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>CMV</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Dados} alt="CMV" />
                                 <label className='text-black font-semibold w-full'>{cmv}%</label>
                             </div>
                         </div>
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[18%] flex-col gap-2 flex items-center justify-center'>
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[18%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Itens para comprar</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Compra} alt="Produtos Abaixo do Mínimo" />
@@ -280,7 +280,7 @@ const Dashboard = () => {
                     </div>
 
                     <div className='flex w-full  items-end h-[70%] justify-center flex-wrap'>
-                        <div className="mt-8 w-[100%] md:w-[30%] h-64">
+                        <div className="mt-8 w-[100%] lg:w-[30%] h-64">
                             <h2 className="text-lg text-center font-bold text-primary mb-7">Estoque por Categoria</h2>
                             <ResponsiveContainer>
                                 <PieChart>
@@ -303,8 +303,8 @@ const Dashboard = () => {
                             </ResponsiveContainer>
 
                         </div>
-                        <div className="mt-8 w-[100%] md:w-[30%] h-64">
-                            <h2 className="text-lg text-center w-full font-bold text-primary mt-12 md:mt-0 mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
+                        <div className="mt-8 w-[100%] lg:w-[30%] h-64">
+                            <h2 className="text-lg text-center w-full font-bold text-primary mt-12 lg:mt-0 mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
                             <ResponsiveContainer width="100%" height={250}>
                                 <BarChart data={dataGrafico}>
                                     <XAxis

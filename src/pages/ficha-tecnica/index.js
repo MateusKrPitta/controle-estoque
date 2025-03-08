@@ -59,8 +59,8 @@ const FichaTecnica = () => {
     const [lucroReal, setLucroReal] = useState(0);
     const [produtosCadastrados, setProdutosCadastrados] = useState([]);
     const [rendimento, setRendimento] = useState('');
-    const [valorRendimento, setValorRendimento] = useState(0); 
-    const [cmvReal, setCmvReal] = useState(0); 
+    const [valorRendimento, setValorRendimento] = useState(0);
+    const [cmvReal, setCmvReal] = useState(0);
     const [pratoEmEdicao, setPratoEmEdicao] = useState(null);
     const [criarPrato, setCriarPrato] = useState(false);
     const [editar, setEditar] = useState(false);
@@ -101,11 +101,11 @@ const FichaTecnica = () => {
         }
     }, [valorVenda, custoTotal]);
 
-    
+
     useEffect(() => {
         if (custoTotal && rendimento) {
             const valorRendimentoCalculado = (custoTotal / parseFloat(rendimento)) * 1000;
-            
+
             setValorRendimento(valorRendimentoCalculado);
         } else {
             setValorRendimento(0);
@@ -114,8 +114,8 @@ const FichaTecnica = () => {
 
     const fetchProdutosDaFicha = async () => {
         try {
-            const response = await api.get(`/ficha?unidade=${unidadeId}`); 
-            const data = response.data.data; 
+            const response = await api.get(`/ficha?unidade=${unidadeId}`);
+            const data = response.data.data;
             if (Array.isArray(data)) {
                 setProdutosDaFicha(data);
             } else {
@@ -154,8 +154,8 @@ const FichaTecnica = () => {
         const produto = produtos.find(prod => prod.id === value);
         setProdutoSelecionado(produto);
         if (produto) {
-            setUnidade(unidadeMedidaMap[produto.unidadeMedida]); 
-            setPrecoPorcao(formatValor(produto.valorPorcao)); 
+            setUnidade(unidadeMedidaMap[produto.unidadeMedida]);
+            setPrecoPorcao(formatValor(produto.valorPorcao));
         } else {
             setUnidade('');
             setPrecoPorcao('');
@@ -220,7 +220,7 @@ const FichaTecnica = () => {
                 lucroReal: lucroReal,
             },
             produtos: produtosAdicionados.map(produto => {
-  
+
                 const produtoSelecionado = produtos.find(p => p.nome === produto.nome);
                 if (!produtoSelecionado) {
                     CustomToast({ type: "error", message: "Produto selecionado não é válido!" });
@@ -229,7 +229,7 @@ const FichaTecnica = () => {
                 return {
                     qtdUtilizado: parseFloat(produto.quantidade),
                     valorUtilizado: parseFloat(produto.valorUtilizado.replace('R$', '').replace('.', '').replace(',', '.')),
-                    produtoId: produtoSelecionado.id, 
+                    produtoId: produtoSelecionado.id,
                 };
             }).filter(Boolean),
         };
@@ -257,7 +257,7 @@ const FichaTecnica = () => {
 
     const handleCriarPrato = () => setCriarPrato(true);
     const handleFecharPrato = () => {
-        setCriarPrato(false); 
+        setCriarPrato(false);
         setNomePrato('');
         setProdutosAdicionados([]);
         setValorVenda('');
@@ -265,7 +265,7 @@ const FichaTecnica = () => {
         setLucroReal(0);
         setCmvReal(0);
         setRendimento('');
-        setPratoEmEdicao(null); 
+        setPratoEmEdicao(null);
     };
 
     const fetchProdutos = async () => {
@@ -286,7 +286,7 @@ const FichaTecnica = () => {
         }
     }, [unidadeId]);
 
-        useEffect(() => {
+    useEffect(() => {
         const timer = setTimeout(() => {
             setIsVisible(true);
         }, 300);
@@ -300,7 +300,7 @@ const FichaTecnica = () => {
             <div className='flex flex-col gap-3 w-full items-end'>
                 <MenuMobile />
                 <HeaderPerfil />
-                <h1 className='justify-center sm:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex gap-2 '>
+                <h1 className='justify-center  md:justify-center lg:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 lg:w-[98%]'>
                     <ContentPasteSearchIcon /> Ficha Técnica
                 </h1>
 
@@ -321,7 +321,7 @@ const FichaTecnica = () => {
                             value={searchTerm}
                             onChange={handleSearch}
                             autoComplete="off"
-                            sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '30%' } }}
+                            sx={{ width: { xs: '70%', sm: '40%', md: '40%', lg: '30%' } }}
                         />
 
                         <ButtonComponent
@@ -337,8 +337,8 @@ const FichaTecnica = () => {
                 <CentralModal
                     tamanhoTitulo={'81%'}
                     maxHeight={'100vh'}
-                    top={'15%'}
-                    left={'20%'}
+                    top={'5%'}
+                    left={'5%'}
                     bottom={'5%'}
                     width={'1050px'}
                     icon={<AddCircleOutline fontSize="small" />}
@@ -370,7 +370,7 @@ const FichaTecnica = () => {
                                     disabled
                                     autoComplete="off"
                                     sx={{
-                                        width: { xs: '48%', sm: '50%', md: '40%', lg: '15%' },
+                                        width: { xs: '48%', sm: '24%', md: '40%', lg: '15%' },
                                         '& .MuiInputLabel-root': {
                                             color: 'black',
                                             fontWeight: 700
@@ -397,7 +397,7 @@ const FichaTecnica = () => {
                                     value={precoPorcao}
                                     autoComplete="off"
                                     sx={{
-                                        width: { xs: '48%', sm: '50%', md: '40%', lg: '15%' },
+                                        width: { xs: '48%', sm: '30%', md: '40%', lg: '15%' },
                                         '& .MuiInputLabel-root': {
                                             color: 'black',
                                             fontWeight: 700
@@ -428,7 +428,7 @@ const FichaTecnica = () => {
                                     value={quantidade}
                                     onChange={(e) => setQuantidade(e.target.value)}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '15%' } }}
+                                    sx={{ width: { xs: '48%', sm: '48%', md: '40%', lg: '15%' } }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -489,25 +489,25 @@ const FichaTecnica = () => {
                                     sx={{ width: { xs: '100%', sm: '50%', md: '40%', lg: '30%' } }}
                                 />
                                 <h2 className="font-bold text-xs mt-2">Produtos Adicionados:</h2>
-                                <div className='w-full items-center flex '>
-                                    <label className='w-[20%]' >Produto</label>
-                                    <label className='w-[13%]' >Quantidade</label>
-                                    <label className='w-[13%]'>Valor Porção</label>
-                                    <label className='w-[13%]'>Valor Utilizado</label>
+                                <div className='w-full items-center hidden md:flex  '>
+                                    <label className='md:w-[30%] lg:w-[20%]' >Produto</label>
+                                    <label className='md:w-[20%] lg:w-[13%]' >Quantidade</label>
+                                    <label className='md:w-[20%] lg:w-[13%]'>Valor Porção</label>
+                                    <label className='md:w-[20%] lg:w-[13%]'>Valor Utilizado</label>
                                 </div>
                                 <div className='flex gap-4 w-full flex-wrap'>
-                                    <div className='w-[100%]  md:w-[66%]'>
+                                    <div className='w-[100%]  lg:w-[66%]'>
                                         {produtosAdicionados.map((produto, index) => (
-                                            <div key={index} className="flex justify-between items-center border-black py-2 w-full">
+                                            <div key={index} className="flex justify-center flex-wrap md:justify-between items-center border-black py-2 w-full">
                                                 <div style={{ border: '1px solid black', borderRadius: '10px' }} className='w-[100%] flex items-center p-1'>
-                                                    <label className='text-xs w-[95%] items-center flex gap-2 flex-wrap'>
-                                                        <FlatwareIcon />
-                                                        <p className='w-[40%] md:w-[25%] text-xs'>{produto.nome}</p>
-                                                        <p className=' w-[30%] md:w-[18%]' style={{ display: 'flex', textAlign: 'center', justifyContent: 'center', backgroundColor: '#BCDA72', color: 'black', padding: '5px', borderRadius: '5px', fontWeight: '700' }}> {produto.quantidade} - {produto.unidade}</p>
+                                                    <label className='text-xs w-[100%] items-center justify-center md:justify-start flex gap-2 flex-wrap'>
+                                                        
+                                                        <p className='w-[100%] text-center md:text-start md:w-[30%] lg:w-[30%] gap-2 flex justify-center md:justify-start items-center text-xs'><FlatwareIcon />{produto.nome}</p>
+                                                        <p className='w-[100%] text-center md:text-start  md:w-[20%] lg:w-[18%]' style={{ display: 'flex', textAlign: 'center', justifyContent: 'center', backgroundColor: '#BCDA72', color: 'black', padding: '5px', borderRadius: '5px', fontWeight: '700' }}> {produto.quantidade} - {produto.unidade}</p>
 
-                                                        <p className=' w-[50%] ml-2 md:w-[20%] md:ml-0' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#d9d9d9', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.precoPorcao}</p>
+                                                        <p className='w-[100%] text-center md:text-start md:w-[20%] lg:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#d9d9d9', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.precoPorcao}</p>
 
-                                                        <p className=' w-[50%] md:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#b0d847', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.valorUtilizado}</p>
+                                                        <p className='w-[100%] text-center md:text-start md:w-[20%] lg:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#b0d847', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.valorUtilizado}</p>
                                                     </label>
                                                     <ButtonClose
                                                         funcao={() => handleRemoveProduto(index)}
@@ -516,7 +516,7 @@ const FichaTecnica = () => {
                                             </div>
                                         ))}
                                     </div>
-                                    <div className='w-[100%] md:w-[32%] p-2 flex flex-col gap-2' style={{ border: '1px solid black', borderRadius: '10px' }}>
+                                    <div className='w-[100%] md:w-[70%] lg:w-[32%] p-2 flex flex-col gap-2' style={{ border: '1px solid black', borderRadius: '10px' }}>
                                         <div className='flex items-center w-full '>
                                             <label className='text-xs font-bold w-[60%]'>Custo Total: </label>
                                             <label className='text-xs font-bold w-[40%] p-1 pl- items-start justify-start' style={{ backgroundColor: '#b0d847', borderRadius: '10px', }}>
@@ -621,8 +621,8 @@ const FichaTecnica = () => {
             <CentralModal
                 tamanhoTitulo={'81%'}
                 maxHeight={'100vh'}
-                top={'15%'}
-                left={'20%'}
+                top={'5%'}
+                    left={'5%'}
                 bottom={'5%'}
                 width={'1050px'}
                 icon={<Edit fontSize="small" />}
@@ -631,257 +631,257 @@ const FichaTecnica = () => {
                 title="Editar Prato"
             >
                 <div>
-                    <div className={` w-[94.5%] overflow-auto transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
-                        <div className='p-6 flex flex-wrap gap-2' style={{ border: '1px solid black', borderRadius: '10px' }}>
-                            <SelectTextFields
-                                width={'240px'}
-                                icon={<ArticleIcon fontSize="small" />}
-                                label={'Produto'}
-                                backgroundColor={"#D9D9D9"}
-                                name={"produto"}
-                                fontWeight={500}
-                                options={produtos.map(produto => ({ label: produto.nome, value: produto.id }))}
-                                onChange={(e) => handleProdutoChange(e.target.value)}
-                            />
-
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                size="small"
-                                label="Unidade"
-                                name="unidadeMedida"
-                                value={unidade}
-                                disabled
-                                autoComplete="off"
-                                sx={{
-                                    width: { xs: '48%', sm: '50%', md: '40%', lg: '15%' },
-                                    '& .MuiInputLabel-root': {
-                                        color: 'black',
-                                        fontWeight: 700
-                                    },
-                                    '& .MuiInputLabel-root.Mui-focused': {
-                                        color: 'black',
-                                    },
-                                }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <ScaleIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                size="small"
-                                label="Preço Porção"
-                                name="precoPorcao"
-                                value={precoPorcao}
-                                autoComplete="off"
-                                sx={{
-                                    width: { xs: '48%', sm: '50%', md: '40%', lg: '15%' },
-                                    '& .MuiInputLabel-root': {
-                                        color: 'black',
-                                        fontWeight: 700
-                                    },
-                                    '& .MuiInputLabel-root.Mui-focused': {
-                                        color: 'black',
-                                    },
-                                    '& .MuiSvgIcon-root': {
-                                        color: 'black',
-                                    },
-                                }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <MoneySharp />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                disabled
-                            />
-
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                size="small"
-                                label={`Quantidade Utilizada`}
-                                name="quantidade"
-                                value={quantidade}
-                                onChange={(e) => setQuantidade(e.target.value)}
-                                autoComplete="off"
-                                sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '15%' } }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <ScaleIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                size="small"
-                                label="Valor Utilizado"
-                                name="valorUtilizado"
-                                value={valorUtilizado}
-                                autoComplete="off"
-                                sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '19%' } }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <MoneySharp />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                disabled
-                            />
-
-                            <div className='flex items-end justify-end w-full'>
-                                <ButtonComponent
-                                    startIcon={<AddCircleOutline fontSize='small' />}
-                                    title={'Adicionar'}
-                                    subtitle={'Adicionar'}
-                                    buttonSize="large"
-                                    onClick={handleAdicionarProduto}
+                        <div className={` w-[94.5%] overflow-auto transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
+                            <div className='p-6 flex flex-wrap gap-2' style={{ border: '1px solid black', borderRadius: '10px' }}>
+                                <SelectTextFields
+                                    width={'240px'}
+                                    icon={<ArticleIcon fontSize="small" />}
+                                    label={'Produto'}
+                                    backgroundColor={"#D9D9D9"}
+                                    name={"produto"}
+                                    fontWeight={500}
+                                    options={produtos.map(produto => ({ label: produto.nome, value: produto.id }))}
+                                    onChange={(e) => handleProdutoChange(e.target.value)}
                                 />
+
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    size="small"
+                                    label="Unidade"
+                                    name="unidadeMedida"
+                                    value={unidade}
+                                    disabled
+                                    autoComplete="off"
+                                    sx={{
+                                        width: { xs: '48%', sm: '24%', md: '40%', lg: '15%' },
+                                        '& .MuiInputLabel-root': {
+                                            color: 'black',
+                                            fontWeight: 700
+                                        },
+                                        '& .MuiInputLabel-root.Mui-focused': {
+                                            color: 'black',
+                                        },
+                                    }}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <ScaleIcon />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    size="small"
+                                    label="Preço Porção"
+                                    name="precoPorcao"
+                                    value={precoPorcao}
+                                    autoComplete="off"
+                                    sx={{
+                                        width: { xs: '48%', sm: '30%', md: '40%', lg: '15%' },
+                                        '& .MuiInputLabel-root': {
+                                            color: 'black',
+                                            fontWeight: 700
+                                        },
+                                        '& .MuiInputLabel-root.Mui-focused': {
+                                            color: 'black',
+                                        },
+                                        '& .MuiSvgIcon-root': {
+                                            color: 'black',
+                                        },
+                                    }}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <MoneySharp />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                    disabled
+                                />
+
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    size="small"
+                                    label={`Quantidade Utilizada`}
+                                    name="quantidade"
+                                    value={quantidade}
+                                    onChange={(e) => setQuantidade(e.target.value)}
+                                    autoComplete="off"
+                                    sx={{ width: { xs: '48%', sm: '48%', md: '40%', lg: '15%' } }}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <ScaleIcon />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    size="small"
+                                    label="Valor Utilizado"
+                                    name="valorUtilizado"
+                                    value={valorUtilizado}
+                                    autoComplete="off"
+                                    sx={{ width: { xs: '48%', sm: '50%', md: '40%', lg: '19%' } }}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <MoneySharp />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                    disabled
+                                />
+
+                                <div className='flex items-end justify-end w-full'>
+                                    <ButtonComponent
+                                        startIcon={<AddCircleOutline fontSize='small' />}
+                                        title={'Adicionar'}
+                                        subtitle={'Adicionar'}
+                                        buttonSize="large"
+                                        onClick={handleAdicionarProduto}
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className={`w-[95%] mt-3 p-4 border border-gray-300 rounded-lg transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
-                        <div>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                size="small"
-                                label="Nome do Prato"
-                                value={nomePrato}
-                                onChange={(e) => setNomePrato(e.target.value)}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <LocalDiningIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                autoComplete="off"
-                                sx={{ width: { xs: '100%', sm: '50%', md: '40%', lg: '30%' } }}
-                            />
-                            <h2 className="font-bold text-xs mt-2">Produtos Adicionados:</h2>
-                            <div className='w-full items-center flex '>
-                                <label className='w-[20%]' >Produto</label>
-                                <label className='w-[13%]' >Quantidade</label>
-                                <label className='w-[13%]'>Valor Porção</label>
-                                <label className='w-[13%]'>Valor Utilizado</label>
-                            </div>
-                            <div className='flex gap-4 w-full flex-wrap'>
-                                <div className='w-[100%]  md:w-[66%]'>
-                                    {produtosAdicionados.map((produto, index) => (
-                                        <div key={index} className="flex justify-between items-center border-black py-2 w-full">
-                                            <div style={{ border: '1px solid black', borderRadius: '10px' }} className='w-[100%] flex items-center p-1'>
-                                                <label className='text-xs w-[95%] items-center flex gap-2 flex-wrap'>
-                                                    <FlatwareIcon />
-                                                    <p className='w-[40%] md:w-[25%] text-xs'>{produto.nome}</p>
-                                                    <p className=' w-[30%] md:w-[18%]' style={{ display: 'flex', textAlign: 'center', justifyContent: 'center', backgroundColor: '#BCDA72', color: 'black', padding: '5px', borderRadius: '5px', fontWeight: '700' }}> {produto.quantidade} - {produto.unidade}</p>
+                        <div className={`w-[95%] mt-3 p-4 border border-gray-300 rounded-lg transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
+                            <div>
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    size="small"
+                                    label="Nome do Prato"
+                                    value={nomePrato}
+                                    onChange={(e) => setNomePrato(e.target.value)}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <LocalDiningIcon />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                    autoComplete="off"
+                                    sx={{ width: { xs: '100%', sm: '50%', md: '40%', lg: '30%' } }}
+                                />
+                                <h2 className="font-bold text-xs mt-2">Produtos Adicionados:</h2>
+                                <div className='w-full items-center hidden md:flex  '>
+                                    <label className='md:w-[30%] lg:w-[20%]' >Produto</label>
+                                    <label className='md:w-[20%] lg:w-[13%]' >Quantidade</label>
+                                    <label className='md:w-[20%] lg:w-[13%]'>Valor Porção</label>
+                                    <label className='md:w-[20%] lg:w-[13%]'>Valor Utilizado</label>
+                                </div>
+                                <div className='flex gap-4 w-full flex-wrap'>
+                                    <div className='w-[100%]  lg:w-[66%]'>
+                                        {produtosAdicionados.map((produto, index) => (
+                                            <div key={index} className="flex justify-center flex-wrap md:justify-between items-center border-black py-2 w-full">
+                                                <div style={{ border: '1px solid black', borderRadius: '10px' }} className='w-[100%] flex items-center p-1'>
+                                                    <label className='text-xs w-[100%] items-center justify-center md:justify-start flex gap-2 flex-wrap'>
+                                                        
+                                                        <p className='w-[100%] text-center md:text-start md:w-[30%] lg:w-[30%] gap-2 flex justify-center md:justify-start items-center text-xs'><FlatwareIcon />{produto.nome}</p>
+                                                        <p className='w-[100%] text-center md:text-start  md:w-[20%] lg:w-[18%]' style={{ display: 'flex', textAlign: 'center', justifyContent: 'center', backgroundColor: '#BCDA72', color: 'black', padding: '5px', borderRadius: '5px', fontWeight: '700' }}> {produto.quantidade} - {produto.unidade}</p>
 
-                                                    <p className=' w-[50%] ml-2 md:w-[20%] md:ml-0' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#d9d9d9', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.precoPorcao}</p>
+                                                        <p className='w-[100%] text-center md:text-start md:w-[20%] lg:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#d9d9d9', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.precoPorcao}</p>
 
-                                                    <p className=' w-[50%] md:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#b0d847', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.valorUtilizado}</p>
-                                                </label>
-                                                <ButtonClose
-                                                    funcao={() => handleRemoveProduto(index)}
-                                                />
+                                                        <p className='w-[100%] text-center md:text-start md:w-[20%] lg:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#b0d847', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.valorUtilizado}</p>
+                                                    </label>
+                                                    <ButtonClose
+                                                        funcao={() => handleRemoveProduto(index)}
+                                                    />
+                                                </div>
                                             </div>
+                                        ))}
+                                    </div>
+                                    <div className='w-[100%] md:w-[70%] lg:w-[32%] p-2 flex flex-col gap-2' style={{ border: '1px solid black', borderRadius: '10px' }}>
+                                        <div className='flex items-center w-full '>
+                                            <label className='text-xs font-bold w-[60%]'>Custo Total: </label>
+                                            <label className='text-xs font-bold w-[40%] p-1 pl- items-start justify-start' style={{ backgroundColor: '#b0d847', borderRadius: '10px', }}>
+                                                {formatValor(custoTotal)}
+                                            </label>
                                         </div>
-                                    ))}
-                                </div>
-                                <div className='w-[100%] md:w-[32%] p-2 flex flex-col gap-2' style={{ border: '1px solid black', borderRadius: '10px' }}>
-                                    <div className='flex items-center w-full '>
-                                        <label className='text-xs font-bold w-[60%]'>Custo Total: </label>
-                                        <label className='text-xs font-bold w-[40%] p-1 pl- items-start justify-start' style={{ backgroundColor: '#b0d847', borderRadius: '10px', }}>
-                                            {formatValor(custoTotal)}
-                                        </label>
-                                    </div>
-                                    <div className='flex items-center w-full '>
-                                        <label className='text-xs font-bold w-[60%]'>Quantidade de Rendimento: </label>
-                                        <input
-                                            type="text"
-                                            value={rendimento} // Evita NaN
-                                            onChange={(e) => setRendimento(e.target.value)}
-                                            style={{
-                                                backgroundColor: "#d9d9d9",
-                                                color: 'black',
-                                                borderRadius: '10px',
-                                                fontSize: '12px',
-                                                fontWeight: '700',
-                                                width: '40%',
-                                                padding: '2px',
-                                                border: '1px solid #ccc',
-                                                outline: 'none'
-                                            }}
-                                        />
-                                    </div>
-                                    <div className='flex items-center w-full '>
-                                        <label className='text-xs font-bold w-[60%]'>Valor do Rendimento(Kg/Ml/Uni): </label>
-                                        <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
-                                            {formatValor((custoTotal / (parseFloat(rendimento) || 1)) * 1000)} {/* Cálculo do valor do rendimento */}
-                                        </label>
-                                    </div>
-                                    <div className='flex items-center w-full '>
-                                        <label className='text-xs font-bold w-[60%]'>Valor Venda: </label>
-                                        <NumericFormat
-                                            value={valorVenda}
-                                            onValueChange={(values) => {
-                                                const { formattedValue, value } = values;
-                                                setValorVenda(formattedValue); // Armazena o valor formatado
-                                                // Você pode armazenar o valor numérico se precisar
-                                            }}
-                                            thousandSeparator={true}
-                                            decimalScale={2}
-                                            fixedDecimalScale={true}
-                                            prefix={'R$ '}
-                                            className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start'
-                                            style={{
-                                                backgroundColor: '#BCDA72',
-                                                borderRadius: '10px',
-                                                border: '1px solid #ccc',
-                                                outline: 'none',
-                                                padding: '5px',
-                                            }}
-                                        />
-                                    </div>
-                                    <div className='flex items-center w-full '>
-                                        <label className='text-xs font-bold w-[60%]'>CMV Real: </label>
-                                        <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
-                                            {formatCmvReal(cmvReal)}
-                                        </label>
-                                    </div>
-                                    <div className='flex items-center w-full '>
-                                        <label className='text-xs font-bold w-[60%]'>Lucro Real: </label>
-                                        <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#d9d9d9', borderRadius: '10px', }}>
-                                            {formatValor(lucroReal)}
-                                        </label>
+                                        <div className='flex items-center w-full '>
+                                            <label className='text-xs font-bold w-[60%]'>Quantidade de Rendimento: </label>
+                                            <input
+                                                type="text"
+                                                value={rendimento} // Evita NaN
+                                                onChange={(e) => setRendimento(e.target.value)}
+                                                style={{
+                                                    backgroundColor: "#d9d9d9",
+                                                    color: 'black',
+                                                    borderRadius: '10px',
+                                                    fontSize: '12px',
+                                                    fontWeight: '700',
+                                                    width: '40%',
+                                                    padding: '2px',
+                                                    border: '1px solid #ccc',
+                                                    outline: 'none'
+                                                }}
+                                            />
+                                        </div>
+                                        <div className='flex items-center w-full '>
+                                            <label className='text-xs font-bold w-[60%]'>Valor do Rendimento(Kg/Ml/Uni): </label>
+                                            <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
+                                                {formatValor((custoTotal / (parseFloat(rendimento) || 1)) * 1000)} {/* Cálculo do valor do rendimento */}
+                                            </label>
+                                        </div>
+                                        <div className='flex items-center w-full '>
+                                            <label className='text-xs font-bold w-[60%]'>Valor Venda: </label>
+                                            <NumericFormat
+                                                value={valorVenda}
+                                                onValueChange={(values) => {
+                                                    const { formattedValue, value } = values;
+                                                    setValorVenda(formattedValue); // Armazena o valor formatado
+                                                    // Você pode armazenar o valor numérico se precisar
+                                                }}
+                                                thousandSeparator={true}
+                                                decimalScale={2}
+                                                fixedDecimalScale={true}
+                                                prefix={'R$ '}
+                                                className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start'
+                                                style={{
+                                                    backgroundColor: '#BCDA72',
+                                                    borderRadius: '10px',
+                                                    border: '1px solid #ccc',
+                                                    outline: 'none',
+                                                    padding: '5px',
+                                                }}
+                                            />
+                                        </div>
+                                        <div className='flex items-center w-full '>
+                                            <label className='text-xs font-bold w-[60%]'>CMV Real: </label>
+                                            <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
+                                                {formatCmvReal(cmvReal)}
+                                            </label>
+                                        </div>
+                                        <div className='flex items-center w-full '>
+                                            <label className='text-xs font-bold w-[60%]'>Lucro Real: </label>
+                                            <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#d9d9d9', borderRadius: '10px', }}>
+                                                {formatValor(lucroReal)}
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className='w-full flex items-end justify-end mt-2'>
-                                <ButtonComponent
-                                    startIcon={<Save fontSize='small' />}
-                                    title={'Cadastrar'}
-                                    subtitle={'Cadastrar'}
-                                    buttonSize="large"
-                                    onClick={handleCadastrar}
-                                />
+                                <div className='w-full flex items-end justify-end mt-2'>
+                                    <ButtonComponent
+                                        startIcon={<Save fontSize='small' />}
+                                        title={'Cadastrar'}
+                                        subtitle={'Cadastrar'}
+                                        buttonSize="large"
+                                        onClick={handleCadastrar}
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                </div>
+                    </div>
             </CentralModal>
 
         </div>

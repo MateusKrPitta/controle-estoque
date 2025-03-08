@@ -22,13 +22,13 @@ const CentralModal = ({ open, onClose, bottom, title, children, icon, width, top
                 <Box
                     sx={{
                         position: "absolute",
-                        top: { xs: '10%', sm: top || '20%' },
-                        left: { xs: '5%', sm: left || '28%' }, 
+                        top: { xs: '10%', sm: '20%', lg:'20%' },
+                        left: { xs: '5%', sm: '15%', lg:'28%' }, 
                         bottom: { bottom },
                         maxHeight: maxHeight,
                         overflowY: 'auto',
                         transform: "translate(-50%, -50%)",
-                        width: { xs: '90%', sm: width || '450px' },
+                        width: { xs: '90%', sm: '70%', md: '50%', lg: width || '450px' },
                         bgcolor: "background.paper",
                         boxShadow: 24,
                         p: 3,

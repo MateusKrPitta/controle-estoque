@@ -160,10 +160,10 @@ const Unidades = () => {
   return (
     <div className="flex w-full ">
       <Navbar />
-      <div className="flex ml-0 flex-col gap-3 w-full items-end md:ml-2">
+      <div className='flex ml-0 flex-col gap-3 w-full items-end md:ml-0 lg:ml-2'>
         <MenuMobile />
         <HeaderPerfil />
-        <h1 className="flex justify-center text-base items-center gap-2 sm:ml-1  md:text-2xl  font-bold  w-full md:justify-start   ">
+        <h1 className='justify-center  md:justify-center lg:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
           <LocationOnOutlined />
           Cadastro Unidades
         </h1>
@@ -171,10 +171,10 @@ const Unidades = () => {
           className={` items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start transition-opacity duration-500 ${isVisible ? "opacity-100" : "opacity-0 translate-y-4"
             }`}
         >
-          <div className="hidden md:w-[14%] md:flex ">
+                             <div className="hidden lg:w-[14%] lg:flex  ">
             <HeaderCadastro />
           </div>
-          <div className="w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col md:w-[80%]">
+          <div className="w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col lg:w-[80%]">
             <div className="flex gap-2 flex-wrap w-full justify-center md:justify-start">
               <TextField
                 fullWidth
@@ -184,7 +184,7 @@ const Unidades = () => {
                 autoComplete="off"
                 value={filtroNome}
                 onChange={(e) => setFiltroNome(e.target.value)}
-                sx={{ width: { xs: "90%", sm: "50%", md: "40%", lg: "40%" } }}
+                sx={{ width: { xs: "72%", sm: "50%", md: "40%", lg: "40%" } }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -250,7 +250,7 @@ const Unidades = () => {
                     autoComplete="off"
                     value={nomeUnidade}
                     onChange={(e) => setNomeUnidade(e.target.value)}
-                    sx={{ width: { xs: "95%", sm: "50%", md: "40%", lg: "95%" } }}
+                    sx={{ width: { xs: "95%", sm: "100%", md: "40%", lg: "95%" } }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -282,7 +282,7 @@ const Unidades = () => {
               tamanhoTitulo={"73%"}
               conteudo={
                 <>
-                  <div className="mt-4 flex gap-3 flex-wrap">
+                  <div className="mt-4 flex gap-3 flex-wrap w-full">
                     <TextField
                       fullWidth
                       variant="outlined"

@@ -26,13 +26,13 @@ const HeaderRelatorio = () => {
 
 
     return (
-        <div className="w-[100%] items-center justify-center flex flex-wrap  sm:justify-start md: gap-1 ">
+        <div className="w-[100%] items-center justify-center flex flex-wrap  lg:justify-start md: gap-1 ">
             <ButtonComponent
                 startIcon={<BarChartIcon fontSize="small" />}
                 title="Estoque Real"
                 buttonSize="large"
                 onClick={() => handleNavigation('estoque-real')}
-                className="w-[35%] sm:w-[50%] md:w-[100%]"
+                className="w-[35%] sm:w-[50%] md:w-[25%] lg:w-[100%]"
 
             />
             <ButtonComponent
@@ -40,7 +40,7 @@ const HeaderRelatorio = () => {
                 title="Lista de Compra"
                 buttonSize="large"
                 onClick={() => handleNavigation('lista-compra')}
-                className="w-[40%] sm:w-[50%] md:w-[100%]"
+                className="w-[40%] sm:w-[50%]  md:w-[25%] lg:w-[100%]"
 
             />
             {/* <ButtonComponent
