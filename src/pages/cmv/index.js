@@ -25,9 +25,10 @@ const CMV = () => {
   const { unidadeId } = useUnidade();
   const [loading, setLoading] = useState(false);
   const [produtos, setProdutos] = useState([]);
-  const [totals, setTotals] = useState({ totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0, totalUtilizado: 0 });
+  const [totals, setTotals] = useState({ totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0, totalUtihandleEditarlizado: 0 });
   const [cadastro, setCadastro] = useState(false);
   const [editar, setEditar] = useState(false);
+  const [cmvId, setCmvId] = useState(null);
   const [categorias, setCategorias] = useState([]);
   const [nome, setNome] = useState('');
   const [lista, setLista] = useState([]);
@@ -49,10 +50,10 @@ const CMV = () => {
     return rows.map((row) => {
       const estoqueInicial = Number(row.estoqueInicial || 0);
       const estoqueFinal = Number(row.estoqueFinal || 0);
-      const entradas = Number(row.entradas || 0);
+      const entrada = Number(row.entrada || 0); // Certifique-se de que esta chave está correta
       const preco = Number(row.preco || 0);
 
-      const utilizado = estoqueInicial + entradas - estoqueFinal;
+      const utilizado = estoqueInicial + entrada - estoqueFinal;
 
       if (utilizado < 0) {
         CustomToast({ type: "error", message: "O valor da coluna utilizado não pode ser negativo!" });
@@ -64,7 +65,7 @@ const CMV = () => {
         };
       }
 
-      const valorTotal = ((estoqueInicial + entradas + estoqueFinal) * preco).toFixed(2);
+      const valorTotal = utilizado * preco; // Corrigido o cálculo do valor total
 
       return {
         ...row,
@@ -77,22 +78,24 @@ const CMV = () => {
   const calculateTotals = (rows) => {
     const newTotals = rows.reduce((acc, row) => {
       const preco = Number(row.preco || 0);
-      const entradas = Number(row.entradas || 0);
+      const entrada = Number(row.entrada || 0); // Certifique-se de que esta chave está correta
 
-      acc.totalEntradas += entradas * preco;
+      acc.totalEntradas += entrada * preco;
       acc.estoqueInicial += (Number(row.estoqueInicial || 0) * preco);
       acc.estoqueFinal += (Number(row.estoqueFinal || 0) * preco);
 
       return acc;
     }, { totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
 
-
     newTotals.totalUtilizado = newTotals.estoqueInicial + newTotals.totalEntradas - newTotals.estoqueFinal;
 
     setTotals(newTotals);
+    console.log("Totais calculados:", newTotals); // Adicione este log para verificar os totais
   };
-
   const formatCurrency = (value) => {
+    if (value === undefined || value === null) {
+      return 'R$ 0,00'; // ou qualquer valor padrão que você queira retornar
+    }
     return value.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
@@ -105,16 +108,127 @@ const CMV = () => {
     carregaProdutos(unidadeId);
   };
 
-  const handleEditar = () => setEditar(true);
+  const handleEditar = async (id) => {
+    setLoading(true);
+    setCmvId(id);
+    try {
+      const response = await api.get(`/cmv/${id}`);
+      if (response.data.status) {
+        const cmvData = response.data.data;
+  
+        const cmvPrincipal = {
+          id: cmvData.$attributes.id,
+          nome: cmvData.$attributes.nome,
+          faturamento: cmvData.$attributes.faturamento / 100,
+          valorCMV: cmvData.$attributes.valorCMV,
+          unidadeId: cmvData.$attributes.unidadeId,
+          itens: cmvData.itens.map(item => ({
+            id: item.$attributes.id,
+            estoqueInicial: item.$attributes.estoqueInicial,
+            valorInicial: item.$attributes.valorInicial,
+            entrada: item.$attributes.entrada,
+            valorEntrada: item.$attributes.valorEntrada,
+            estoqueFinal: item.$attributes.estoqueFinal,
+            valorEstoqueFinal: item.$attributes.valorEstoqueFinal,
+            utilizado: item.$attributes.utilizado,
+            valorUtilizado: item.$attributes.valorUtilizado,
+            nomeProduto: item.produto.nome,
+            preco: item.produto.valor,
+            categoria: item.categoria,
+          })),
+        };
+  
+        setNome(cmvPrincipal.nome);
+        setFaturamento(cmvPrincipal.faturamento.toFixed(2).replace('.', ','));
+        setCmv(cmvPrincipal.valorCMV);
+        setProdutos(cmvPrincipal.itens); // Atualiza o estado com os produtos do CMV
+        calculateTotals(cmvPrincipal.itens);
+        setEditar(true);
+      } else {
+        CustomToast({ type: "error", message: response.data.message });
+      }
+    } catch (error) {
+      console.error('Erro ao buscar CMV:', error);
+      CustomToast({ type: "error", message: "Erro ao buscar CMV." });
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleCloseEditar = () => setEditar(false);
   const handleCloseCadastro = () => setCadastro(false);
 
   const handleRowChange = (updatedRows) => {
-    const updatedWithUtilizado = calculateUtilizado(updatedRows);
+    const updatedWithUtilizado = updatedRows.map((row, index) => {
+      const originalRow = produtos[index]; // Mantém os dados originais do produto
+      const estoqueInicial = Number(row.estoqueInicial || 0);
+      const estoqueFinal = Number(row.estoqueFinal || 0);
+      const entrada = Number(row.entrada || 0);
+      const preco = Number(row.preco || 0);
+
+      const utilizado = estoqueInicial + entrada - estoqueFinal;
+
+      if (utilizado < 0) {
+        CustomToast({ type: "error", message: "O valor da coluna utilizado não pode ser negativo!" });
+
+        return {
+          ...originalRow, // Mantém os dados originais
+          utilizado: 0,
+          valorUtilizado: formatCurrency(0),
+        };
+      }
+
+      const valorTotal = ((estoqueInicial + entrada + estoqueFinal) * preco).toFixed(2);
+
+      return {
+        ...originalRow, // Mantém os dados originais
+        estoqueInicial,
+        estoqueFinal,
+        entrada,
+        utilizado,
+        valorUtilizado: formatCurrency(valorTotal),
+      };
+    });
+
     setProdutos(updatedWithUtilizado);
     calculateTotals(updatedWithUtilizado);
   };
 
+const handleRowChangeEditar = (updatedRows) => {
+  const updatedWithUtilizado = updatedRows.map((row, index) => {
+    const originalRow = produtos[index]; // Mantém os dados originais do produto
+    const estoqueInicial = Number(row.estoqueInicial || 0);
+    const estoqueFinal = Number(row.estoqueFinal || 0);
+    const entrada = Number(row.entrada || 0);
+    const preco = Number(row.preco || 0);
+
+    const utilizado = estoqueInicial + entrada - estoqueFinal;
+
+    if (utilizado < 0) {
+      CustomToast({ type: "error", message: "O valor da coluna utilizado não pode ser negativo!" });
+
+      return {
+        ...originalRow, // Mantém os dados originais
+        utilizado: 0,
+        valorUtilizado: formatCurrency(0),
+      };
+    }
+
+    const valorTotal = ((estoqueInicial + entrada + estoqueFinal) * preco).toFixed(2);
+
+    return {
+      ...originalRow, // Mantém os dados originais
+      estoqueInicial,
+      estoqueFinal,
+      entrada,
+      utilizado,
+      valorUtilizado: formatCurrency(valorTotal),
+    };
+  });
+
+  setProdutos(updatedWithUtilizado);
+  calculateTotals(updatedWithUtilizado);
+};
+  
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     const tableHTML = `
@@ -214,31 +328,44 @@ const CMV = () => {
         valorCMV: cmv,
       },
       produtos: produtos.map(produto => ({
-        estoqueInicial: produto.estoqueInicial,
-        valorInicial: produto.valorInicial,
-        entrada: produto.entradas,
-        valorEntrada: produto.valorEntrada,
-        estoqueFinal: produto.estoqueFinal,
-        valorEstoqueFinal: produto.valorEstoqueFinal,
-        utilizado: produto.utilizado,
-        valorUtilizado: produto.valorUtilizado,
+        estoqueInicial: Number(produto.estoqueInicial),
+        valorInicial: Number(produto.valorUtilizado),
+        entrada: Number(produto.entrada),
+        valorEntrada: Number(produto.valorUtilizado),
+        estoqueFinal: Number(produto.estoqueFinal),
+        valorEstoqueFinal: Number(produto.valorUtilizado),
+        utilizado: Number(produto.utilizado),
+        valorUtilizado: Number(produto.valorUtilizado.replace(',', '.')),
         produtoId: produto.id,
+        nomeProduto: produto.nomeProduto, // Certifique-se de que o nome do produto está sendo enviado
       })),
     };
 
     try {
-      const response = await api.post('/cmv', cmvData);
-      if (response.data.status) {
-        CustomToast({ type: "success", message: response.data.message });
-        handleCloseCadastro();
-        fetchCMVData();
-        clearFields();
+      if (editar) {
+        const response = await api.put(`/cmv/${cmvId}`, cmvData);
+        if (response.data.status) {
+          CustomToast({ type: "success", message: response.data.message });
+          handleCloseEditar();
+          fetchCMVData();
+          clearFields();
+        } else {
+          CustomToast({ type: "error", message: "Erro ao editar CMV." });
+        }
       } else {
-        CustomToast({ type: "error", message: "Erro ao cadastrar CMV." });
+        const response = await api.post('/cmv', cmvData);
+        if (response.data.status) {
+          CustomToast({ type: "success", message: response.data.message });
+          handleCloseCadastro();
+          fetchCMVData();
+          clearFields();
+        } else {
+          CustomToast({ type: "error", message: "Erro ao cadastrar CMV." });
+        }
       }
     } catch (error) {
-      console.error('Erro ao cadastrar CMV:', error);
-      CustomToast({ type: "error", message: "Erro ao cadastrar CMV." });
+      console.error('Erro ao cadastrar/editar CMV:', error);
+      CustomToast({ type: "error", message: "Erro ao cadastrar/editar CMV." });
     }
   };
 
@@ -298,13 +425,15 @@ const CMV = () => {
   }, [unidadeId]);
 
   const calculateCmv = () => {
-    const totalUtilizado = totals.totalUtilizado;
-    const faturamentoValue = Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')) || 1;
+    const totalUtilizado = totals.totalUtilizado; // Certifique-se de que este valor está correto
+    const faturamentoValue = Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')) || 1; // Converte o faturamento para número
+
     if (faturamentoValue === 0) {
       setCmv(0);
       return;
     }
-    const cmvValue = (totalUtilizado / faturamentoValue) * 100;
+
+    const cmvValue = (totalUtilizado / faturamentoValue) * 100; // Cálculo do CMV
     setCmv(cmvValue);
   };
 
@@ -368,7 +497,7 @@ const CMV = () => {
                 headers={headerCmv2}
                 rows={lista}
                 actionCalls={{
-                  edit: handleEditar,
+                  edit: (row) => handleEditar(row.id), // Passa o ID do CMV para a função de edição
                   delete: (row) => handleApagar(row.id),
                   print: handlePrint,
                 }}
@@ -603,7 +732,7 @@ const CMV = () => {
                     size="large"
                     label="CMV"
                     name="CMV"
-                    value={`${cmv.toFixed(2)}%`}
+                    value={`${cmv.toFixed(2).replace('.', ',')} %`} // Formatação para exibir corretamente
                     autoComplete="off"
                     InputProps={{
                       startAdornment: (
@@ -652,8 +781,9 @@ const CMV = () => {
                   name="Faturamento"
                   value={faturamento}
                   onValueChange={(values) => {
-                    const { formattedValue, value } = values;
+                    const { value } = values;
                     setFaturamento(value);
+                    calculateCmv(); // Recalcula o CMV sempre que o faturamento mudar
                   }}
                   autoComplete="off"
                   customInput={TextField}
@@ -702,13 +832,22 @@ const CMV = () => {
             </div>
           </div>
           <TableComponent
-            headers={headerCmv}
-            rows={produtos}
-            onRowChange={handleRowChange}
-            actionCalls={{
-              tirar: handleDelete,
-            }}
-          />
+  headers={headerCmv}
+  rows={produtos.map(produto => ({
+    nome: produto.nomeProduto, // Nome do produto
+    categoria: produto.categoria,
+    preco: produto.preco,
+    estoqueInicial: produto.estoqueInicial,
+    entrada: produto.entrada,
+    estoqueFinal: produto.estoqueFinal,
+    utilizado: produto.utilizado,
+    valorUtilizado: produto.valorUtilizado,
+  }))}
+  onRowChange={handleRowChangeEditar}
+  actionCalls={{
+    tirar: handleDelete,
+  }}
+/>
           <div className='w-full flex items-center mt-3'>
             <label className='w-[22%] flex items-center justify-end mr-3  font-bold text-sm'>Total:</label>
             <div className=' md:flex flex-wrap items-center w-[70%] '>
@@ -719,9 +858,9 @@ const CMV = () => {
               </span>
 
               <span
-                className='w-[80%] md:w-[45%] lg:w-[20%] flex items-center text-sm font-bold justify-center  mr-12 p-2'
+                className='w-[80%] md:w-[45%] lg:w-[20%] flex items-center text-sm font-bold justify-center mr-12 p-2'
                 style={{ backgroundColor: '#2563eb', borderRadius: '10px', color: 'white' }}>
-                {formatCurrency(totals.totalEntradas)}
+                {formatCurrency(totals.totalEntradas)} {/* Exibe o total de entradas formatado */}
               </span>
 
               <span
@@ -738,10 +877,9 @@ const CMV = () => {
           </div>
           <div className='flex justify-center w-[100%] mt-10'>
             <ButtonComponent
-              title={'Cadastrar'}
-              subtitle={'Cadastrar'}
+              title={'Salvar'}
+              subtitle={'Salvar'}
               startIcon={<Save />}
-              onClick={handleSubmit}
             />
           </div>
         </>

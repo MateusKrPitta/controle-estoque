@@ -102,7 +102,7 @@ const Dashboard = () => {
             if (response.data.status) {
                 setTotalProdutos(response.data.data.totalProduto);
                 setItensEmEstoque(response.data.data.totalItens);
-                setValorTotal(response.data.data.valorTotalItens);
+                setValorTotal(Number(response.data.data.valorTotalItens) || 0); // Garantir que seja um número
                 setProdutosAbaixoMinimo(response.data.data.produtosQtdMin);
                 setProdutos(response.data.data.produtos || []);
                 setEntradasSaidas(response.data.data.entradasSaidas || []);

@@ -14,7 +14,7 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
     const [pageList, setPageList] = useState([]);
     const hasActions = Object.keys(actionCalls).length > 0;
     const actionTypes = Object.keys(actionCalls);
-    const [totals, setTotals] = useState({ entradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
+    const [totals, setTotals] = useState({ entrada: 0, estoqueInicial: 0, estoqueFinal: 0 });
 
     let headersList = hasActions
         ? headers.concat([{
@@ -30,11 +30,11 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
     };
     const calculateTotals = (rows) => {
         const newTotals = rows.reduce((acc, row) => {
-            acc.entradas += Number(row.entradas || 0);
+            acc.entrada += Number(row.entrada || 0);
             acc.estoqueInicial += Number(row.estoqueInicial || 0);
             acc.estoqueFinal += Number(row.estoqueFinal || 0);
             return acc;
-        }, { entradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
+        }, { entrada: 0, estoqueInicial: 0, estoqueFinal: 0 });
         setTotals(newTotals);
     };
 
@@ -238,7 +238,7 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                                         }}>
                                             {row.tipo === "3" ? "Desperdício" : row[key]}
                                         </TableCell>
-                                    ) : key === "entradas" || key === "estoqueInicial" || key === "estoqueFinal" ? (
+                                    ) : key === "entrada" || key === "estoqueInicial" || key === "estoqueFinal" ? (
                                         <TableCell key={key}>
                                             <TextField
                                                 type="number"
