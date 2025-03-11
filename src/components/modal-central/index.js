@@ -22,8 +22,8 @@ const CentralModal = ({ open, onClose, bottom, title, children, icon, width, top
                 <Box
                     sx={{
                         position: "absolute",
-                        top: { xs: '10%', sm: '20%', lg:'20%' },
-                        left: { xs: '5%', sm: '15%', lg:'28%' }, 
+                        top: { xs: '10%', sm: '20%', lg:top, },
+                        left: { xs: '5%', sm: '15%', lg:left, }, 
                         bottom: { bottom },
                         maxHeight: maxHeight,
                         overflowY: 'auto',

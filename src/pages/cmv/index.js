@@ -11,15 +11,17 @@ import api from '../../services/api.js';
 import { formatValor } from '../../utils/functions.js';
 import CustomToast from '../../components/toast/index.js';
 import { headerCmv2 } from '../../entities/headers/header-cmv2.js';
-
+import Logo from '../../assets/png/logo_preta.png'
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
 import NumbersIcon from '@mui/icons-material/Numbers';
-import { InputAdornment, TextField } from '@mui/material';
-import { Edit, Save } from '@mui/icons-material';
+import { IconButton, InputAdornment, TextField } from '@mui/material';
+import { CircleRounded, Edit, Print, ProductionQuantityLimits, Save } from '@mui/icons-material';
 import PercentIcon from '@mui/icons-material/Percent';
 import TopicIcon from '@mui/icons-material/Topic';
 import { NumericFormat } from 'react-number-format';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+
+import SelectTextFields from '../../components/select/index.js';
 
 const CMV = () => {
   const { unidadeId } = useUnidade();
@@ -31,11 +33,13 @@ const CMV = () => {
   const [cmvId, setCmvId] = useState(null);
   const [categorias, setCategorias] = useState([]);
   const [nome, setNome] = useState('');
+  const [produtoSelecionado, setProdutoSelecionado] = useState('');
   const [lista, setLista] = useState([]);
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [faturamento, setFaturamento] = useState('');
   const [produtosOriginais, setProdutosOriginais] = useState([]);
+  const [produtosDisponiveis, setProdutosDisponiveis] = useState([]);
   const [cmv, setCmv] = useState(0);
 
   const userOptionsUnidade = [
@@ -50,7 +54,7 @@ const CMV = () => {
     return rows.map((row) => {
       const estoqueInicial = Number(row.estoqueInicial || 0);
       const estoqueFinal = Number(row.estoqueFinal || 0);
-      const entrada = Number(row.entrada || 0); // Certifique-se de que esta chave está correta
+      const entrada = Number(row.entrada || 0);
       const preco = Number(row.preco || 0);
 
       const utilizado = estoqueInicial + entrada - estoqueFinal;
@@ -65,7 +69,7 @@ const CMV = () => {
         };
       }
 
-      const valorTotal = utilizado * preco; // Corrigido o cálculo do valor total
+      const valorTotal = utilizado * preco;
 
       return {
         ...row,
@@ -78,23 +82,25 @@ const CMV = () => {
   const calculateTotals = (rows) => {
     const newTotals = rows.reduce((acc, row) => {
       const preco = Number(row.preco || 0);
-      const entrada = Number(row.entrada || 0); // Certifique-se de que esta chave está correta
+      const estoqueInicial = Number(row.estoqueInicial || 0);
+      const entrada = Number(row.entrada || 0);
+      const estoqueFinal = Number(row.estoqueFinal || 0);
 
       acc.totalEntradas += entrada * preco;
-      acc.estoqueInicial += (Number(row.estoqueInicial || 0) * preco);
-      acc.estoqueFinal += (Number(row.estoqueFinal || 0) * preco);
+      acc.estoqueInicial += estoqueInicial * preco;
+      acc.estoqueFinal += estoqueFinal * preco;
+
+      const utilizado = estoqueInicial + entrada - estoqueFinal;
+      acc.totalUtilizado += utilizado * preco;
 
       return acc;
-    }, { totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0 });
-
-    newTotals.totalUtilizado = newTotals.estoqueInicial + newTotals.totalEntradas - newTotals.estoqueFinal;
+    }, { totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0, totalUtilizado: 0 });
 
     setTotals(newTotals);
-    console.log("Totais calculados:", newTotals); // Adicione este log para verificar os totais
   };
   const formatCurrency = (value) => {
-    if (value === undefined || value === null) {
-      return 'R$ 0,00'; // ou qualquer valor padrão que você queira retornar
+    if (value === undefined || value === null || isNaN(value)) {
+      return 'R$ 0,00';
     }
     return value.toLocaleString('pt-BR', {
       style: 'currency',
@@ -113,53 +119,64 @@ const CMV = () => {
     setCmvId(id);
     try {
       const response = await api.get(`/cmv/${id}`);
-      if (response.data.status) {
+      if (response.data && response.data.status) {
         const cmvData = response.data.data;
-  
+
         const cmvPrincipal = {
-          id: cmvData.$attributes.id,
-          nome: cmvData.$attributes.nome,
-          faturamento: cmvData.$attributes.faturamento / 100,
-          valorCMV: cmvData.$attributes.valorCMV,
-          unidadeId: cmvData.$attributes.unidadeId,
+          id: cmvData.id,
+          nome: cmvData.nome,
+          faturamento: cmvData.faturamento / 100,
+          valorCMV: cmvData.valorCMV,
+          unidadeId: cmvData.unidadeId,
           itens: cmvData.itens.map(item => ({
-            id: item.$attributes.id,
-            estoqueInicial: item.$attributes.estoqueInicial,
-            valorInicial: item.$attributes.valorInicial,
-            entrada: item.$attributes.entrada,
-            valorEntrada: item.$attributes.valorEntrada,
-            estoqueFinal: item.$attributes.estoqueFinal,
-            valorEstoqueFinal: item.$attributes.valorEstoqueFinal,
-            utilizado: item.$attributes.utilizado,
-            valorUtilizado: item.$attributes.valorUtilizado,
+            id: item.id,
+            estoqueInicial: item.estoqueInicial,
+            valorInicial: item.valorInicial,
+            entrada: item.entrada,
+            valorEntrada: item.valorEntrada,
+            estoqueFinal: item.estoqueFinal,
+            valorEstoqueFinal: item.valorEstoqueFinal,
+            utilizado: item.utilizado,
+            valorUtilizado: item.valorUtilizado,
             nomeProduto: item.produto.nome,
             preco: item.produto.valor,
             categoria: item.categoria,
+            produtoId: item.produto.id,
           })),
         };
-  
+
         setNome(cmvPrincipal.nome);
         setFaturamento(cmvPrincipal.faturamento.toFixed(2).replace('.', ','));
         setCmv(cmvPrincipal.valorCMV);
-        setProdutos(cmvPrincipal.itens); // Atualiza o estado com os produtos do CMV
+        setProdutos(cmvPrincipal.itens);
         calculateTotals(cmvPrincipal.itens);
+
+
+        const produtosNaTabela = cmvPrincipal.itens.map(item => item.produtoId);
+
+
+        const produtosFiltrados = produtosOriginais.filter(produto => !produtosNaTabela.includes(produto.id));
+
+
+        setProdutosDisponiveis(produtosFiltrados);
+
         setEditar(true);
       } else {
-        CustomToast({ type: "error", message: response.data.message });
+        CustomToast({ type: "error", message: response.data.message || "Erro ao buscar CMV." });
       }
     } catch (error) {
-      console.error('Erro ao buscar CMV:', error);
       CustomToast({ type: "error", message: "Erro ao buscar CMV." });
     } finally {
       setLoading(false);
     }
   };
+
   const handleCloseEditar = () => setEditar(false);
   const handleCloseCadastro = () => setCadastro(false);
 
   const handleRowChange = (updatedRows) => {
     const updatedWithUtilizado = updatedRows.map((row, index) => {
-      const originalRow = produtos[index]; // Mantém os dados originais do produto
+      const originalRow = produtos[index];
       const estoqueInicial = Number(row.estoqueInicial || 0);
       const estoqueFinal = Number(row.estoqueFinal || 0);
       const entrada = Number(row.entrada || 0);
@@ -171,16 +188,16 @@ const CMV = () => {
         CustomToast({ type: "error", message: "O valor da coluna utilizado não pode ser negativo!" });
 
         return {
-          ...originalRow, // Mantém os dados originais
+          ...originalRow,
           utilizado: 0,
           valorUtilizado: formatCurrency(0),
         };
       }
 
-      const valorTotal = ((estoqueInicial + entrada + estoqueFinal) * preco).toFixed(2);
+      const valorTotal = utilizado * preco;
 
       return {
-        ...originalRow, // Mantém os dados originais
+        ...originalRow,
         estoqueInicial,
         estoqueFinal,
         entrada,
@@ -193,87 +210,165 @@ const CMV = () => {
     calculateTotals(updatedWithUtilizado);
   };
 
-const handleRowChangeEditar = (updatedRows) => {
-  const updatedWithUtilizado = updatedRows.map((row, index) => {
-    const originalRow = produtos[index]; // Mantém os dados originais do produto
-    const estoqueInicial = Number(row.estoqueInicial || 0);
-    const estoqueFinal = Number(row.estoqueFinal || 0);
-    const entrada = Number(row.entrada || 0);
-    const preco = Number(row.preco || 0);
+  const handleRowChangeEditar = (updatedRows) => {
+    const updatedWithUtilizado = updatedRows.map((row, index) => {
+      const originalRow = produtos[index];
+      const estoqueInicial = Number(row.estoqueInicial || 0);
+      const estoqueFinal = Number(row.estoqueFinal || 0);
+      const entrada = Number(row.entrada || 0);
+      const preco = Number(row.preco || 0);
 
-    const utilizado = estoqueInicial + entrada - estoqueFinal;
+      const utilizado = estoqueInicial + entrada - estoqueFinal;
 
-    if (utilizado < 0) {
-      CustomToast({ type: "error", message: "O valor da coluna utilizado não pode ser negativo!" });
+      if (utilizado < 0) {
+        CustomToast({ type: "error", message: "O valor da coluna utilizado não pode ser negativo!" });
+
+        return {
+          ...originalRow,
+          utilizado: 0,
+          valorUtilizado: formatCurrency(0),
+        };
+      }
+
+      const valorTotal = utilizado * preco;
 
       return {
-        ...originalRow, // Mantém os dados originais
-        utilizado: 0,
-        valorUtilizado: formatCurrency(0),
+        ...originalRow,
+        estoqueInicial,
+        estoqueFinal,
+        entrada,
+        utilizado,
+        valorUtilizado: formatCurrency(valorTotal),
       };
-    }
+    });
 
-    const valorTotal = ((estoqueInicial + entrada + estoqueFinal) * preco).toFixed(2);
+    setProdutos(updatedWithUtilizado);
+    calculateTotals(updatedWithUtilizado);
+  };
 
-    return {
-      ...originalRow, // Mantém os dados originais
-      estoqueInicial,
-      estoqueFinal,
-      entrada,
-      utilizado,
-      valorUtilizado: formatCurrency(valorTotal),
-    };
-  });
-
-  setProdutos(updatedWithUtilizado);
-  calculateTotals(updatedWithUtilizado);
-};
-  
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
+    // Verifique se os dados estão disponíveis e no formato correto
+    if (!produtos || !Array.isArray(produtos)) {
+      CustomToast({ type: "error", message: "Dados inválidos para impressão." });
+      return;
+    }
+  
+    // Calcule os totais
+    const totals = produtos.reduce((acc, item) => {
+      const preco = Number(item.preco || 0);
+      const estoqueInicial = Number(item.estoqueInicial || 0);
+      const entrada = Number(item.entrada || 0);
+      const estoqueFinal = Number(item.estoqueFinal || 0);
+  
+      acc.estoqueInicial += estoqueInicial * preco;
+      acc.totalEntradas += entrada * preco;
+      acc.estoqueFinal += estoqueFinal * preco;
+  
+      // Cálculo do total utilizado
+      const utilizado = estoqueInicial + entrada - estoqueFinal;
+      acc.totalUtilizado += utilizado < 0 ? 0 : utilizado * preco; // Evita valores negativos
+  
+      return acc;
+    }, { estoqueInicial: 0, totalEntradas: 0, estoqueFinal: 0, totalUtilizado: 0 });
+  
+    // Formate o faturamento corretamente
+    const faturamentoFormatado = formatCurrency(Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')));
+  
+    // Cria o conteúdo HTML para impressão
     const tableHTML = `
       <html>
         <head>
           <title>Imprimir CMV</title>
           <style>
-            table {
-              width: 100%;
-              border-collapse: collapse;
+            body { 
+              font-family: Arial, sans-serif; 
+              background-color: white;
+              color: black;
+              text-align: start;
             }
-            th, td {
-              border: 1px solid black;
-              padding: 8px;
-              text-align: left;
+            .logo {
+              width: 100%; 
+              display: flex;
+              justify-content: center;
             }
-            th {
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-top: 20px;
+            }
+            th, td { 
+              border: 1px solid #000;
+              padding: 8px; 
+              text-align: left; 
+            }
+            th { 
               background-color: #f2f2f2;
             }
           </style>
         </head>
         <body>
-          <h1>Relatório de CMV</h1>
+          <div class="logo">
+            <img src="${Logo}" alt="Logo" onload="window.print()" /> <!-- Adiciona onload para imprimir após carregar a imagem -->
+          </div>
+          <h3>CMV: ${nome || "N/A"}</h3>
+          <h3>Porcentagem: ${cmv.toFixed(2)}%</h3>
+          <h3>Faturamento: ${faturamentoFormatado}</h3>
+          <h3>Total:</h3>
+          <ul>
+            <li><label>Estoque Inicial: ${formatCurrency(totals.estoqueInicial)}</label></li>
+            <li><label>Total Entradas: ${formatCurrency(totals.totalEntradas)}</label></li>
+            <li><label>Estoque Final: ${formatCurrency(totals.estoqueFinal)}</label></li>
+            <li><label>Total Utilizado: ${formatCurrency(totals.totalUtilizado)}</label></li>
+          </ul>
           <table>
             <thead>
               <tr>
                 ${headerCmv.map(header => `<th>${header.label}</th>`).join('')}
+                <th>Preço</th>
               </tr>
             </thead>
             <tbody>
-              ${produtos.map(produto => `
-                <tr>
-                  ${headerCmv.map(header => `<td>${produto[header.key] !== undefined ? produto[header.key] : 0}</td>`).join('')}
-                </tr>
-              `).join('')}
+              ${produtos.map(item => {
+                const estoqueInicial = Number(item.estoqueInicial || 0);
+                const entrada = Number(item.entrada || 0);
+                const estoqueFinal = Number(item.estoqueFinal || 0);
+                const utilizado = estoqueInicial + entrada - estoqueFinal;
+                const valorUtilizado = utilizado * (item.preco || 0);
+  
+                return `
+                  <tr>
+                    <td>${item.nomeProduto || "N/A"}</td>
+                    <td>${item.categoria || "N/A"}</td>
+                    <td>${formatCurrency(item.preco)}</td>
+                    <td>${estoqueInicial}</td>
+                    <td>${estoqueInicial}</td>
+                    <td>${entrada}</td>
+                    <td>${estoqueFinal}</td>
+                    <td>${utilizado}</td>
+                    <td>${formatCurrency(valorUtilizado)}</td>
+                  </tr>
+                `;
+              }).join('')}
             </tbody>
           </table>
         </body>
       </html>
     `;
-    printWindow.document.write(tableHTML);
-    printWindow.document.close();
-    printWindow.print();
+  
+    // Abre a janela de impressão
+    const printWindow = window.open('', '_blank');
+  
+    // Adiciona um timeout para garantir que a imagem seja carregada
+    setTimeout(() => {
+      printWindow.document.write(tableHTML);
+      printWindow.document.close();
+  
+      // Aguarda o carregamento da imagem antes de imprimir
+      printWindow.document.querySelector('img').onload = () => {
+        printWindow.print();
+      };
+    }, 500); // Ajuste o tempo conforme necessário
   };
-
 
   const carregaProdutos = async (unidadeId) => {
     setLoading(true);
@@ -313,59 +408,48 @@ const handleRowChangeEditar = (updatedRows) => {
       setLoading(false);
     }
   };
-
   const handleSubmit = async () => {
-    if (!nome || !faturamento || produtos.length === 0) {
-      CustomToast({ type: "error", message: "Por favor, preencha todos os campos obrigatórios!" });
-      return;
-    }
-
-    const cmvData = {
-      cmv: {
-        unidadeId,
-        nome,
-        faturamento: Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')),
-        valorCMV: cmv,
-      },
-      produtos: produtos.map(produto => ({
-        estoqueInicial: Number(produto.estoqueInicial),
-        valorInicial: Number(produto.valorUtilizado),
-        entrada: Number(produto.entrada),
-        valorEntrada: Number(produto.valorUtilizado),
-        estoqueFinal: Number(produto.estoqueFinal),
-        valorEstoqueFinal: Number(produto.valorUtilizado),
-        utilizado: Number(produto.utilizado),
-        valorUtilizado: Number(produto.valorUtilizado.replace(',', '.')),
-        produtoId: produto.id,
-        nomeProduto: produto.nomeProduto, // Certifique-se de que o nome do produto está sendo enviado
-      })),
-    };
-
+    setLoading(true);
     try {
-      if (editar) {
-        const response = await api.put(`/cmv/${cmvId}`, cmvData);
-        if (response.data.status) {
-          CustomToast({ type: "success", message: response.data.message });
-          handleCloseEditar();
-          fetchCMVData();
-          clearFields();
-        } else {
-          CustomToast({ type: "error", message: "Erro ao editar CMV." });
-        }
+
+      const cmvData = {
+        unidadeId: unidadeId,
+        nome: nome,
+        faturamento: Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')), // Converte o faturamento para número
+        valorCMV: cmv,
+      };
+
+
+      const produtosData = produtos.map(produto => ({
+        estoqueInicial: produto.estoqueInicial,
+        valorInicial: produto.preco * produto.estoqueInicial,
+        entrada: produto.entrada,
+        valorEntrada: produto.preco * produto.entrada,
+        estoqueFinal: produto.estoqueFinal,
+        valorEstoqueFinal: produto.preco * produto.estoqueFinal,
+        utilizado: produto.utilizado,
+        valorUtilizado: produto.preco * produto.utilizado,
+        produtoId: produto.id,
+      }));
+
+
+      const response = await api.post('/cmv', {
+        cmv: cmvData,
+        produtos: produtosData,
+      });
+
+      if (response.data.status) {
+        CustomToast({ type: "success", message: "CMV cadastrado com sucesso!" });
+        clearFields();
+        fetchCMVData();
+        handleCloseCadastro();
       } else {
-        const response = await api.post('/cmv', cmvData);
-        if (response.data.status) {
-          CustomToast({ type: "success", message: response.data.message });
-          handleCloseCadastro();
-          fetchCMVData();
-          clearFields();
-        } else {
-          CustomToast({ type: "error", message: "Erro ao cadastrar CMV." });
-        }
+        CustomToast({ type: "error", message: response.data.message });
       }
     } catch (error) {
-      console.error('Erro ao cadastrar/editar CMV:', error);
-      CustomToast({ type: "error", message: "Erro ao cadastrar/editar CMV." });
+      CustomToast({ type: "error", message: "Erro ao cadastrar CMV." });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -382,7 +466,6 @@ const handleRowChangeEditar = (updatedRows) => {
     calculateTotals(updatedRows);
     CustomToast({ type: "success", message: "Produto excluído com sucesso!" });
   };
-
   const handleApagar = async (id) => {
     setLoading(true);
     try {
@@ -394,7 +477,6 @@ const handleRowChangeEditar = (updatedRows) => {
         CustomToast({ type: "error", message: response.data.message });
       }
     } catch (error) {
-      console.error('Erro ao deletar CMV:', error);
       CustomToast({ type: "error", message: "Erro ao deletar CMV." });
     } finally {
       setLoading(false);
@@ -411,12 +493,15 @@ const handleRowChangeEditar = (updatedRows) => {
         CustomToast({ type: "error", message: response.data.message });
       }
     } catch (error) {
-      console.error('Erro ao buscar CMV:', error);
       CustomToast({ type: "error", message: "Erro ao buscar CMV." });
     } finally {
       setLoading(false);
     }
   };
+  const formattedLista = lista.map(item => ({
+    ...item,
+    faturamento: formatCurrency(item.faturamento / 100), // Formata o faturamento
+  }));
 
   useEffect(() => {
     if (unidadeId && typeof unidadeId === 'number') {
@@ -425,7 +510,7 @@ const handleRowChangeEditar = (updatedRows) => {
   }, [unidadeId]);
 
   const calculateCmv = () => {
-    const totalUtilizado = totals.totalUtilizado; // Certifique-se de que este valor está correto
+    const totalUtilizado = totals.totalUtilizado;
     const faturamentoValue = Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')) || 1; // Converte o faturamento para número
 
     if (faturamentoValue === 0) {
@@ -433,19 +518,31 @@ const handleRowChangeEditar = (updatedRows) => {
       return;
     }
 
-    const cmvValue = (totalUtilizado / faturamentoValue) * 100; // Cálculo do CMV
+    const cmvValue = (totalUtilizado / faturamentoValue) * 100;
     setCmv(cmvValue);
   };
 
-  useEffect(() => {
-    const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
-    const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
-      .map(nome => categoriasSalvas.find(cat => cat.nome === nome));
-
-    setCategorias(categoriasUnicas);
-    setUniqueCategoriesCount(categoriasUnicas.length);
-  }, []);
-
+  const handleAdicionarProduto = () => {
+    if (produtoSelecionado) {
+      const produto = produtosDisponiveis.find(p => p.id === produtoSelecionado);
+      if (produto) {
+        setProdutos(prev => [
+          ...prev,
+          {
+            ...produto,
+            nomeProduto: produto.nome,
+            estoqueInicial: 0,
+            entrada: 0,
+            estoqueFinal: 0,
+            utilizado: 0,
+            valorUtilizado: formatCurrency(0),
+          },
+        ]);
+        setProdutosDisponiveis(prev => prev.filter(p => p.id !== produtoSelecionado));
+        setProdutoSelecionado(null);
+      }
+    }
+  };
   useEffect(() => {
     calculateCmv();
   }, [faturamento, totals]);
@@ -458,7 +555,7 @@ const handleRowChangeEditar = (updatedRows) => {
 
   useEffect(() => {
     if (unidadeId) {
-      carregaProdutos();
+      carregaProdutos(unidadeId);
       fetchCMVData(unidadeId);
     }
   }, [unidadeId]);
@@ -470,6 +567,7 @@ const handleRowChangeEditar = (updatedRows) => {
 
     return () => clearTimeout(timer);
   }, []);
+
 
   return (
     <div className="flex w-full ">
@@ -495,11 +593,10 @@ const handleRowChangeEditar = (updatedRows) => {
             <div className='mt-2 w-[95%]'>
               <TableComponent
                 headers={headerCmv2}
-                rows={lista}
+                rows={formattedLista} // Use a lista formatada
                 actionCalls={{
-                  edit: (row) => handleEditar(row.id), // Passa o ID do CMV para a função de edição
+                  edit: (row) => handleEditar(row.id),
                   delete: (row) => handleApagar(row.id),
-                  print: handlePrint,
                 }}
               />
             </div>
@@ -540,7 +637,8 @@ const handleRowChangeEditar = (updatedRows) => {
                 }}
                 autoComplete="off"
               />
-              <div className=' w-[70%] md:w-[28%] lg:ml-[250px] flex justify-end'>
+
+              <div className=' w-[70%] md:w-[28%] lg:ml-[150px] flex justify-end'>
                 <div className='w-[100%] sm:ml-0 md:w-[100%] lg:w-[60%] lg:first-letter: p-5 ' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
                   <TextField
                     fullWidth
@@ -646,6 +744,7 @@ const handleRowChangeEditar = (updatedRows) => {
               </div>
             </div>
           </div>
+
           <TableComponent
             headers={headerCmv}
             rows={produtos}
@@ -707,24 +806,76 @@ const handleRowChangeEditar = (updatedRows) => {
           <div className='flex items-center gap-3'>
 
             <div className=' w-[100%] md:w-[100%] lg:w-[100%] mt-5 md:mt-0 flex justify-center md:justify-start items-end gap-3 flex-wrap '>
-              <TextField
-                fullWidth
-                variant="outlined"
-                size="small"
-                label="Nome do CMV"
-                sx={{ width: { xs: '100%', sm: '40%', md: '10%', lg: '30%' }, }}
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <TopicIcon />
-                    </InputAdornment>
-                  ),
-                }}
-                autoComplete="off"
-              />
-              <div className=' w-[70%] md:w-[28%] lg:ml-[250px] flex justify-end'>
+              <div className='w-[40%]'>
+                <div className='flex w-full gap-2'>
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                    label="Nome do CMV"
+                    sx={{ width: { xs: '100%', sm: '40%', md: '10%', lg: '40%' }, }}
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <TopicIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                    autoComplete="off"
+                  />
+                  <SelectTextFields
+                    width={'150px'}
+                    icon={<ProductionQuantityLimits fontSize="small" />}
+                    label={'Selecionar Produto'}
+                    backgroundColor={"#D9D9D9"}
+                    name={"produto"}
+                    options={produtosDisponiveis.map(produto => ({
+                      value: produto.id,
+                      label: produto.nome,
+                    }))}
+                    value={produtoSelecionado}
+                    onChange={(e) => setProdutoSelecionado(e.target.value)}
+                  />
+                  <IconButton title="Adicionar Produto"
+                    onClick={handleAdicionarProduto}
+                    className='view-button w-10 h-10 '
+                    sx={{
+                      color: 'black',
+                      border: '1px solid black',
+                      '&:hover': {
+                        color: '#fff',
+                        backgroundColor: '#BCDA72',
+                        border: '1px solid black'
+                      }
+                    }} >
+                    <AddCircleOutlineIcon fontSize={"small"} />
+                  </IconButton>
+                  <IconButton title="Imprimir"
+                    onClick={handlePrint}
+                    className='view-button w-10 h-10 '
+                    sx={{
+                      color: 'black',
+                      border: '1px solid black',
+                      '&:hover': {
+                        color: '#fff',
+                        backgroundColor: '#BCDA72',
+                        border: '1px solid black'
+                      }
+                    }} >
+                    <Print fontSize={"small"} />
+                  </IconButton>
+
+                </div>
+
+                <div className='w-[100%] flex gap-2 items-center'>
+
+
+                </div>
+              </div>
+
+              <div className=' w-[70%] md:w-[28%] lg:ml-[100px] flex justify-end'>
                 <div className='w-[100%] sm:ml-0 md:w-[100%] lg:w-[60%] lg:first-letter: p-5 ' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
                   <TextField
                     fullWidth
@@ -732,7 +883,7 @@ const handleRowChangeEditar = (updatedRows) => {
                     size="large"
                     label="CMV"
                     name="CMV"
-                    value={`${cmv.toFixed(2).replace('.', ',')} %`} // Formatação para exibir corretamente
+                    value={`${cmv.toFixed(2).replace('.', ',')} %`}
                     autoComplete="off"
                     InputProps={{
                       startAdornment: (
@@ -771,6 +922,7 @@ const handleRowChangeEditar = (updatedRows) => {
                     }}
                   />
                 </div>
+
               </div>
               <div className='w-[70%] md:w-[28%] lg:w-[18%] p-5' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
                 <NumericFormat
@@ -783,7 +935,7 @@ const handleRowChangeEditar = (updatedRows) => {
                   onValueChange={(values) => {
                     const { value } = values;
                     setFaturamento(value);
-                    calculateCmv(); // Recalcula o CMV sempre que o faturamento mudar
+                    calculateCmv();
                   }}
                   autoComplete="off"
                   customInput={TextField}
@@ -831,23 +983,25 @@ const handleRowChangeEditar = (updatedRows) => {
               </div>
             </div>
           </div>
+
           <TableComponent
-  headers={headerCmv}
-  rows={produtos.map(produto => ({
-    nome: produto.nomeProduto, // Nome do produto
-    categoria: produto.categoria,
-    preco: produto.preco,
-    estoqueInicial: produto.estoqueInicial,
-    entrada: produto.entrada,
-    estoqueFinal: produto.estoqueFinal,
-    utilizado: produto.utilizado,
-    valorUtilizado: produto.valorUtilizado,
-  }))}
-  onRowChange={handleRowChangeEditar}
-  actionCalls={{
-    tirar: handleDelete,
-  }}
-/>
+            headers={headerCmv}
+            rows={produtos.map(produto => ({
+              id: produto.id,
+              nome: produto.nomeProduto || produto.nome,
+              categoria: produto.categoria,
+              preco: produto.preco,
+              estoqueInicial: produto.estoqueInicial,
+              entrada: produto.entrada,
+              estoqueFinal: produto.estoqueFinal,
+              utilizado: produto.utilizado,
+              valorUtilizado: produto.valorUtilizado,
+            }))}
+            onRowChange={handleRowChange}
+            actionCalls={{
+              tirar: handleDelete,
+            }}
+          />
           <div className='w-full flex items-center mt-3'>
             <label className='w-[22%] flex items-center justify-end mr-3  font-bold text-sm'>Total:</label>
             <div className=' md:flex flex-wrap items-center w-[70%] '>

@@ -51,7 +51,7 @@ const TabelaProdutos = ({ pratos, onEditClick }) => {
                                 <TableCell style={{ backgroundColor: '#B0D847', borderRadius: '5px', textAlign: 'center', fontWeight: 700 }}>{formatValor(prato.cmvReal)}</TableCell>
                                 <TableCell style={{ borderRadius: '5px', textAlign: 'center', fontWeight: 700 }}>{formatValor(prato.lucroReal)}</TableCell>
                                 <TableCell style={{ textAlign: 'center' }}>
-                                    <IconButton onClick={() => onEditClick(index)}>
+                                    <IconButton onClick={() => onEditClick(prato)}>
                                         <EditIcon />
                                     </IconButton>
                                 </TableCell>
@@ -68,22 +68,22 @@ const TabelaProdutos = ({ pratos, onEditClick }) => {
                                                     <TableRow>
                                                         <TableCell>Nome do Produto</TableCell>
                                                         <TableCell align="right">Quantidade</TableCell>
-                                                        <TableCell align="right">Unidade</TableCell>
-                                                        <TableCell align="right">Preço por Porção</TableCell>
+                                                        <TableCell align="right">Unidade</TableCell> {/* Exibir unidade */}
+                                                        <TableCell align="right">Preço por Porção</TableCell> {/* Exibir preço por porção */}
                                                         <TableCell align="right">Valor Utilizado</TableCell>
                                                     </TableRow>
                                                 </TableHead>
                                                 <TableBody>
-                                                    {prato.produtos.map((produto, prodIndex) => (
-                                                        <TableRow key={prodIndex}>
-                                                            <TableCell>{produto.produtoNome}</TableCell>
-                                                            <TableCell align="right">{produto.qtdUtilizado}</TableCell>
-                                                            <TableCell align="right">{produto.unidade}</TableCell>
-                                                            <TableCell align="right">{produto.precoPorcao}</TableCell>
-                                                            <TableCell align="right">{formatValor(produto.valorUtilizado)}</TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                </TableBody>
+    {prato.produtos.map((produto, prodIndex) => (
+        <TableRow key={prodIndex}>
+            <TableCell>{produto.produtoNome}</TableCell>
+            <TableCell align="right">{produto.qtdUtilizado}</TableCell>
+            <TableCell align="right">{produto.unidade}</TableCell> {/* Exibir unidade */}
+            <TableCell align="right">{produto.precoPorcao}</TableCell> {/* Exibir preço por porção */}
+            <TableCell align="right">{formatValor(produto.valorUtilizado)}</TableCell>
+        </TableRow>
+    ))}
+</TableBody>
                                             </Table>
                                         </Box>
                                     </Collapse>
@@ -99,7 +99,7 @@ const TabelaProdutos = ({ pratos, onEditClick }) => {
 
 TabelaProdutos.propTypes = {
     pratos: PropTypes.array.isRequired,
-    onEditClick: PropTypes.func.isRequired, // Alterado para onEditClick
+    onEditClick: PropTypes.func.isRequired,
 };
 
 export default TabelaProdutos;

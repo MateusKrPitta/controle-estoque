@@ -116,9 +116,22 @@ const FichaTecnica = () => {
         try {
             const response = await api.get(`/ficha?unidade=${unidadeId}`);
             const data = response.data.data;
-            console.log("Fetched produtos da ficha:", data); // Log the fetched data
+            console.log("Fetched produtos da ficha:", data);
+    
             if (Array.isArray(data)) {
-                setProdutosDaFicha(data);
+                const pratosComProdutos = data.map(prato => ({
+                    ...prato,
+                    produtos: prato.produtos.map(produto => {
+                        const produtoSelecionado = produtos.find(p => p.id === produto.produtoId);
+                        return {
+                            ...produto,
+                            produtoNome: produtoSelecionado ? produtoSelecionado.nome : "Produto não encontrado",
+                            unidade: produtoSelecionado ? unidadeMedidaMap[produtoSelecionado.unidadeMedida] : "N/A",
+                            precoPorcao: produtoSelecionado ? formatValor(produtoSelecionado.valorPorcao) : "N/A"
+                        };
+                    })
+                }));
+                setProdutosDaFicha(pratosComProdutos);
             } else {
                 setProdutosDaFicha([]);
             }
@@ -223,7 +236,6 @@ const FichaTecnica = () => {
                 lucroReal: lucroReal,
             },
             produtos: produtosAdicionados.map(produto => {
-
                 const produtoSelecionado = produtos.find(p => p.nome === produto.nome);
                 if (!produtoSelecionado) {
                     CustomToast({ type: "error", message: "Produto selecionado não é válido!" });
@@ -233,6 +245,8 @@ const FichaTecnica = () => {
                     qtdUtilizado: parseFloat(produto.quantidade),
                     valorUtilizado: parseFloat(produto.valorUtilizado.replace('R$', '').replace('.', '').replace(',', '.')),
                     produtoId: produtoSelecionado.id,
+                    unidade: produto.unidade, // Certifique-se de que isso está sendo passado
+                    precoPorcao: produto.precoPorcao // Certifique-se de que isso está sendo passado
                 };
             }).filter(Boolean),
         };
@@ -256,33 +270,38 @@ const FichaTecnica = () => {
     };
 
     const handleFecharEditar = () => setEditar(false);
+
     const handleEditar = (prato) => {
         console.log("Received prato in handleEditar:", prato); // Log the prato object
-    
-        // Check if prato is valid
+
         if (!prato || prato.id === 0) {
             CustomToast({ type: "error", message: "Prato não encontrado!" });
             return; // Exit the function early
         }
-    
-        // Proceed with setting state if prato is valid
+
+        // Set the state with prato data
         setNomePrato(prato.nome);
         setCustoTotal(prato.custoTotal);
         setRendimento(prato.qtdRendimento);
         setValorVenda(formatValor(prato.valorVenda));
-    
+
         // Check if produtos is defined and is an array
         if (Array.isArray(prato.produtos)) {
-            setProdutosAdicionados(prato.produtos.map(prod => ({
-                nome: prod.produtoNome,
-                quantidade: prod.qtdUtilizado,
-                valorUtilizado: formatValor(prod.valorUtilizado),
-                unidade: unidadeMedidaMap[prod.unidadeId] // Assuming you have a way to get the unit ID
-            })));
+            const produtosAdicionados = prato.produtos.map(prod => {
+                const produtoSelecionado = produtos.find(p => p.id === prod.produtoId); // Ensure you find by ID
+                return {
+                    nome: produtoSelecionado.nome,
+                    quantidade: prod.qtdUtilizado,
+                    valorUtilizado: formatValor(prod.valorUtilizado),
+                    unidade: unidadeMedidaMap[produtoSelecionado.unidadeMedida], // Set the unit of measure
+                    precoPorcao: formatValor(produtoSelecionado.valorPorcao) // Set the portion value
+                };
+            });
+            setProdutosAdicionados(produtosAdicionados);
         } else {
             setProdutosAdicionados([]); // Reset if produtos is not valid
         }
-    
+
         setEditar(true);
     };
     const handleCriarPrato = () => setCriarPrato(true);
@@ -302,12 +321,12 @@ const FichaTecnica = () => {
         try {
             const response = await api.get(`/produto?unidadeId=${unidadeId}`);
             const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
+            console.log("Fetched products:", produtosFiltrados); // Log the fetched products
             setProdutos(produtosFiltrados);
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
         }
     };
-
 
     useEffect(() => {
         if (unidadeId) {
@@ -641,10 +660,10 @@ const FichaTecnica = () => {
                             <label className="text-sm">Nenhum prato encontrado!</label>
                         </div>
                     ) : (
-<TabelaProdutos
-    pratos={filteredPratos}
-    onEditClick={(prato) => handleEditar(prato)} // Pass the entire prato object
-/>
+                        <TabelaProdutos
+                            pratos={filteredPratos}
+                            onEditClick={(prato) => handleEditar(prato)} // Pass the entire prato object
+                        />
                     )}
                 </div>
             </div>
@@ -810,18 +829,23 @@ const FichaTecnica = () => {
                                 <label className='md:w-[20%] lg:w-[13%]'>Valor Utilizado</label>
                             </div>
                             <div className='flex gap-4 w-full flex-wrap'>
-                                <div className='w-[100%]  lg:w-[66%]'>
+                                <div className='w-[100%] lg:w-[66%]'>
                                     {produtosAdicionados.map((produto, index) => (
                                         <div key={index} className="flex justify-center flex-wrap md:justify-between items-center border-black py-2 w-full">
                                             <div style={{ border: '1px solid black', borderRadius: '10px' }} className='w-[100%] flex items-center p-1'>
                                                 <label className='text-xs w-[100%] items-center justify-center md:justify-start flex gap-2 flex-wrap'>
-
-                                                    <p className='w-[100%] text-center md:text-start md:w-[30%] lg:w-[30%] gap-2 flex justify-center md:justify-start items-center text-xs'><FlatwareIcon />{produto.nome}</p>
-                                                    <p className='w-[100%] text-center md:text-start  md:w-[20%] lg:w-[18%]' style={{ display: 'flex', textAlign: 'center', justifyContent: 'center', backgroundColor: '#BCDA72', color: 'black', padding: '5px', borderRadius: '5px', fontWeight: '700' }}> {produto.quantidade} - {produto.unidade}</p>
-
-                                                    <p className='w-[100%] text-center md:text-start md:w-[20%] lg:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#d9d9d9', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.precoPorcao}</p>
-
-                                                    <p className='w-[100%] text-center md:text-start md:w-[20%] lg:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#b0d847', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>{produto.valorUtilizado}</p>
+                                                    <p className='w-[100%] text-center md:text-start md:w-[30%] lg:w-[30%] gap-2 flex justify-center md:justify-start items-center text-xs'>
+                                                        <FlatwareIcon />{produto.nome}
+                                                    </p>
+                                                    <p className='w-[100%] text-center md:text-start md:w-[20%] lg:w-[18%]' style={{ display: 'flex', textAlign: 'center', justifyContent: 'center', backgroundColor: '#BCDA72', color: 'black', padding: '5px', borderRadius: '5px', fontWeight: '700' }}>
+                                                        {produto.quantidade} - {produto.unidade}
+                                                    </p>
+                                                    <p className='w-[100%] text-center md:text-start md:w-[20%] lg:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#d9d9d9', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>
+                                                        {produto.precoPorcao}
+                                                    </p>
+                                                    <p className='w-[100%] text-center md:text-start md:w-[20%] lg:w-[20%]' style={{ display: 'flex', justifyContent: "center", backgroundColor: '#b0d847', color: 'black', fontWeight: '700', padding: '5px', borderRadius: '5px' }}>
+                                                        {produto.valorUtilizado}
+                                                    </p>
                                                 </label>
                                                 <ButtonClose
                                                     funcao={() => handleRemoveProduto(index)}
@@ -869,7 +893,6 @@ const FichaTecnica = () => {
                                             onValueChange={(values) => {
                                                 const { formattedValue, value } = values;
                                                 setValorVenda(formattedValue); // Armazena o valor formatado
-                                                // Você pode armazenar o valor numérico se precisar
                                             }}
                                             thousandSeparator={true}
                                             decimalScale={2}
