@@ -50,34 +50,9 @@ const CMV = () => {
     { value: 5, label: 'Unidade' },
   ];
 
-  const calculateUtilizado = (rows) => {
-    return rows.map((row) => {
-      const estoqueInicial = Number(row.estoqueInicial || 0);
-      const estoqueFinal = Number(row.estoqueFinal || 0);
-      const entrada = Number(row.entrada || 0);
-      const preco = Number(row.preco || 0);
+  const produtosNaTabela = produtos.map(produto => produto.produtoId); // Supondo que você tenha um campo produtoId em cada produto
+  const produtosFiltrados = produtosDisponiveis.filter(produto => !produtosNaTabela.includes(produto.id));
 
-      const utilizado = estoqueInicial + entrada - estoqueFinal;
-
-      if (utilizado < 0) {
-        CustomToast({ type: "error", message: "O valor da coluna utilizado não pode ser negativo!" });
-
-        return {
-          ...row,
-          utilizado: 0,
-          valorUtilizado: formatCurrency(0),
-        };
-      }
-
-      const valorTotal = utilizado * preco;
-
-      return {
-        ...row,
-        utilizado,
-        valorUtilizado: formatCurrency(valorTotal),
-      };
-    });
-  };
 
   const calculateTotals = (rows) => {
     const newTotals = rows.reduce((acc, row) => {
@@ -116,29 +91,39 @@ const CMV = () => {
 
   const handleEditar = (row) => {
     if (row) {
-      setCmvId(row.id); // Defina o cmvId aqui
-      setNome(row.nome || ''); // Set the name
-      setFaturamento(row.faturamento ? row.faturamento.toString() : ''); // Set the faturamento
-      setCmv(row.valorCMV || 0); // Set the CMV value
+      setCmvId(row.id); // Define o cmvId
+      setNome(row.nome || ''); // Define o nome
 
-      // Map the items to include product name and price
+      // Remove o símbolo de moeda e a formatação antes de definir o faturamento
+      const faturamentoNumerico = parseFloat(row.faturamento.replace('R$', '').replace('.', '').replace(',', '.').trim());
+      setFaturamento(isNaN(faturamentoNumerico) ? '' : faturamentoNumerico.toString()); // Define o faturamento como string
+
+      setCmv(row.valorCMV || 0); // Define o valor do CMV
+
+      // Mapeia os produtos para incluir nome e preço
       const mappedProdutos = row.itens.map(item => ({
         ...item,
-        nome: item.produto.nome, // Product name
-        preco: item.produto.valor, // Product price
+        nome: item.produto.nome, // Nome do produto
+        preco: item.produto.valor, // Preço do produto
       }));
 
-      setProdutos(mappedProdutos); // Set the products
-      calculateTotals(mappedProdutos); // Calculate totals based on the new products
+      setProdutos(mappedProdutos); // Define os produtos
+      calculateTotals(mappedProdutos); // Calcula os totais com base nos novos produtos
 
-      setEditar(true); // Open the edit modal
+      setEditar(true); // Abre o modal de edição
     } else {
       console.error("Row data is undefined");
     }
   };
-  const handleCloseEditar = () => setEditar(false);
-  const handleCloseCadastro = () => setCadastro(false);
 
+  const handleCloseEditar = () => {
+    clearFields(); // Limpa os campos ao fechar a modal de edição
+    setEditar(false);
+  };
+  const handleCloseCadastro = () => {
+    clearFields(); // Limpa os campos ao fechar a modal de cadastro
+    setCadastro(false);
+  };
   const handleRowChange = (updatedRows) => {
     const updatedWithUtilizado = updatedRows.map((row, index) => {
       const originalRow = produtos[index];
@@ -275,7 +260,7 @@ const CMV = () => {
           <div class="logo">
             <img src="${Logo}" alt="Logo" onload="window.print()" /> <!-- Adiciona onload para imprimir após carregar a imagem -->
           </div>
-          <h3>CMV: ${nome || "N/A"}</h3>
+          <h3>CMV: ${nome}</h3>
           <h3>Porcentagem: ${cmv.toFixed(2)}%</h3>
           <h3>Faturamento: ${faturamentoFormatado}</h3>
           <h3>Total:</h3>
@@ -302,7 +287,7 @@ const CMV = () => {
 
       return `
                   <tr>
-                    <td>${item.nomeProduto || "N/A"}</td>
+                    <td>${item.nome || "N/A"}</td>
                     <td>${item.categoria || "N/A"}</td>
                     <td>${formatCurrency(item.preco)}</td>
                     <td>${estoqueInicial}</td>
@@ -344,7 +329,7 @@ const CMV = () => {
         const mappedProdutos = produtosFiltrados.map(produto => {
           const unidade = userOptionsUnidade.find(unit => unit.value === parseInt(produto.unidadeMedida));
           const valorFormatado = formatValor(produto.valorReajuste || produto.valor);
-  
+
           return {
             id: produto.id,
             nome: produto.nome,
@@ -375,17 +360,19 @@ const CMV = () => {
       setLoading(false);
     }
   };
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      // Converte o faturamento para número, substituindo vírgula por ponto
+      const faturamentoValue = parseFloat(faturamento.replace(',', '.')) || 0; // Converte o valor para número
 
       const cmvData = {
         unidadeId: unidadeId,
         nome: nome,
-        faturamento: Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')), // Converte o faturamento para número
+        faturamento: faturamentoValue, // Valor já convertido para número
         valorCMV: cmv,
       };
-
 
       const produtosData = produtos.map(produto => ({
         estoqueInicial: produto.estoqueInicial,
@@ -398,7 +385,6 @@ const CMV = () => {
         valorUtilizado: produto.preco * produto.utilizado,
         produtoId: produto.id,
       }));
-
 
       const response = await api.post('/cmv', {
         cmv: cmvData,
@@ -426,13 +412,62 @@ const CMV = () => {
     setProdutos([]);
     setTotals({ totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0, totalUtilizado: 0 });
     setCmv(0);
+    setProdutoSelecionado(''); // Limpa a seleção do produto
   };
   const handleDelete = (rowIndex) => {
     const updatedRows = produtos.filter((_, index) => index !== rowIndex);
     setProdutos(updatedRows);
     calculateTotals(updatedRows);
-    CustomToast({ type: "success", message: "Produto excluído com sucesso!" });
+    CustomToast({ type: "success", message: "Produto removido com sucesso!" });
   };
+
+
+
+  const handleSalvar = async () => {
+    setLoading(true);
+    try {
+      // Converte o faturamento para número
+      const faturamentoValue = parseFloat(faturamento) || 0;
+
+      const cmvData = {
+        unidadeId: unidadeId,
+        nome: nome,
+        faturamento: faturamentoValue, // Valor já convertido para número
+        valorCMV: cmv,
+      };
+
+      const produtosData = produtos.map(produto => ({
+        estoqueInicial: produto.estoqueInicial,
+        valorInicial: produto.preco * produto.estoqueInicial,
+        entrada: produto.entrada,
+        valorEntrada: produto.preco * produto.entrada,
+        estoqueFinal: produto.estoqueFinal,
+        valorEstoqueFinal: produto.preco * produto.estoqueFinal,
+        utilizado: produto.utilizado,
+        valorUtilizado: produto.preco * produto.utilizado,
+        produtoId: produto.produtoId || produto.id,
+      }));
+
+      const response = await api.put(`/cmv/${cmvId}`, {
+        cmv: cmvData,
+        produtos: produtosData,
+      });
+
+      if (response.data.status) {
+        CustomToast({ type: "success", message: "CMV atualizado com sucesso!" });
+        clearFields();
+        fetchCMVData();
+        handleCloseEditar();
+      } else {
+        CustomToast({ type: "error", message: response.data.message });
+      }
+    } catch (error) {
+      CustomToast({ type: "error", message: "Erro ao atualizar CMV." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleApagar = async (id) => {
     setLoading(true);
     try {
@@ -467,18 +502,16 @@ const CMV = () => {
   };
   const formattedLista = lista.map(item => ({
     ...item,
-    faturamento: formatCurrency(item.faturamento / 100), // Formata o faturamento
+    faturamento: formatValor(item.faturamento), // Formata o faturamento para exibição
   }));
-
   useEffect(() => {
     if (unidadeId && typeof unidadeId === 'number') {
       fetchCMVData();
     }
   }, [unidadeId]);
-
   const calculateCmv = () => {
     const totalUtilizado = totals.totalUtilizado;
-    const faturamentoValue = Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')) || 1; // Converte o faturamento para número
+    const faturamentoValue = parseFloat(faturamento) || 1; // Converte o valor diretamente para número
 
     if (faturamentoValue === 0) {
       setCmv(0);
@@ -503,7 +536,7 @@ const CMV = () => {
             estoqueFinal: 0,
             utilizado: 0,
             valorUtilizado: formatCurrency(0),
-            produtoId: produto.id, // Adiciona o produtoId aqui
+            produtoId: produto.id, // Aqui você está pegando o ID correto do produto
           },
         ]);
         setProdutosDisponiveis(prev => prev.filter(p => p.id !== produtoSelecionado)); // Remove o produto selecionado
@@ -511,61 +544,6 @@ const CMV = () => {
       }
     }
   };
-
-
-  const handleSalvar = async () => {
-    setLoading(true); // Inicia o carregamento
-    try {
-      // Coleta os dados do CMV
-      const cmvData = {
-        unidadeId: unidadeId,
-        nome: nome,
-        faturamento: Number(faturamento.replace('R$', '').replace('.', '').replace(',', '.')), // Converte o faturamento para número
-        valorCMV: cmv,
-      };
-  
-      // Coleta os dados dos produtos, incluindo o produtoId
-      const produtosData = produtos.map(produto => {
-        // Encontra o produto correspondente na lista de produtos disponíveis
-        const produtoEncontrado = produtosDisponiveis.find(p => p.nome === produto.nomeProduto);
-        
-        return {
-          estoqueInicial: produto.estoqueInicial,
-          valorInicial: produto.preco * produto.estoqueInicial,
-          entrada: produto.entrada,
-          valorEntrada: produto.preco * produto.entrada,
-          estoqueFinal: produto.estoqueFinal,
-          valorEstoqueFinal: produto.preco * produto.estoqueFinal,
-          utilizado: produto.utilizado,
-          valorUtilizado: produto.preco * produto.utilizado,
-          produtoId: produtoEncontrado ? produtoEncontrado.id : null, // Adiciona o produtoId encontrado
-        };
-      }).filter(produto => produto.produtoId !== null); // Filtra produtos sem produtoId
-  
-      // Envia a requisição PUT para a API
-      const response = await api.put(`/cmv/${cmvId}`, {
-        cmv: cmvData,
-        produtos: produtosData,
-      });
-  
-      // Verifica a resposta da API
-      if (response.data.status) {
-        CustomToast({ type: "success", message: "CMV atualizado com sucesso!" });
-        clearFields(); // Limpa os campos
-        fetchCMVData(); // Atualiza a lista de CMVs
-        handleCloseEditar(); // Fecha o modal de edição
-      } else {
-        CustomToast({ type: "error", message: response.data.message });
-      }
-    } catch (error) {
-      CustomToast({ type: "error", message: "Erro ao atualizar CMV." });
-    } finally {
-      setLoading(false); // Finaliza o carregamento
-    }
-  };
-  useEffect(() => {
-    calculateCmv();
-  }, [faturamento, totals]);
 
   useEffect(() => {
     if (faturamento) {
@@ -713,10 +691,10 @@ const CMV = () => {
                   size="large"
                   label="Faturamento"
                   name="Faturamento"
-                  value={faturamento}
+                  value={faturamento ? formatValor(faturamento) : ''} // Formata o valor para exibição
                   onValueChange={(values) => {
-                    const { formattedValue, value } = values;
-                    setFaturamento(value);
+                    const { value } = values; // Captura o valor sem formatação
+                    setFaturamento(value); // Armazena o valor sem formatação
                   }}
                   autoComplete="off"
                   customInput={TextField}
@@ -761,6 +739,7 @@ const CMV = () => {
                     },
                   }}
                 />
+
               </div>
             </div>
           </div>
@@ -845,19 +824,19 @@ const CMV = () => {
                     }}
                     autoComplete="off"
                   />
-                 <SelectTextFields
-  width={'150px'}
-  icon={<ProductionQuantityLimits fontSize="small" />}
-  label={'Selecionar Produto'}
-  backgroundColor={"#D9D9D9"}
-  name={"produto"}
-  options={produtosDisponiveis.map(produto => ({
-    value: produto.id,
-    label: produto.nome,
-  }))}
-  value={produtoSelecionado}
-  onChange={(e) => setProdutoSelecionado(e.target.value)}
-/>
+                  <SelectTextFields
+                    width={'150px'}
+                    icon={<ProductionQuantityLimits fontSize="small" />}
+                    label={'Selecionar Produto'}
+                    backgroundColor={"#D9D9D9"}
+                    name={"produto"}
+                    options={produtosFiltrados.map(produto => ({
+                      value: produto.id,
+                      label: produto.nome,
+                    }))}
+                    value={produtoSelecionado}
+                    onChange={(e) => setProdutoSelecionado(e.target.value)}
+                  />
                   <IconButton title="Adicionar Produto"
                     onClick={handleAdicionarProduto}
                     className='view-button w-10 h-10 '
@@ -951,11 +930,10 @@ const CMV = () => {
                   size="large"
                   label="Faturamento"
                   name="Faturamento"
-                  value={faturamento}
+                  value={faturamento ? formatValor(faturamento) : ''} // Formata o valor para exibição
                   onValueChange={(values) => {
-                    const { value } = values;
-                    setFaturamento(value);
-                    calculateCmv();
+                    const { value } = values; // Captura o valor sem formatação
+                    setFaturamento(value); // Armazena o valor sem formatação
                   }}
                   autoComplete="off"
                   customInput={TextField}
@@ -1053,4 +1031,4 @@ const CMV = () => {
   );
 };
 
-export default CMV;
+export default CMV; 

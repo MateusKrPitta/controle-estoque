@@ -117,7 +117,7 @@ const FichaTecnica = () => {
         try {
             const response = await api.get(`/ficha?unidade=${unidadeId}`);
             const data = response.data.data;
-    
+
             if (Array.isArray(data)) {
                 const pratosComProdutos = data.map(prato => ({
                     ...prato,
@@ -275,14 +275,14 @@ const FichaTecnica = () => {
             CustomToast({ type: "error", message: "Prato não encontrado!" });
             return; // Exit the function early
         }
-    
+
         // Set the state with prato data
         setPratoId(prato.id); // Armazena o ID do prato
         setNomePrato(prato.nome);
         setCustoTotal(prato.custoTotal);
         setRendimento(prato.qtdRendimento);
         setValorVenda(formatValor(prato.valorVenda));
-    
+
         if (Array.isArray(prato.produtos)) {
             const produtosAdicionados = prato.produtos.map(prod => {
                 const produtoSelecionado = produtos.find(p => p.id === prod.produtoId);
@@ -298,7 +298,7 @@ const FichaTecnica = () => {
         } else {
             setProdutosAdicionados([]);
         }
-    
+
         setEditar(true);
     };
     const handleCriarPrato = () => setCriarPrato(true);
@@ -330,17 +330,17 @@ const FichaTecnica = () => {
             CustomToast({ type: "error", message: "Informe o nome do prato!" });
             return;
         }
-    
+
         if (produtosAdicionados.length === 0) {
             CustomToast({ type: "error", message: "Adicione pelo menos um produto!" });
             return;
         }
-    
+
         if (!valorVenda) {
             CustomToast({ type: "error", message: "Informe o valor de venda!" });
             return;
         }
-    
+
         const pratoAtualizado = {
             prato: {
                 nome: nomePrato,
@@ -364,14 +364,14 @@ const FichaTecnica = () => {
                 };
             }).filter(Boolean), // Filtra os produtos que não são válidos
         };
-    
+
         try {
             const response = await api.put(`/ficha/${pratoId}`, pratoAtualizado); // Envia a requisição PUT
             CustomToast({ type: "success", message: "Prato atualizado com sucesso!" });
             handleFecharEditar(true);
             fetchProdutosDaFicha();
 
-    
+
             // Resetar estados após a atualização
             setProdutosAdicionados([]);
             setNomePrato('');
@@ -385,6 +385,17 @@ const FichaTecnica = () => {
             CustomToast({ type: "error", message: "Erro ao atualizar prato!" });
         }
     };
+
+    const handleDeletePrato = async (id) => {
+        try {
+            await api.delete(`/ficha/${id}`); // Chama a rota de exclusão
+            CustomToast({ type: "success", message: "Prato excluído com sucesso!" });
+            fetchProdutosDaFicha(); // Atualiza a lista de pratos
+        } catch (error) {
+            CustomToast({ type: "error", message: "Erro ao excluir prato!" });
+        }
+    };
+
 
     useEffect(() => {
         if (unidadeId) {
@@ -721,7 +732,8 @@ const FichaTecnica = () => {
                     ) : (
                         <TabelaProdutos
                             pratos={filteredPratos}
-                            onEditClick={(prato) => handleEditar(prato)} // Pass the entire prato object
+                            onEditClick={(prato) => handleEditar(prato)}
+                            onDeleteClick={handleDeletePrato} // Passa a função de exclusão
                         />
                     )}
                 </div>
@@ -982,13 +994,13 @@ const FichaTecnica = () => {
                                 </div>
                             </div>
                             <div className='w-full flex items-end justify-end mt-2'>
-                            <ButtonComponent
-    startIcon={<Save fontSize='small' />}
-    title={'Salvar'}
-    subtitle={'Salvar'}
-    buttonSize="large"
-    onClick={handleSalvar} // Chama a função de salvar
-/>
+                                <ButtonComponent
+                                    startIcon={<Save fontSize='small' />}
+                                    title={'Salvar'}
+                                    subtitle={'Salvar'}
+                                    buttonSize="large"
+                                    onClick={handleSalvar} // Chama a função de salvar
+                                />
                             </div>
                         </div>
                     </div>
