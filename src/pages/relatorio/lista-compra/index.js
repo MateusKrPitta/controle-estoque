@@ -304,7 +304,7 @@ const ListaCompra = () => {
                                     rows={rows}
                                     actionsLabel={'Ações'}
                                     actionCalls={{}}
-                                    rowStyle={(row) => row.isAbaixoMinimo ? { backgroundColor: '#ffcccc' } : {}} // Define a cor de fundo para produtos abaixo do mínimo
+                                    rowStyle={(row) => row.isAbaixoMinimo ? { backgroundColor: '#ffcccc' } : {}} 
                                 />
                             </div>
                         </div>

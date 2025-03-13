@@ -90,12 +90,12 @@ const Navbar = ({ user }) => {
                             <span>Ficha Técnica</span>
                         </button>
                         <button
-                            onClick={() => handleNavigate("/relatorios")}
+                            onClick={() => handleNavigate("/relatorio")}
                             className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/relatorios" ? "border-b-2 border-primary" : ""}`}
-                            title={'Relatórios'}
+                            title={'Relatório'}
                         >
                             <DataThresholdingIcon fontSize={"small"} />
-                            <span>Relatórios</span>
+                            <span>Relatório</span>
                         </button>
 
                        

@@ -15,6 +15,7 @@ import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import { formatValor } from '../../utils/functions';
 import { useUnidade } from '../../components/unidade-context';
+import moment from 'moment';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -26,6 +27,7 @@ const Dashboard = () => {
     const [produtosAbaixoMinimo, setProdutosAbaixoMinimo] = useState(0);
     const [estoquePorCategoria, setEstoquePorCategoria] = useState([]);
     const [produtos, setProdutos] = useState([]);
+    const [entradasSaidasOriginais, setEntradasSaidasOriginais] = useState([]);
     const [entradasSaidas, setEntradasSaidas] = useState([]);
     const [dataGrafico, setDataGrafico] = useState([]);
     const [isVisible, setIsVisible] = useState(false);
@@ -38,6 +40,32 @@ const Dashboard = () => {
         { value: 4, label: 'Mililitro' },
         { value: 5, label: 'Unidade' },
     ];
+    const prepareDataForChart = (movimentacoes) => {
+        const dataMap = {};
+
+        movimentacoes.forEach(mov => {
+            const produtoNome = mov.produtoNome;
+
+            if (!dataMap[produtoNome]) {
+                dataMap[produtoNome] = {
+                    nome: produtoNome,
+                    entradas: 0,
+                    saidas: 0,
+                    desperdicio: 0,
+                };
+            }
+
+            if (mov.tipo === "1") { 
+                dataMap[produtoNome].entradas += mov.quantidade;
+            } else if (mov.tipo === "2") {
+                dataMap[produtoNome].saidas += mov.quantidade;
+            } else if (mov.tipo === "3") { 
+                dataMap[produtoNome].desperdicio += mov.quantidade;
+            }
+        });
+
+        return Object.values(dataMap);
+    };
 
     const getColor = (index) => {
         const colors = [
@@ -102,7 +130,7 @@ const Dashboard = () => {
             if (response.data.status) {
                 setTotalProdutos(response.data.data.totalProduto);
                 setItensEmEstoque(response.data.data.totalItens);
-                setValorTotal(Number(response.data.data.valorTotalItens) || 0); // Garantir que seja um número
+                setValorTotal(Number(response.data.data.valorTotalItens) || 0);
                 setProdutosAbaixoMinimo(response.data.data.produtosQtdMin);
                 setProdutos(response.data.data.produtos || []);
                 setEntradasSaidas(response.data.data.entradasSaidas || []);
@@ -123,29 +151,39 @@ const Dashboard = () => {
     };
 
     const fetchEntradasSaidas = async () => {
+        setLoading(true);
         try {
-            const response = await api.get(`/movimentacao?unidadeId=${unidadeId}`);
+            const response = await api.get(`/movimentacao?unidade=${unidadeId}`);
             const movimentacoes = response.data.data;
-            const agrupadas = movimentacoes.reduce((acc, mov) => {
-                if (!acc[mov.produtoNome]) {
-                    acc[mov.produtoNome] = { nome: mov.produtoNome, entradas: 0, saidas: 0, desperdicio: 0 };
-                }
-                if (mov.tipo === "1") acc[mov.produtoNome].entradas += mov.quantidade;
-                if (mov.tipo === "2") acc[mov.produtoNome].saidas += mov.quantidade;
-                if (mov.tipo === "3") acc[mov.produtoNome].desperdicio += mov.quantidade;
-                return acc;
-            }, {});
 
-            const data = Object.values(agrupadas);
-            setDataGrafico(data);
-            setEntradasSaidas(movimentacoes); 
+            const formattedMovimentacoes = movimentacoes.map(mov => {
+                return {
+                    id: mov.id,
+                    tipo: mov.tipo, 
+                    produtoNome: mov.produtoNome,
+                    quantidade: mov.quantidade,
+                    categoria: mov.categoriaNome,
+                    precoPorcao: mov.precoPorcao,
+                    valorTotal: mov.precoPorcao * mov.quantidade,
+                    observacao: mov.observacao,
+                    dataCadastro: moment(mov.data).format('DD/MM/YYYY'),
+                    dataISO: mov.data
+                };
+            });
+
+            setEntradasSaidas(formattedMovimentacoes);
+            setEntradasSaidasOriginais(formattedMovimentacoes);
+            const dataGrafico = prepareDataForChart(formattedMovimentacoes);
+            setDataGrafico(dataGrafico);
         } catch (error) {
-            CustomToast({ type: "error", message: "Erro ao carregar movimentações!" });
+            CustomToast({ type: "error", message: "Erro ao carregar as movimentações!" });
+        } finally {
+            setLoading(false);
         }
     };
-
-
-
+    useEffect(() => {
+        fetchEntradasSaidas();
+    }, [unidadeId]);
 
     useEffect(() => {
         const data = produtos.map(produto => {
@@ -172,7 +210,7 @@ const Dashboard = () => {
                 acc[categoria] = 0;
             }
 
-            acc[categoria] += 1; 
+            acc[categoria] += 1;
             return acc;
         }, {});
 
@@ -187,11 +225,11 @@ const Dashboard = () => {
     useEffect(() => {
         const data = produtos.map(produto => {
             const entradas = entradasSaidas
-                .filter(item => item.produtoNome === produto.nome && item.tipo === '1') 
+                .filter(item => item.produtoNome === produto.nome && item.tipo === '1')
                 .reduce((acc, item) => acc + parseInt(item.quantidade), 0);
 
             const saidas = entradasSaidas
-                .filter(item => item.produtoNome === produto.nome && item.tipo === '2') 
+                .filter(item => item.produtoNome === produto.nome && item.tipo === '2')
                 .reduce((acc, item) => acc + parseInt(item.quantidade), 0);
 
             const desperdicio = entradasSaidas
@@ -229,6 +267,43 @@ const Dashboard = () => {
 
         return () => clearTimeout(timer);
     }, []);
+
+    useEffect(() => {
+        const movimentacoesContagem = {};
+        entradasSaidas.forEach(item => {
+            const produtoNome = item.produtoNome;
+
+            if (!movimentacoesContagem[produtoNome]) {
+                movimentacoesContagem[produtoNome] = {
+                    nome: produtoNome,
+                    entradas: 0,
+                    saidas: 0,
+                    desperdicio: 0,
+                };
+            }
+
+            if (item.tipo === '1') { 
+                movimentacoesContagem[produtoNome].entradas += item.quantidade;
+            } else if (item.tipo === '2') { 
+                movimentacoesContagem[produtoNome].saidas += item.quantidade;
+            } else if (item.tipo === '3') { 
+                movimentacoesContagem[produtoNome].desperdicio += item.quantidade;
+            }
+        });
+
+        const dataArray = Object.values(movimentacoesContagem);
+        const sortedData = dataArray.sort((a, b) => {
+            const totalA = a.entradas + a.saidas + a.desperdicio;
+            const totalB = b.entradas + b.saidas + b.desperdicio;
+            return totalB - totalA; 
+        });
+
+
+        const top5Data = sortedData.slice(0, 5);
+
+        setDataGrafico(top5Data);
+    }, [entradasSaidas]);
+
     return (
         <div className="lg:flex w-[100%] h-[100%]">
             <MenuMobile />
@@ -242,35 +317,29 @@ const Dashboard = () => {
                 <div className={`w-full mt-8 flex-wrap p-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                     <div className='w-full flex gap-6 flex-wrap items-center justify-center'>
 
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[90%] lg:w-[18%] flex-col gap-2 flex items-center justify-center'>
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[90%] lg:w-[22%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Total de Produtos</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Estoque} alt="Total de Produtos" />
                                 <label className='text-black font-semibold w-full'>{totalProdutos}</label>
                             </div>
                         </div>
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[18%] flex-col gap-2 flex items-center justify-center'>
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[22%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Itens em Estoque</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Produtos} alt="Itens em Estoque" />
                                 <label className='text-black font-semibold w-full'>{itensEmEstoque}</label>
                             </div>
                         </div>
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[18%] flex-col gap-2 flex items-center justify-center'>
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[22%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Valor Total</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Dinheiro} alt="Valor Total" />
-                                <label className='text-black font-semibold w-full'>R$ {valorTotal.toFixed(2).replace('.', ',')}</label>
+                                <label className='text-black font-semibold w-full'>R$ {formatValor(valorTotal)}</label>
                             </div>
                         </div>
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[18%] flex-col gap-2 flex items-center justify-center'>
-                            <label className='text-black text-xs font-semibold'>CMV</label>
-                            <div className='flex items-center justify-center gap-6'>
-                                <img src={Dados} alt="CMV" />
-                                <label className='text-black font-semibold w-full'>{cmv}%</label>
-                            </div>
-                        </div>
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[18%] flex-col gap-2 flex items-center justify-center'>
+
+                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[22%] flex-col gap-2 flex items-center justify-center'>
                             <label className='text-black text-xs font-semibold'>Itens para comprar</label>
                             <div className='flex items-center justify-center gap-6'>
                                 <img src={Compra} alt="Produtos Abaixo do Mínimo" />
@@ -307,23 +376,14 @@ const Dashboard = () => {
                             <h2 className="text-lg text-center w-full font-bold text-primary mt-12 lg:mt-0 mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
                             <ResponsiveContainer width="100%" height={250}>
                                 <BarChart data={dataGrafico}>
-                                    <XAxis
-                                        dataKey="nome"
-                                        tick={{ fontSize: 10 }} 
-                                    />
-                                    <YAxis
-                                        tick={{ fontSize: 10 }}
-                                    />
-                                    <Tooltip
-                                        content={<CustomTooltip />}
-                                        contentStyle={{ fontSize: 12 }} 
-                                    />
+                                    <XAxis dataKey="nome" tick={{ fontSize: 10 }} />
+                                    <YAxis tick={{ fontSize: 10 }} />
+                                    <Tooltip content={<CustomTooltip />} contentStyle={{ fontSize: 12 }} />
                                     <Bar dataKey="entradas" fill="#BCDA72" />
                                     <Bar dataKey="saidas" fill="#FF0000" />
                                     <Bar dataKey="desperdicio" fill="#000000" />
                                 </BarChart>
                             </ResponsiveContainer>
-
                         </div>
                     </div>
                 </div>

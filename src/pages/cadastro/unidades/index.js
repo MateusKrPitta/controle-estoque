@@ -165,7 +165,7 @@ const Unidades = () => {
         <HeaderPerfil />
         <h1 className='justify-center  md:justify-center lg:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
           <LocationOnOutlined />
-          Cadastro Unidades
+          Unidade
         </h1>
         <div
           className={` items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start transition-opacity duration-500 ${isVisible ? "opacity-100" : "opacity-0 translate-y-4"

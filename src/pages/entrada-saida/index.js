@@ -101,8 +101,9 @@ const EntradaSaida = () => {
 
 
       fetchEntradasSaidas();
-    } catch (error) {
-      CustomToast({ type: "error", message: "Erro ao cadastrar registro!" });
+    }  catch (error) {
+      const errorMessage = error.response?.data?.errors || "Erro ao cadastrar registro!";
+      CustomToast({ type: "error", message: errorMessage });
     } finally {
       setDesativa(false);
     }
@@ -204,7 +205,7 @@ const EntradaSaida = () => {
       const matchesDataInicial = dataInicialMoment ? registroDataMoment.isSameOrAfter(dataInicialMoment) : true;
       const matchesDataFinal = dataFinalMoment ? registroDataMoment.isSameOrBefore(dataFinalMoment) : true;
       const matchesCategoria = selectedCategoria ? registro.categoria === selectedCategoria : true;
-      const matchesTipo = selectedTipos.length > 0 ? selectedTipos.includes(registro.tipo) : true; // Verifica se o tipo está incluído
+      const matchesTipo = selectedTipos.length > 0 ? selectedTipos.includes(registro.tipo) : true; 
 
       return matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
     });
@@ -502,7 +503,7 @@ const EntradaSaida = () => {
                 ]}
                 onChange={(e) => setSelectedTipos(e.target.value)}
                 value={selectedTipos}
-                multiple // Permite múltiplas seleções
+                multiple 
               />
             </div>
             <div className='w-[95%] mt-2 flex items-end justify-end'>

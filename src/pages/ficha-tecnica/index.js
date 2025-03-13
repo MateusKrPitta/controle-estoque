@@ -117,7 +117,7 @@ const FichaTecnica = () => {
         try {
             const response = await api.get(`/ficha?unidade=${unidadeId}`);
             const data = response.data.data;
-    
+
             if (Array.isArray(data)) {
                 const pratosComProdutos = data.map(prato => ({
                     ...prato,
@@ -244,8 +244,8 @@ const FichaTecnica = () => {
                     qtdUtilizado: parseFloat(produto.quantidade),
                     valorUtilizado: parseFloat(produto.valorUtilizado.replace('R$', '').replace('.', '').replace(',', '.')),
                     produtoId: produtoSelecionado.id,
-                    unidade: produto.unidade, // Certifique-se de que isso está sendo passado
-                    precoPorcao: produto.precoPorcao // Certifique-se de que isso está sendo passado
+                    unidade: produto.unidade, 
+                    precoPorcao: produto.precoPorcao 
                 };
             }).filter(Boolean),
         };
@@ -273,16 +273,15 @@ const FichaTecnica = () => {
     const handleEditar = (prato) => {
         if (!prato || prato.id === 0) {
             CustomToast({ type: "error", message: "Prato não encontrado!" });
-            return; // Exit the function early
+            return; 
         }
-    
-        // Set the state with prato data
-        setPratoId(prato.id); // Armazena o ID do prato
+
+        setPratoId(prato.id);
         setNomePrato(prato.nome);
         setCustoTotal(prato.custoTotal);
         setRendimento(prato.qtdRendimento);
         setValorVenda(formatValor(prato.valorVenda));
-    
+
         if (Array.isArray(prato.produtos)) {
             const produtosAdicionados = prato.produtos.map(prod => {
                 const produtoSelecionado = produtos.find(p => p.id === prod.produtoId);
@@ -298,7 +297,7 @@ const FichaTecnica = () => {
         } else {
             setProdutosAdicionados([]);
         }
-    
+
         setEditar(true);
     };
     const handleCriarPrato = () => setCriarPrato(true);
@@ -318,7 +317,7 @@ const FichaTecnica = () => {
         try {
             const response = await api.get(`/produto?unidadeId=${unidadeId}`);
             const produtosFiltrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
-            console.log("Fetched products:", produtosFiltrados); // Log the fetched products
+
             setProdutos(produtosFiltrados);
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
@@ -330,17 +329,17 @@ const FichaTecnica = () => {
             CustomToast({ type: "error", message: "Informe o nome do prato!" });
             return;
         }
-    
+
         if (produtosAdicionados.length === 0) {
             CustomToast({ type: "error", message: "Adicione pelo menos um produto!" });
             return;
         }
-    
+
         if (!valorVenda) {
             CustomToast({ type: "error", message: "Informe o valor de venda!" });
             return;
         }
-    
+
         const pratoAtualizado = {
             prato: {
                 nome: nomePrato,
@@ -355,24 +354,21 @@ const FichaTecnica = () => {
                 const produtoSelecionado = produtos.find(p => p.nome === produto.nome);
                 if (!produtoSelecionado) {
                     CustomToast({ type: "error", message: "Produto selecionado não é válido!" });
-                    return null; // Retorna null se o produto não for encontrado
+                    return null; 
                 }
                 return {
                     qtdUtilizado: parseFloat(produto.quantidade),
                     valorUtilizado: parseFloat(produto.valorUtilizado.replace('R$', '').replace('.', '').replace(',', '.')),
-                    produtoId: produtoSelecionado.id, // Certifique-se de que isso está sendo passado
+                    produtoId: produtoSelecionado.id,
                 };
-            }).filter(Boolean), // Filtra os produtos que não são válidos
+            }).filter(Boolean), 
         };
-    
+
         try {
-            const response = await api.put(`/ficha/${pratoId}`, pratoAtualizado); // Envia a requisição PUT
+            const response = await api.put(`/ficha/${pratoId}`, pratoAtualizado); 
             CustomToast({ type: "success", message: "Prato atualizado com sucesso!" });
             handleFecharEditar(true);
             fetchProdutosDaFicha();
-
-    
-            // Resetar estados após a atualização
             setProdutosAdicionados([]);
             setNomePrato('');
             setValorVenda('');
@@ -390,7 +386,7 @@ const FichaTecnica = () => {
             const response = await api.delete(`/ficha/${id}`);
             if (response.status === 200) {
                 CustomToast({ type: "success", message: "Prato deletado com sucesso!" });
-                fetchProdutosDaFicha(); // Recarrega a lista de pratos após a exclusão
+                fetchProdutosDaFicha(); 
             }
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao deletar prato!" });
@@ -651,7 +647,7 @@ const FichaTecnica = () => {
                                             <label className='text-xs font-bold w-[60%]'>Quantidade de Rendimento: </label>
                                             <input
                                                 type="text"
-                                                value={rendimento} // Evita NaN
+                                                value={rendimento}
                                                 onChange={(e) => setRendimento(e.target.value)}
                                                 style={{
                                                     backgroundColor: "#d9d9d9",
@@ -678,8 +674,7 @@ const FichaTecnica = () => {
                                                 value={valorVenda}
                                                 onValueChange={(values) => {
                                                     const { formattedValue, value } = values;
-                                                    setValorVenda(formattedValue); // Armazena o valor formatado
-                                                    // Você pode armazenar o valor numérico se precisar
+                                                    setValorVenda(formattedValue);
                                                 }}
                                                 thousandSeparator={true}
                                                 decimalScale={2}
@@ -736,10 +731,10 @@ const FichaTecnica = () => {
                         </div>
                     ) : (
                         <TabelaProdutos
-                        pratos={filteredPratos}
-                        onEditClick={(prato) => handleEditar(prato)}
-                        onDeleteClick={(id) => handleDeletar(id)} // Passar a função de deletar
-                    />
+                            pratos={filteredPratos}
+                            onEditClick={(prato) => handleEditar(prato)}
+                            onDeleteClick={(id) => handleDeletar(id)}
+                        />
                     )}
                 </div>
             </div>
@@ -941,7 +936,7 @@ const FichaTecnica = () => {
                                         <label className='text-xs font-bold w-[60%]'>Quantidade de Rendimento: </label>
                                         <input
                                             type="text"
-                                            value={rendimento} // Evita NaN
+                                            value={rendimento}
                                             onChange={(e) => setRendimento(e.target.value)}
                                             style={{
                                                 backgroundColor: "#d9d9d9",
@@ -968,7 +963,7 @@ const FichaTecnica = () => {
                                             value={valorVenda}
                                             onValueChange={(values) => {
                                                 const { formattedValue, value } = values;
-                                                setValorVenda(formattedValue); // Armazena o valor formatado
+                                                setValorVenda(formattedValue);
                                             }}
                                             thousandSeparator={true}
                                             decimalScale={2}
@@ -999,13 +994,13 @@ const FichaTecnica = () => {
                                 </div>
                             </div>
                             <div className='w-full flex items-end justify-end mt-2'>
-                            <ButtonComponent
-    startIcon={<Save fontSize='small' />}
-    title={'Salvar'}
-    subtitle={'Salvar'}
-    buttonSize="large"
-    onClick={handleSalvar} // Chama a função de salvar
-/>
+                                <ButtonComponent
+                                    startIcon={<Save fontSize='small' />}
+                                    title={'Salvar'}
+                                    subtitle={'Salvar'}
+                                    buttonSize="large"
+                                    onClick={handleSalvar}
+                                />
                             </div>
                         </div>
                     </div>

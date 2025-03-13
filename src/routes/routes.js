@@ -24,16 +24,16 @@ const AppRoutes = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/entrada-saida" element={<EntradaSaida />} />
                 <Route path="/cmv" element={<CMV />} />
-                <Route path="/relatorios" element={<Relatorio />} />
-                <Route path="/relatorios/estoque-real" element={<EstoqueReal />} />
-                <Route path="/relatorios/lista-compra" element={<ListaCompra />} />
-                <Route path="/relatorios/desperdicio" element={<Desperdicio />} />
+                <Route path="/relatorio" element={<Relatorio />} />
+                <Route path="/relatorio/estoque-real" element={<EstoqueReal />} />
+                <Route path="/relatorio/lista-compra" element={<ListaCompra />} />
+                <Route path="/relatorio/desperdicio" element={<Desperdicio />} />
                 <Route path="/ficha-tecnica" element={<FichaTecnica />} />
                 <Route path="/cadastro" element={<Cadastro />} />
                 <Route path="/cadastro/categoria" element={<Categoria />} />
-                <Route path="/cadastro/usuarios" element={<Usuario />} />
-                <Route path="/cadastro/produtos" element={<Produtos />} />
-                <Route path="/cadastro/unidades" element={<Unidades />} />
+                <Route path="/cadastro/usuario" element={<Usuario />} />
+                <Route path="/cadastro/produto" element={<Produtos />} />
+                <Route path="/cadastro/unidade" element={<Unidades />} />
             </Route>
 
         </Routes>

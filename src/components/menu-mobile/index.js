@@ -119,7 +119,7 @@ const MenuMobile = () => {
                 <MenuItem onClick={() => handleNavigate("/entrada-saida")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
                     <AddchartIcon style={{ color: '#BCDA72' }} fontSize='small' />Entrada/Saída
                 </MenuItem>
-                <MenuItem onClick={() => handleNavigate("/relatorios")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
+                <MenuItem onClick={() => handleNavigate("/relatorio")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>
                     <DataThresholdingIcon style={{ color: '#BCDA72' }} fontSize='small' />Relatório
                 </MenuItem>
                 <MenuItem onClick={() => handleNavigate("/cadastro")} style={{ color: 'black', gap: '8px', display: 'flex', alignItems: 'center', fontWeight: '600', fontSize: '12px' }}>

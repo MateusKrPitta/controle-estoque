@@ -299,6 +299,13 @@ const Categoria = () => {
                             value={categoriaEditada ? categoriaEditada.nome : ''}
                             onChange={(e) => setCategoriaEditada({ ...categoriaEditada, nome: e.target.value })}
                             autoComplete="off"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <CategoryIcon />
+                                    </InputAdornment>
+                                ),
+                            }}
                         />
                         <ButtonComponent
                             title={'Salvar'}

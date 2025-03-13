@@ -50,18 +50,18 @@ const LoginPage = () => {
             CustomToast({ type: 'warning', message: 'Informe sua senha!' });
             return;
         }
-
+    
         setLoading(true);
-
+    
         try {
             const response = await api.post('/login', { cpf, senha });
-
+    
             const { token, nome, unidade } = response.data.data;
-
+    
             if (token) {
                 localStorage.setItem('token', token);
                 localStorage.setItem('userName', nome);
-
+    
                 if (unidade && unidade.length > 0) {
                     const unidadeSelecionada = unidade[0];
                     setUnidadeId(unidadeSelecionada.id);
@@ -84,10 +84,17 @@ const LoginPage = () => {
             }
         } catch (error) {
             setLoading(false);
-            if (error.response && error.response.data.message) {
-                CustomToast({ type: 'warning', message: error.response.data.message });
+            if (error.response) {
+                // Verifica se a mensagem de erro é a específica que você mencionou
+                if (error.response.data.message === "Usuário inativo. Contate o administrador.") {
+                    CustomToast({ type: 'warning', message: error.response.data.message });
+                } else if (error.response.data.message) {
+                    CustomToast({ type: 'warning', message: error.response.data.message });
+                } else {
+                    CustomToast({ type: 'error', message: 'Usuário inativo. Contate o administrador.' });
+                }
             } else {
-                CustomToast({ type: 'error', message: 'Erro ao fazer login. Tente novamente mais tarde.' });
+                CustomToast({ type: 'error', message: 'Usuário inativo. Contate o administrador.' });
             }
         }
     };
@@ -133,7 +140,7 @@ const LoginPage = () => {
                 <div className="tutorial text-center mt-3" style={{ color: '#9EBB51' }}>
                    
                 </div>
-                <div className="versao-app text-center mt-10">
+                <div className="versao-app text-center text-white mt-10">
                     <p> Versão {packageJson.version}</p>
                 </div>
             </div>

@@ -412,7 +412,7 @@ const Usuario = () => {
         <MenuMobile />
         <HeaderPerfil />
         <h1 className='justify-center  md:justify-center lg:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
-          <AccountCircleIcon />Cadastro Usuários
+          <AccountCircleIcon />Usuário
         </h1>
         <div className=" items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start">
         <div className="hidden lg:w-[14%] lg:flex  ">

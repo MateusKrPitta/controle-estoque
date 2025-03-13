@@ -11,14 +11,14 @@ const HeaderCadastro = () => {
 
     const handleNavigation = (section) => {
         switch (section) {
-            case 'usuarios':
-                navigate('/cadastro/usuarios');
+            case 'usuario':
+                navigate('/cadastro/usuario');
                 break;
-            case 'produtos':
-                navigate('/cadastro/produtos');
+            case 'produto':
+                navigate('/cadastro/produto');
                 break;
-            case 'unidades':
-                navigate('/cadastro/unidades');
+            case 'unidade':
+                navigate('/cadastro/unidade');
                 break;
             case 'categoria':
                 navigate('/cadastro/categoria');
@@ -37,29 +37,29 @@ const HeaderCadastro = () => {
                 startIcon={<AccountCircleIcon fontSize="small" />}
                 title="Usuário"
                 buttonSize="large"
-                onClick={() => handleNavigation('usuarios')}
+                onClick={() => handleNavigation('usuario')}
                 className="w-[35%] sm:w-[50%] md:w-[40%]  lg:w-[100%]"
 
             />
             <ButtonComponent
                 startIcon={<ProductionQuantityLimitsTwoTone fontSize="small" />}
-                title="Produtos"
+                title="Produto"
                 buttonSize="large"
-                onClick={() => handleNavigation('produtos')}
+                onClick={() => handleNavigation('produto')}
                 className="w-[35%] sm:w-[50%] md:w-[40%] lg:w-[100%]"
 
             />
             <ButtonComponent
                 startIcon={<LocationOnIcon fontSize="small" />}
-                title="Unidades"
+                title="Unidade"
                 buttonSize="large"
-                onClick={() => handleNavigation('unidades')}
+                onClick={() => handleNavigation('unidade')}
                 className="w-[35%] sm:w-[50%] md:w-[40%]  lg:w-[100%]"
 
             />
             <ButtonComponent
                 startIcon={<CategoryIcon fontSize="small" />}
-                title="Categorias"
+                title="Categoria"
                 buttonSize="large"
                 onClick={() => handleNavigation('categoria')}
                 className="w-[35%] sm:w-[50%] md:w-[40%]  lg:w-[100%]"

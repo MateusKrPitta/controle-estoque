@@ -330,7 +330,7 @@ const Produtos = () => {
                 <MenuMobile />
                 <HeaderPerfil />
                 <h1 className='justify-center  md:justify-center lg:justify-start items-center md:text-2xl font-bold text-black w-[99%] flex  gap-2 '>
-                    <ProductionQuantityLimitsTwoTone /> Produtos
+                    <ProductionQuantityLimitsTwoTone /> Produto
                 </h1>
                 <div className=" items-center w-full flex mt-[40px] gap-2 flex-wrap md:items-start">
                     <div className="hidden lg:w-[14%] lg:flex  ">
@@ -514,7 +514,7 @@ const Produtos = () => {
                                             backgroundColor={"#D9D9D9"}
                                             name={"categoria"}
                                             fontWeight={500}
-                                            options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))} // Mapeia para o formato esperado
+                                            options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))} 
                                             onChange={(e) => setSelectedCategoria(e.target.value)}
                                             value={selectedCategoria}
                                         />
