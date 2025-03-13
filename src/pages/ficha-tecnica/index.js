@@ -50,6 +50,7 @@ const FichaTecnica = () => {
     const [unidade, setUnidade] = useState('');
     const [valorUtilizado, setValorUtilizado] = useState('');
     const [isVisible, setIsVisible] = useState(false);
+    const [pratoId, setPratoId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [produtosAdicionados, setProdutosAdicionados] = useState([]);
     const [custoTotal, setCustoTotal] = useState(0);
@@ -116,7 +117,6 @@ const FichaTecnica = () => {
         try {
             const response = await api.get(`/ficha?unidade=${unidadeId}`);
             const data = response.data.data;
-            console.log("Fetched produtos da ficha:", data);
     
             if (Array.isArray(data)) {
                 const pratosComProdutos = data.map(prato => ({
@@ -175,7 +175,6 @@ const FichaTecnica = () => {
             setPrecoPorcao('');
         }
     };
-
     const handleAdicionarProduto = () => {
         if (!produtoSelecionado) {
             CustomToast({ type: "error", message: "Selecione o produto!" });
@@ -272,36 +271,34 @@ const FichaTecnica = () => {
     const handleFecharEditar = () => setEditar(false);
 
     const handleEditar = (prato) => {
-        console.log("Received prato in handleEditar:", prato); // Log the prato object
-
         if (!prato || prato.id === 0) {
             CustomToast({ type: "error", message: "Prato não encontrado!" });
             return; // Exit the function early
         }
-
+    
         // Set the state with prato data
+        setPratoId(prato.id); // Armazena o ID do prato
         setNomePrato(prato.nome);
         setCustoTotal(prato.custoTotal);
         setRendimento(prato.qtdRendimento);
         setValorVenda(formatValor(prato.valorVenda));
-
-        // Check if produtos is defined and is an array
+    
         if (Array.isArray(prato.produtos)) {
             const produtosAdicionados = prato.produtos.map(prod => {
-                const produtoSelecionado = produtos.find(p => p.id === prod.produtoId); // Ensure you find by ID
+                const produtoSelecionado = produtos.find(p => p.id === prod.produtoId);
                 return {
                     nome: produtoSelecionado.nome,
                     quantidade: prod.qtdUtilizado,
                     valorUtilizado: formatValor(prod.valorUtilizado),
-                    unidade: unidadeMedidaMap[produtoSelecionado.unidadeMedida], // Set the unit of measure
-                    precoPorcao: formatValor(produtoSelecionado.valorPorcao) // Set the portion value
+                    unidade: unidadeMedidaMap[produtoSelecionado.unidadeMedida],
+                    precoPorcao: formatValor(produtoSelecionado.valorPorcao)
                 };
             });
             setProdutosAdicionados(produtosAdicionados);
         } else {
-            setProdutosAdicionados([]); // Reset if produtos is not valid
+            setProdutosAdicionados([]);
         }
-
+    
         setEditar(true);
     };
     const handleCriarPrato = () => setCriarPrato(true);
@@ -328,9 +325,71 @@ const FichaTecnica = () => {
         }
     };
 
+    const handleSalvar = async () => {
+        if (!nomePrato) {
+            CustomToast({ type: "error", message: "Informe o nome do prato!" });
+            return;
+        }
+    
+        if (produtosAdicionados.length === 0) {
+            CustomToast({ type: "error", message: "Adicione pelo menos um produto!" });
+            return;
+        }
+    
+        if (!valorVenda) {
+            CustomToast({ type: "error", message: "Informe o valor de venda!" });
+            return;
+        }
+    
+        const pratoAtualizado = {
+            prato: {
+                nome: nomePrato,
+                custoTotal: custoTotal,
+                qtdRendimento: parseFloat(rendimento) || 0,
+                valorRendimento: valorRendimento,
+                valorVenda: parseFloat(valorVenda.replace('R$', '').replace('.', '').replace(',', '.')),
+                cmvReal: cmvReal,
+                lucroReal: lucroReal,
+            },
+            produtos: produtosAdicionados.map(produto => {
+                const produtoSelecionado = produtos.find(p => p.nome === produto.nome);
+                if (!produtoSelecionado) {
+                    CustomToast({ type: "error", message: "Produto selecionado não é válido!" });
+                    return null; // Retorna null se o produto não for encontrado
+                }
+                return {
+                    qtdUtilizado: parseFloat(produto.quantidade),
+                    valorUtilizado: parseFloat(produto.valorUtilizado.replace('R$', '').replace('.', '').replace(',', '.')),
+                    produtoId: produtoSelecionado.id, // Certifique-se de que isso está sendo passado
+                };
+            }).filter(Boolean), // Filtra os produtos que não são válidos
+        };
+    
+        try {
+            const response = await api.put(`/ficha/${pratoId}`, pratoAtualizado); // Envia a requisição PUT
+            CustomToast({ type: "success", message: "Prato atualizado com sucesso!" });
+            handleFecharEditar(true);
+            fetchProdutosDaFicha();
+
+    
+            // Resetar estados após a atualização
+            setProdutosAdicionados([]);
+            setNomePrato('');
+            setValorVenda('');
+            setCustoTotal(0);
+            setLucroReal(0);
+            setCmvReal(0);
+            setRendimento('');
+            handleFecharPrato();
+        } catch (error) {
+            CustomToast({ type: "error", message: "Erro ao atualizar prato!" });
+        }
+    };
+
     useEffect(() => {
         if (unidadeId) {
             fetchProdutos();
+            fetchProdutosDaFicha();
             fetchProdutosDaFicha();
         }
     }, [unidadeId]);
@@ -923,13 +982,13 @@ const FichaTecnica = () => {
                                 </div>
                             </div>
                             <div className='w-full flex items-end justify-end mt-2'>
-                                <ButtonComponent
-                                    startIcon={<Save fontSize='small' />}
-                                    title={'Cadastrar'}
-                                    subtitle={'Cadastrar'}
-                                    buttonSize="large"
-                                    onClick={handleCadastrar}
-                                />
+                            <ButtonComponent
+    startIcon={<Save fontSize='small' />}
+    title={'Salvar'}
+    subtitle={'Salvar'}
+    buttonSize="large"
+    onClick={handleSalvar} // Chama a função de salvar
+/>
                             </div>
                         </div>
                     </div>
