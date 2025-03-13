@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, Box, Typography, Button, Grow } from "@mui/material";
+import { Modal, Box, Typography, Grow } from "@mui/material";
 import Lines from "../lines";
 
 import Label from "../label";
@@ -22,8 +22,8 @@ const CentralModal = ({ open, onClose, bottom, title, children, icon, width, top
                 <Box
                     sx={{
                         position: "absolute",
-                        top: { xs: '10%', sm: '20%', lg:top, },
-                        left: { xs: '5%', sm: '15%', lg:left, }, 
+                        top: { xs: '10%', sm: '20%', md:'15%', lg: top || '15%' },
+                        left: { xs: '5%', sm: '15%', md:'15%', lg: left ||  '20%' },
                         bottom: { bottom },
                         maxHeight: maxHeight,
                         overflowY: 'auto',

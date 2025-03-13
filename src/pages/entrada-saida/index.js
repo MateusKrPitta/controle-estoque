@@ -341,8 +341,8 @@ const EntradaSaida = () => {
         <CentralModal
           tamanhoTitulo={'81%'}
           maxHeight={'90vh'}
-          top={'20%'}
-          left={'5%'}
+          top={'28%'}
+          left={'28%'}
           width={'400px'}
           icon={<AddCircleOutline fontSize="small" />}
           open={cadastro}

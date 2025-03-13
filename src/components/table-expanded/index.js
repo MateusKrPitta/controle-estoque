@@ -5,9 +5,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import EditIcon from '@mui/icons-material/Edit'; // Importar o ícone de edição
 import { formatValor } from '../../utils/functions';
-
-import DeleteIcon from '@mui/icons-material/Delete'; // Importar o ícone de exclusão
-
+import DeleteIcon from '@mui/icons-material/Delete';
 const TabelaProdutos = ({ pratos, onEditClick, onDeleteClick }) => {
     const [openRow, setOpenRow] = React.useState(null);
 
@@ -31,7 +29,7 @@ const TabelaProdutos = ({ pratos, onEditClick, onDeleteClick }) => {
                         <TableCell style={{ textAlign: 'center' }}>Valor Venda</TableCell>
                         <TableCell style={{ textAlign: 'center' }}>CMV Real</TableCell>
                         <TableCell style={{ textAlign: 'center' }}>Lucro Real</TableCell>
-                        <TableCell style={{ textAlign: 'center' }}>Ações</TableCell> {/* Coluna para ações */}
+                        <TableCell style={{ textAlign: 'center' }}>Ações</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -56,7 +54,10 @@ const TabelaProdutos = ({ pratos, onEditClick, onDeleteClick }) => {
                                     <IconButton onClick={() => onEditClick(prato)}>
                                         <EditIcon />
                                     </IconButton>
-                                    <IconButton onClick={() => onDeleteClick(prato.id)} color="error">
+                                    <IconButton
+                                        onClick={() => onDeleteClick(prato.id)}
+                                        style={{ color: '#ff4444' }} // Cor vermelha para o ícone de deletar
+                                    >
                                         <DeleteIcon />
                                     </IconButton>
                                 </TableCell>
@@ -105,7 +106,6 @@ const TabelaProdutos = ({ pratos, onEditClick, onDeleteClick }) => {
 TabelaProdutos.propTypes = {
     pratos: PropTypes.array.isRequired,
     onEditClick: PropTypes.func.isRequired,
-    onDeleteClick: PropTypes.func.isRequired, // Adicione esta linha
 };
 
 export default TabelaProdutos;

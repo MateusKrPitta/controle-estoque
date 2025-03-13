@@ -84,7 +84,7 @@ const HeaderPerfil = () => {
           style={{ backgroundColor: '#BCDA72' }}
         >
           <div className="w-[100%] items-star flex flex-wrap gap-4 p-2">
-            <div className="w-[53%] p-2 bg-white rounded-md"> 
+            <div className="w-[53%] p-2 bg-white rounded-md flex justify-center"> 
               <SelectTextFields
                 width={'150px'}
                 icon={<LocationOnIcon fontSize="small" />}
