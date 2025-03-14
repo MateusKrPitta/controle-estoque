@@ -13,14 +13,15 @@ import CustomToast from '../../components/toast/index.js';
 import { headerCmv2 } from '../../entities/headers/header-cmv2.js';
 import Logo from '../../assets/png/logo_preta.png'
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
+import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import NumbersIcon from '@mui/icons-material/Numbers';
 import { IconButton, InputAdornment, TextField } from '@mui/material';
-import { CircleRounded, Edit, Print, ProductionQuantityLimits, Save } from '@mui/icons-material';
+import { Edit, Print, ProductionQuantityLimits, Save } from '@mui/icons-material';
 import PercentIcon from '@mui/icons-material/Percent';
 import TopicIcon from '@mui/icons-material/Topic';
 import { NumericFormat } from 'react-number-format';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SelectTextFields from '../../components/select/index.js';
 
 const CMV = () => {
@@ -31,11 +32,9 @@ const CMV = () => {
   const [cadastro, setCadastro] = useState(false);
   const [editar, setEditar] = useState(false);
   const [cmvId, setCmvId] = useState(null);
-  const [categorias, setCategorias] = useState([]);
   const [nome, setNome] = useState('');
   const [produtoSelecionado, setProdutoSelecionado] = useState('');
   const [lista, setLista] = useState([]);
-  const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [faturamento, setFaturamento] = useState('');
   const [produtosOriginais, setProdutosOriginais] = useState([]);
@@ -347,6 +346,49 @@ const CMV = () => {
     }
   };
 
+  const handlePasteData = async () => {
+    try {
+      // Obtém os dados da área de transferência
+      const text = await navigator.clipboard.readText();
+      
+      // Divide os dados em linhas e converte para números
+      const pastedValues = text.split('\n').map(value => parseFloat(value)).filter(value => !isNaN(value));
+  
+      // Atualiza os produtos com os valores colados na coluna "estoque final"
+      const updatedProducts = produtos.map((produto, index) => {
+        if (pastedValues[index] !== undefined) {
+          return {
+            ...produto,
+            estoqueFinal: pastedValues[index], // Preenche o estoque final com o valor colado
+          };
+        }
+        return produto;
+      });
+  
+      setProdutos(updatedProducts);
+      calculateTotals(updatedProducts); // Recalcula os totais após a atualização
+      CustomToast({ type: "success", message: "Dados colados com sucesso!" });
+    } catch (err) {
+      console.error('Erro ao colar os dados: ', err);
+      CustomToast({ type: "error", message: "Erro ao colar os dados." });
+    }
+  };
+
+  const handleCopyData = () => {
+    // Extrair os valores da coluna "estoque final"
+    const estoqueFinalValues = produtos.map(produto => produto.estoqueFinal).join('\n');
+  
+    // Copiar os valores para a área de transferência
+    navigator.clipboard.writeText(estoqueFinalValues)
+      .then(() => {
+        CustomToast({ type: "success", message: "Dados copiados com sucesso!" });
+      })
+      .catch(err => {
+        console.error('Erro ao copiar os dados: ', err);
+        CustomToast({ type: "error", message: "Erro ao copiar os dados." });
+      });
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
@@ -620,6 +662,20 @@ const CMV = () => {
                 }}
                 autoComplete="off"
               />
+               <IconButton title="Colar Dados"
+                 onClick={handlePasteData}
+                    className='view-button w-10 h-10 '
+                    sx={{
+                      color: 'black',
+                      border: '1px solid black',
+                      '&:hover': {
+                        color: '#fff',
+                        backgroundColor: '#BCDA72',
+                        border: '1px solid black'
+                      }
+                    }} >
+                    <ContentPasteGoIcon fontSize={"small"} />
+                  </IconButton>
 
               <div className=' w-[70%] md:w-[28%] lg:ml-[150px] flex justify-end'>
                 <div className='w-[100%] sm:ml-0 md:w-[100%] lg:w-[60%] lg:first-letter: p-5 ' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
@@ -849,6 +905,20 @@ const CMV = () => {
                       }
                     }} >
                     <Print fontSize={"small"} />
+                  </IconButton>
+                  <IconButton title="Copiar Dados"
+                   onClick={handleCopyData} 
+                    className='view-button w-10 h-10 '
+                    sx={{
+                      color: 'black',
+                      border: '1px solid black',
+                      '&:hover': {
+                        color: '#fff',
+                        backgroundColor: '#BCDA72',
+                        border: '1px solid black'
+                      }
+                    }} >
+                    <ContentCopyIcon fontSize={"small"} />
                   </IconButton>
 
                 </div>
