@@ -20,8 +20,9 @@ import { useNavigate } from 'react-router-dom';
 import { useUnidade } from '../../components/unidade-context/index.js';
 import TableLoading from '../../components/loading/loading-table/loading.js';
 import moment from 'moment';
+import Logo from '../../assets/png/logo_preta.png';
 
-import { AddCircleOutline, Save, DateRange } from '@mui/icons-material';
+import { AddCircleOutline, Save, DateRange, Print } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
 import ScaleIcon from '@mui/icons-material/Scale';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
@@ -101,12 +102,79 @@ const EntradaSaida = () => {
 
 
       fetchEntradasSaidas();
-    }  catch (error) {
+    } catch (error) {
       const errorMessage = error.response?.data?.errors || "Erro ao cadastrar registro!";
       CustomToast({ type: "error", message: errorMessage });
     } finally {
       setDesativa(false);
     }
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+
+    const tableRows = filteredEntradasSaidas.map(registro => `
+      <tr>
+        <td>${registro.produtoNome}</td>
+        <td>${registro.quantidade}</td>
+        <td>${formatValor(registro.precoPorcao)}</td>
+        <td>${formatValor(registro.valorTotal)}</td>
+        <td>${registro.categoria}</td>
+        <td>${registro.dataCadastro}</td>
+      </tr>
+    `).join('');
+  
+    const tableHTML = `
+      <html>
+        <head>
+          <title>Imprimir Produtos</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 20px; 
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+            }
+            th, td { 
+              border: 1px solid #000; 
+              padding: 8px; 
+              text-align: left; 
+            }
+            th { 
+              background-color: #f2f2f2; 
+            }
+          </style>
+        </head>
+        <body>
+          <img src="${Logo}" alt="Logo" />
+          <h3>Lista de Produtos</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Quantidade</th>
+                <th>Preço por Porção</th>
+                <th>Valor Total</th>
+                <th>Categoria</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+  
+    printWindow.document.write(tableHTML);
+    printWindow.document.close();
+  
+    setTimeout(() => {
+      printWindow.print();
+    }, 1000);
   };
 
   const valorTotalEntradas = entradasSaidas
@@ -172,7 +240,7 @@ const EntradaSaida = () => {
           precoPorcao: mov.precoPorcao,
           valorTotal: valorTotal,
           observacao: mov.observacao,
-          dataCadastro: moment(mov.data).format('DD/MM/YYYY'),
+          dataCadastro: moment(mov.data).format('DD/MM/YYYY'), // Remova .utc().local()
           dataISO: mov.data
         };
       });
@@ -205,7 +273,7 @@ const EntradaSaida = () => {
       const matchesDataInicial = dataInicialMoment ? registroDataMoment.isSameOrAfter(dataInicialMoment) : true;
       const matchesDataFinal = dataFinalMoment ? registroDataMoment.isSameOrBefore(dataFinalMoment) : true;
       const matchesCategoria = selectedCategoria ? registro.categoria === selectedCategoria : true;
-      const matchesTipo = selectedTipos.length > 0 ? selectedTipos.includes(registro.tipo) : true; 
+      const matchesTipo = selectedTipos.length > 0 ? selectedTipos.includes(registro.tipo) : true;
 
       return matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
     });
@@ -317,6 +385,20 @@ const EntradaSaida = () => {
                 }
               }} >
               <FilterAltIcon fontSize={"small"} />
+            </IconButton>
+            <IconButton title="Imprimir"
+              onClick={handlePrint}
+              className='view-button w-10 h-10 '
+              sx={{
+                color: 'black',
+                border: '1px solid black',
+                '&:hover': {
+                  color: '#fff',
+                  backgroundColor: '#BCDA72',
+                  border: '1px solid black'
+                }
+              }} >
+              <Print fontSize={"small"} />
             </IconButton>
           </div>
           <div className="w-[100%]">
@@ -503,7 +585,7 @@ const EntradaSaida = () => {
                 ]}
                 onChange={(e) => setSelectedTipos(e.target.value)}
                 value={selectedTipos}
-                multiple 
+                multiple
               />
             </div>
             <div className='w-[95%] mt-2 flex items-end justify-end'>

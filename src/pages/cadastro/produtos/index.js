@@ -19,8 +19,9 @@ import TableComponent from '../../../components/table/index.js';
 import MenuMobile from '../../../components/menu-mobile/index.js';
 import { headerProdutos } from '../../../entities/headers/header-produtos.js';
 import moment from 'moment';
+import Logo from '../../../assets/png/logo_preta.png';
 
-import { AddCircleOutline, DateRange, Edit, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
+import { AddCircleOutline, DateRange, Edit, Print, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
 import { IconButton, InputAdornment, TextField, } from '@mui/material';
 import AddchartIcon from '@mui/icons-material/Addchart';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -45,6 +46,7 @@ const Produtos = () => {
     const [loading, setLoading] = useState(false);
     const [produtoEditado, setProdutoEditado] = useState(null);
     const [isVisible, setIsVisible] = useState(false);
+    const [logoLoaded, setLogoLoaded] = useState(false);
 
     const [quantidadeTotal, setQuantidadeTotal] = useState('');
     const [nome, setNome] = useState('');
@@ -55,6 +57,7 @@ const Produtos = () => {
     const [preco, setPreco] = useState('');
     const [filtroNome, setFiltroNome] = useState('');
     const [filtroDataInicial, setFiltroDataInicial] = useState('');
+
     const [filtroDataFinal, setFiltroDataFinal] = useState('');
     const [valorReajuste, setValorReajuste] = useState('');
     const [dataReajuste, setDataReajuste] = useState('');
@@ -106,7 +109,10 @@ const Produtos = () => {
         setIsSubmitting(true);
 
         const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
-        const precoNumerico = preco ? parseFloat(preco.replace(",", ".").replace("R$ ", "")) : 0;
+        let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", ".")) / 100; // Adjusting for decimal
+        if (isNaN(precoNumerico)) {
+            precoNumerico = 0;
+        }
         const rendimentoNumerico = parseFloat(rendimento) || 0;
         const qtdMinNumerica = parseFloat(qtdMin) || 0;
         const novoProduto = {
@@ -194,15 +200,12 @@ const Produtos = () => {
             CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
         }
     };
+
     const handleDeleteProduto = async (produtoId) => {
         try {
-
             await api.delete(`/produto/${produtoId}`);
-            const produtosAtualizados = produtos.filter((produto) => produto.id !== produtoId);
-            setProdutos(produtosAtualizados);
-
+            await carregaProdutos(unidadeId);
             CustomToast({ type: "success", message: "Produto deletado com sucesso!" });
-            carregaProdutos();
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao deletar produto!" });
         }
@@ -226,24 +229,9 @@ const Produtos = () => {
             return;
         }
 
-        let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", "."));
+        let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", ".")) / 100; // Adjusting for decimal
         if (isNaN(precoNumerico)) {
             precoNumerico = 0;
-        }
-
-        const dataReajusteFormatada = dataReajuste ? new Date(dataReajuste).toISOString().split('T')[0] : '';
-
-        if (!dataReajusteFormatada) {
-            CustomToast({ type: "error", message: "Data de reajuste é inválida!" });
-            return;
-        }
-
-        let valorReajusteNumerico = 0;
-        if (valorReajuste) {
-            valorReajusteNumerico = parseFloat(valorReajuste.replace("R$ ", "").replace(/\./g, "").replace(",", "."));
-            if (isNaN(valorReajusteNumerico)) {
-                valorReajusteNumerico = 0;
-            }
         }
 
         const produtoAtualizado = {
@@ -252,8 +240,6 @@ const Produtos = () => {
             quantidade: parseFloat(quantidadeTotal) || 0,
             rendimento: parseFloat(rendimento) || 0,
             valor: precoNumerico,
-            dataReajuste: dataReajusteFormatada,
-            valorReajuste: valorReajusteNumerico,
             unidadeMedida: selectedUnidade,
             unidadeId,
             categoriaId: selectedCategoria,
@@ -269,7 +255,6 @@ const Produtos = () => {
             CustomToast({ type: "error", message: "Erro ao atualizar produto!" });
         }
     };
-
     const carregaCategorias = async (unidadeId) => {
         if (!unidadeId) {
             console.error('unidadeId não está definido');
@@ -288,6 +273,71 @@ const Produtos = () => {
             CustomToast({ type: "error", message: "Erro ao carregar categorias!" });
         }
     };
+
+    const handlePrint = () => {
+        const printWindow = window.open('', '_blank');
+        const tableHTML = `
+            <html>
+                <head>
+                    <title>Imprimir Produtos</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 20px; 
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                        }
+                        th, td { 
+                            border: 1px solid #000; 
+                            padding: 8px; 
+                            text-align: left; 
+                        }
+                        th { 
+                            background-color: #f2f2f2; 
+                        }
+                    </style>
+                </head>
+                <body>
+                    <img src="${Logo}" alt="Logo" />
+                    <h3>Lista de Produtos</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Quantidade Mínima</th>
+                                <th>Rendimento</th>
+                                <th>Preço</th>
+                                <th>Categoria</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${produtos.map(produto => `
+                                <tr>
+                                    <td>${produto.nome}</td>
+                                    <td>${produto.qtdMin}</td>
+                                    <td>${produto.rendimento}</td>
+                                    <td>${produto.valor}</td>
+                                    <td>${produto.categoriaNome}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </body>
+            </html>
+        `;
+        
+        printWindow.document.write(tableHTML);
+        printWindow.document.close();
+    
+        // Atrasar a impressão para garantir que a logo esteja carregada
+        setTimeout(() => {
+            printWindow.print();
+        }, 1000); // Ajuste o tempo conforme necessário
+    };
+
+
 
     useEffect(() => {
         if (unidadeId) {
@@ -385,6 +435,20 @@ const Produtos = () => {
                                         }
                                     }} >
                                     <FilterAltIcon fontSize={"small"} />
+                                </IconButton>
+                                <IconButton title="Imprimir"
+                                    onClick={handlePrint}
+                                    className='view-button w-10 h-10 '
+                                    sx={{
+                                        color: 'black',
+                                        border: '1px solid black',
+                                        '&:hover': {
+                                            color: '#fff',
+                                            backgroundColor: '#BCDA72',
+                                            border: '1px solid black'
+                                        }
+                                    }} >
+                                    <Print fontSize={"small"} />
                                 </IconButton>
                             </div>
 
@@ -514,7 +578,7 @@ const Produtos = () => {
                                             backgroundColor={"#D9D9D9"}
                                             name={"categoria"}
                                             fontWeight={500}
-                                            options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))} 
+                                            options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
                                             onChange={(e) => setSelectedCategoria(e.target.value)}
                                             value={selectedCategoria}
                                         />
@@ -593,7 +657,10 @@ const Produtos = () => {
                                             label="Preço"
                                             sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '50%' }, }}
                                             value={preco}
-                                            onValueChange={(values) => setPreco(values.value)}
+                                            onValueChange={(values) => {
+                                                // Aqui você pode usar o valor formatado diretamente
+                                                setPreco(values.value);
+                                            }}
                                             thousandSeparator="."
                                             decimalSeparator=","
                                             prefix="R$ "

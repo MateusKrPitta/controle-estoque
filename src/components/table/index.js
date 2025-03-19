@@ -131,18 +131,18 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                 </IconButton>
             ),
             inactivate: (
-                <IconButton onClick={() => actionCalls.inactivate(row)} title={row.isActive ? "Inativar Registro" : "Reativar Registro"}
+                <IconButton onClick={() => actionCalls.inactivate(row)} title={row.isAtivo ? "Inativar Registro" : "Reativar Registro"}
                     className='inactivate-button'
                     sx={{
-                        color: row.isActive ? '#ff9800' : '#4caf50', // Cor para inativar e reativar
-                        border: `1px solid ${row.isActive ? '#ff9800' : '#4caf50'}`,
+                        color: row.isAtivo ? '#ff9800' : '#4caf50', // Cor para inativar e reativar
+                        border: `1px solid ${row.isAtivo ? '#ff9800' : '#4caf50'}`,
                         '&:hover': {
                             color: '#fff',
-                            backgroundColor: row.isActive ? '#ff9800' : '#4caf50',
-                            border: `1px solid ${row.isActive ? '#e68a00' : '#388e3c'}`
+                            backgroundColor: row.isAtivo ? '#ff9800' : '#4caf50',
+                            border: `1px solid ${row.isAtivo ? '#e68a00' : '#388e3c'}`
                         }
                     }} >
-                    {row.isActive ? <BlockOutlinedIcon fontSize={"small"} /> : <CheckCircleOutlineIcon fontSize={"small"} />}
+                    {row.isAtivo ? <BlockOutlinedIcon fontSize={"small"} /> : <CheckCircleOutlineIcon fontSize={"small"} />}
                 </IconButton>
             ),
             print: (

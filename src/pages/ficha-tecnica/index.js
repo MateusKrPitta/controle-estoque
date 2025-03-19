@@ -93,12 +93,20 @@ const FichaTecnica = () => {
     }, [produtosAdicionados]);
 
     useEffect(() => {
-        const valorVendaNumerico = parseFloat(valorVenda.replace('R$', '').replace(',', '.'));
-        if (!isNaN(valorVendaNumerico)) {
+        const valorVendaNumerico = parseFloat(valorVenda.replace('R$', '').replace('.', '').replace(',', '.'));
+        if (!isNaN(valorVendaNumerico) && custoTotal) {
             const lucro = valorVendaNumerico - custoTotal;
             setLucroReal(lucro);
+
+            if (valorVendaNumerico > 0) {
+                const cmvCalculado = (custoTotal / valorVendaNumerico) * 100;
+                setCmvReal(cmvCalculado);
+            } else {
+                setCmvReal(0);
+            }
         } else {
             setLucroReal(0);
+            setCmvReal(0);
         }
     }, [valorVenda, custoTotal]);
 
@@ -185,12 +193,15 @@ const FichaTecnica = () => {
             return;
         }
 
+        const valorCalculado = parseFloat(quantidade) * parseFloat(precoPorcao.replace('R$', '').replace('.', '').replace(',', '.'));
+        console.log("Valor Calculado:", valorCalculado);
+
         const novoProduto = {
             nome: produtoSelecionado.nome,
             unidade,
             quantidade,
             precoPorcao,
-            valorUtilizado,
+            valorUtilizado: formatValor(valorCalculado),
         };
         setProdutosAdicionados([...produtosAdicionados, novoProduto]);
         setQuantidade('');
@@ -244,8 +255,8 @@ const FichaTecnica = () => {
                     qtdUtilizado: parseFloat(produto.quantidade),
                     valorUtilizado: parseFloat(produto.valorUtilizado.replace('R$', '').replace('.', '').replace(',', '.')),
                     produtoId: produtoSelecionado.id,
-                    unidade: produto.unidade, 
-                    precoPorcao: produto.precoPorcao 
+                    unidade: produto.unidade,
+                    precoPorcao: produto.precoPorcao
                 };
             }).filter(Boolean),
         };
@@ -273,7 +284,7 @@ const FichaTecnica = () => {
     const handleEditar = (prato) => {
         if (!prato || prato.id === 0) {
             CustomToast({ type: "error", message: "Prato não encontrado!" });
-            return; 
+            return;
         }
 
         setPratoId(prato.id);
@@ -354,18 +365,18 @@ const FichaTecnica = () => {
                 const produtoSelecionado = produtos.find(p => p.nome === produto.nome);
                 if (!produtoSelecionado) {
                     CustomToast({ type: "error", message: "Produto selecionado não é válido!" });
-                    return null; 
+                    return null;
                 }
                 return {
                     qtdUtilizado: parseFloat(produto.quantidade),
                     valorUtilizado: parseFloat(produto.valorUtilizado.replace('R$', '').replace('.', '').replace(',', '.')),
                     produtoId: produtoSelecionado.id,
                 };
-            }).filter(Boolean), 
+            }).filter(Boolean),
         };
 
         try {
-            const response = await api.put(`/ficha/${pratoId}`, pratoAtualizado); 
+            const response = await api.put(`/ficha/${pratoId}`, pratoAtualizado);
             CustomToast({ type: "success", message: "Prato atualizado com sucesso!" });
             handleFecharEditar(true);
             fetchProdutosDaFicha();
@@ -386,7 +397,7 @@ const FichaTecnica = () => {
             const response = await api.delete(`/ficha/${id}`);
             if (response.status === 200) {
                 CustomToast({ type: "success", message: "Prato deletado com sucesso!" });
-                fetchProdutosDaFicha(); 
+                fetchProdutosDaFicha();
             }
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao deletar prato!" });
@@ -676,7 +687,8 @@ const FichaTecnica = () => {
                                                     const { formattedValue, value } = values;
                                                     setValorVenda(formattedValue);
                                                 }}
-                                                thousandSeparator={true}
+                                                thousandSeparator="."
+                                                decimalSeparator=","
                                                 decimalScale={2}
                                                 fixedDecimalScale={true}
                                                 prefix={'R$ '}
@@ -693,7 +705,7 @@ const FichaTecnica = () => {
                                         <div className='flex items-center w-full '>
                                             <label className='text-xs font-bold w-[60%]'>CMV Real: </label>
                                             <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
-                                                {formatCmvReal(cmvReal)}
+                                            {cmvReal.toFixed(2)}%
                                             </label>
                                         </div>
                                         <div className='flex items-center w-full '>
@@ -960,29 +972,30 @@ const FichaTecnica = () => {
                                     <div className='flex items-center w-full '>
                                         <label className='text-xs font-bold w-[60%]'>Valor Venda: </label>
                                         <NumericFormat
-                                            value={valorVenda}
-                                            onValueChange={(values) => {
-                                                const { formattedValue, value } = values;
-                                                setValorVenda(formattedValue);
-                                            }}
-                                            thousandSeparator={true}
-                                            decimalScale={2}
-                                            fixedDecimalScale={true}
-                                            prefix={'R$ '}
-                                            className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start'
-                                            style={{
-                                                backgroundColor: '#BCDA72',
-                                                borderRadius: '10px',
-                                                border: '1px solid #ccc',
-                                                outline: 'none',
-                                                padding: '5px',
-                                            }}
-                                        />
+                                                value={valorVenda}
+                                                onValueChange={(values) => {
+                                                    const { formattedValue, value } = values;
+                                                    setValorVenda(formattedValue);
+                                                }}
+                                                thousandSeparator="."
+                                                decimalSeparator=","
+                                                decimalScale={2}
+                                                fixedDecimalScale={true}
+                                                prefix={'R$ '}
+                                                className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start'
+                                                style={{
+                                                    backgroundColor: '#BCDA72',
+                                                    borderRadius: '10px',
+                                                    border: '1px solid #ccc',
+                                                    outline: 'none',
+                                                    padding: '5px',
+                                                }}
+                                            />
                                     </div>
                                     <div className='flex items-center w-full '>
                                         <label className='text-xs font-bold w-[60%]'>CMV Real: </label>
                                         <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
-                                            {formatCmvReal(cmvReal)}
+                                        {cmvReal.toFixed(2)}%
                                         </label>
                                     </div>
                                     <div className='flex items-center w-full '>

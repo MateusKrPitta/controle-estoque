@@ -348,25 +348,20 @@ const CMV = () => {
 
   const handlePasteData = async () => {
     try {
-      // Obtém os dados da área de transferência
       const text = await navigator.clipboard.readText();
-      
-      // Divide os dados em linhas e converte para números
       const pastedValues = text.split('\n').map(value => parseFloat(value)).filter(value => !isNaN(value));
-  
-      // Atualiza os produtos com os valores colados na coluna "estoque final"
       const updatedProducts = produtos.map((produto, index) => {
         if (pastedValues[index] !== undefined) {
           return {
             ...produto,
-            estoqueFinal: pastedValues[index], // Preenche o estoque final com o valor colado
+            estoqueInicial: pastedValues[index], 
           };
         }
         return produto;
       });
-  
+
       setProdutos(updatedProducts);
-      calculateTotals(updatedProducts); // Recalcula os totais após a atualização
+      calculateTotals(updatedProducts);
       CustomToast({ type: "success", message: "Dados colados com sucesso!" });
     } catch (err) {
       console.error('Erro ao colar os dados: ', err);
@@ -375,10 +370,7 @@ const CMV = () => {
   };
 
   const handleCopyData = () => {
-    // Extrair os valores da coluna "estoque final"
     const estoqueFinalValues = produtos.map(produto => produto.estoqueFinal).join('\n');
-  
-    // Copiar os valores para a área de transferência
     navigator.clipboard.writeText(estoqueFinalValues)
       .then(() => {
         CustomToast({ type: "success", message: "Dados copiados com sucesso!" });
@@ -662,20 +654,20 @@ const CMV = () => {
                 }}
                 autoComplete="off"
               />
-               <IconButton title="Colar Dados"
-                 onClick={handlePasteData}
-                    className='view-button w-10 h-10 '
-                    sx={{
-                      color: 'black',
-                      border: '1px solid black',
-                      '&:hover': {
-                        color: '#fff',
-                        backgroundColor: '#BCDA72',
-                        border: '1px solid black'
-                      }
-                    }} >
-                    <ContentPasteGoIcon fontSize={"small"} />
-                  </IconButton>
+              <IconButton title="Colar Dados"
+                onClick={handlePasteData}
+                className='view-button w-10 h-10 '
+                sx={{
+                  color: 'black',
+                  border: '1px solid black',
+                  '&:hover': {
+                    color: '#fff',
+                    backgroundColor: '#BCDA72',
+                    border: '1px solid black'
+                  }
+                }} >
+                <ContentPasteGoIcon fontSize={"small"} />
+              </IconButton>
 
               <div className=' w-[70%] md:w-[28%] lg:ml-[150px] flex justify-end'>
                 <div className='w-[100%] sm:ml-0 md:w-[100%] lg:w-[60%] lg:first-letter: p-5 ' style={{ backgroundColor: '#BCDA72', borderTopLeftRadius: '10px', borderTopRightRadius: '10px' }}>
@@ -907,7 +899,7 @@ const CMV = () => {
                     <Print fontSize={"small"} />
                   </IconButton>
                   <IconButton title="Copiar Dados"
-                   onClick={handleCopyData} 
+                    onClick={handleCopyData}
                     className='view-button w-10 h-10 '
                     sx={{
                       color: 'black',

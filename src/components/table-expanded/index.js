@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Collapse, Box, Typography } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import EditIcon from '@mui/icons-material/Edit'; // Importar o ícone de edição
+import EditIcon from '@mui/icons-material/Edit'; 
 import { formatValor } from '../../utils/functions';
 import DeleteIcon from '@mui/icons-material/Delete';
 const TabelaProdutos = ({ pratos, onEditClick, onDeleteClick }) => {
@@ -13,7 +13,6 @@ const TabelaProdutos = ({ pratos, onEditClick, onDeleteClick }) => {
         setOpenRow(openRow === index ? null : index);
     };
 
-    // Verifica se pratos é um array antes de mapear
     if (!Array.isArray(pratos)) {
         return <div>Nenhum dado disponível.</div>;
     }
@@ -48,7 +47,7 @@ const TabelaProdutos = ({ pratos, onEditClick, onDeleteClick }) => {
                                 <TableCell>{prato.nome}</TableCell>
                                 <TableCell style={{ backgroundColor: '#B0D847', borderRadius: '5px', textAlign: 'center', fontWeight: 700 }}>{formatValor(prato.custoTotal)}</TableCell>
                                 <TableCell style={{ borderRadius: '5px', textAlign: 'center', fontWeight: 700 }}>{formatValor(prato.valorVenda)}</TableCell>
-                                <TableCell style={{ backgroundColor: '#B0D847', borderRadius: '5px', textAlign: 'center', fontWeight: 700 }}>{formatValor(prato.cmvReal)}</TableCell>
+                                <TableCell style={{ backgroundColor: '#B0D847', borderRadius: '5px', textAlign: 'center', fontWeight: 700 }}>{prato.cmvReal.toFixed(2)}%</TableCell>
                                 <TableCell style={{ borderRadius: '5px', textAlign: 'center', fontWeight: 700 }}>{formatValor(prato.lucroReal)}</TableCell>
                                 <TableCell style={{ textAlign: 'center' }}>
                                     <IconButton onClick={() => onEditClick(prato)}>
@@ -56,7 +55,7 @@ const TabelaProdutos = ({ pratos, onEditClick, onDeleteClick }) => {
                                     </IconButton>
                                     <IconButton
                                         onClick={() => onDeleteClick(prato.id)}
-                                        style={{ color: '#ff4444' }} // Cor vermelha para o ícone de deletar
+                                        style={{ color: '#ff4444' }} 
                                     >
                                         <DeleteIcon />
                                     </IconButton>

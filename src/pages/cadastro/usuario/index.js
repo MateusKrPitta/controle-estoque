@@ -302,23 +302,23 @@ const Usuario = () => {
 
   const handleInactiveUser  = async (user) => {
     try {
-      const response = await api.delete(`/usuario/${user.id}`);
-      if (response.status === 200) {
-        const updatedUsers = users.map(u => {
-          if (u.id === user.id) {
-            return { ...u, isActive: !u.isActive };
-          }
-          return u;
-        });
-        setUsers(updatedUsers);
-        return response.data.message || (user.isActive ? "Usuário inativado com sucesso!" : "Usuário reativado com sucesso!");
-      } else {
-        return "Erro ao inativar/reativar usuário!";
-      }
+        const response = await api.delete(`/usuario/${user.id}`);
+        if (response.status === 200) {
+            const updatedUsers = users.map(u => {
+                if (u.id === user.id) {
+                    return { ...u, isAtivo: !u.isAtivo }; // Alterna o estado isAtivo
+                }
+                return u;
+            });
+            setUsers(updatedUsers);
+            return response.data.message || (user.isAtivo ? "Usuário inativado com sucesso!" : "Usuário reativado com sucesso!");
+        } else {
+            return "Erro ao inativar/reativar usuário!";
+        }
     } catch (error) {
-      return error.response?.data?.message || "Erro ao inativar/reativar usuário!";
+        return error.response?.data?.message || "Erro ao inativar/reativar usuário!";
     }
-  };
+};
 
   const filteredUsers = Array.isArray(users)
     ? users.filter(user =>
@@ -362,18 +362,21 @@ const Usuario = () => {
     }
   };
 
-  const rows = filteredUsers.map(user => {
-    const unidadeNames = Array.isArray(user.unidadeId) ? user.unidadeId.map(id => {
-      const unidadeObj = userOptionsUnidade.find(option => option.value === id);
-      return unidadeObj ? unidadeObj.label : "Unidade Desconhecida";
-    }) : [];
-    return {
-      ...user,
-      unidade: unidadeNames.join(", ") || "Unidade Desconhecida",
-      edit: () => handleEditUser (user),
-      delete: () => handleDeleteUser (user),
-    };
-  });
+const rows = filteredUsers.map(user => {
+  const unidadeNames = Array.isArray(user.unidadeId) ? user.unidadeId.map(id => {
+    const unidadeObj = userOptionsUnidade.find(option => option.value === id);
+    return unidadeObj ? unidadeObj.label : "Unidade Desconhecida";
+  }) : [];
+  
+  return {
+    ...user,
+    unidade: unidadeNames.join(", ") || "Unidade Desconhecida",
+    edit: () => handleEditUser (user),
+    delete: () => handleDeleteUser (user),
+    status: user.isAtivo ? "Ativado" : "Inativado", // Adiciona o status
+    toggleStatus: () => handleInactiveUser (user) // Função para alternar o status
+  };
+});
 
   useEffect(() => {
     carregarUnidades();
