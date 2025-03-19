@@ -277,7 +277,7 @@ const Produtos = () => {
         }
 
         try {
-            const response = await api.get(`/categoria?unidadeId=${unidadeId}`);
+            const response = await api.get(`/categoria?unidade=${unidadeId}`);
             if (Array.isArray(response.data.data)) {
                 const categoriasFiltradas = response.data.data.filter(categoria => categoria.unidadeId === unidadeId);
                 setCategorias(categoriasFiltradas);

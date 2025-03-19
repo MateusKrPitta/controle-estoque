@@ -49,7 +49,11 @@ const Categoria = () => {
         try {
             const response = await api.get(`/categoria?unidade=${unidadeId}`);
             if (Array.isArray(response.data.data)) {
-                setCategorias(response.data.data);
+                const categoriasComEstado = response.data.data.map(categoria => ({
+                    ...categoria,
+                    isActive: true // ou false, dependendo da lógica do seu backend
+                }));
+                setCategorias(categoriasComEstado);
             } else {
                 setCategorias([]);
             }
@@ -61,6 +65,7 @@ const Categoria = () => {
             setLoading(false);
         }
     };
+
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -219,7 +224,7 @@ const Categoria = () => {
                                     {produtosFiltrados.length === 0 ? (
                                         <div className="flex w-full flex-col items-center justify-center gap-5 h-96">
                                             <TableLoading />
-                                            <label className="text-sm">Não foi encontrado uma unidade com esse categoria!</label>
+                                            <label className="text-sm">Não foi encontrado nenhuma categoria!</label>
                                         </div>
                                     ) : (
                                         <TableComponent

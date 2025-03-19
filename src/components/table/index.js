@@ -131,18 +131,18 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                 </IconButton>
             ),
             inactivate: (
-                <IconButton onClick={() => actionCalls.inactivate(row)} title="Inativar Registro"
+                <IconButton onClick={() => actionCalls.inactivate(row)} title={row.isActive ? "Inativar Registro" : "Reativar Registro"}
                     className='inactivate-button'
                     sx={{
-                        color: '#ff9800',
-                        border: '1px solid #ff9800',
+                        color: row.isActive ? '#ff9800' : '#4caf50', // Cor para inativar e reativar
+                        border: `1px solid ${row.isActive ? '#ff9800' : '#4caf50'}`,
                         '&:hover': {
                             color: '#fff',
-                            backgroundColor: '#ff9800',
-                            border: '1px solid #e68a00'
+                            backgroundColor: row.isActive ? '#ff9800' : '#4caf50',
+                            border: `1px solid ${row.isActive ? '#e68a00' : '#388e3c'}`
                         }
                     }} >
-                    <BlockOutlinedIcon fontSize={"small"} />
+                    {row.isActive ? <BlockOutlinedIcon fontSize={"small"} /> : <CheckCircleOutlineIcon fontSize={"small"} />}
                 </IconButton>
             ),
             print: (
