@@ -71,19 +71,19 @@ const EntradaSaida = () => {
     setLimparCampos(!limparCampos);
 
     if (!limparCampos) {
-        // Limpa os campos de filtro
-        setDataInicial('');
-        setDataFinal(''); // Removido a duplicação
-        setSelectedCategoria('');
-        setSelectedTipos('');
-        
-        // Recarrega os produtos
-        fetchEntradasSaidas(unidadeId);
-        
-        // Fecha o modal de filtro
-        handleCloseFiltro();
+      // Limpa os campos de filtro
+      setDataInicial('');
+      setDataFinal(''); // Removido a duplicação
+      setSelectedCategoria('');
+      setSelectedTipos('');
+
+      // Recarrega os produtos
+      fetchEntradasSaidas(unidadeId);
+
+      // Fecha o modal de filtro
+      handleCloseFiltro();
     }
-};
+  };
 
   const handleProdutoChange = (value) => {
     const produtoSelecionado = produtos.find(prod => prod.nome === value);
@@ -95,8 +95,7 @@ const EntradaSaida = () => {
     setDesativa(true);
     const quantidadeNumerica = parseFloat(quantidade) || 0;
     const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0;
-
-
+  
     const novoRegistro = {
       data: new Date().toISOString().split('T')[0],
       movTipo: tipo === 'entrada' ? 1 : tipo === 'saida' ? 2 : 3,
@@ -104,21 +103,21 @@ const EntradaSaida = () => {
       produtoId: produtoSelecionado ? produtoSelecionado.id : null,
       observacao: observacao
     };
-
+  
+    console.log("Data do novo registro:", novoRegistro.data); // Exibe a data do novo registro
+  
     try {
       const response = await api.post('/movimentacao', novoRegistro);
-
       const updatedEntradasSaidas = [...entradasSaidas, { ...novoRegistro, valorTotal }];
       setEntradasSaidas(updatedEntradasSaidas);
-
+  
       setProduto('');
       setQuantidade('');
       setTipo('entrada');
       setProdutoSelecionado(null);
       setObservacao('');
       handleCloseCadastro();
-
-
+  
       fetchEntradasSaidas();
     } catch (error) {
       const errorMessage = error.response?.data?.errors || "Erro ao cadastrar registro!";
@@ -127,6 +126,7 @@ const EntradaSaida = () => {
       setDesativa(false);
     }
   };
+  
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
@@ -258,7 +258,7 @@ const EntradaSaida = () => {
           precoPorcao: mov.precoPorcao,
           valorTotal: valorTotal,
           observacao: mov.observacao,
-          dataCadastro: moment(mov.data).format('DD/MM/YYYY'), // Remova .utc().local()
+          dataCadastro: moment(mov.data).format('DD/MM/YYYY'),
           dataISO: mov.data
         };
       });
@@ -590,24 +590,24 @@ const EntradaSaida = () => {
                 value={selectedCategoria}
               />
               <SelectTextFields
-  width={'155px'}
-  icon={<AddchartIcon fontSize="small" />}
-  label={'Tipo'}
-  backgroundColor={"#D9D9D9"}
-  name={"tipo"}
-  fontWeight={500}
-  options={[
-    { value: 'entrada', label: 'Entrada' },
-    { value: 'saida', label: 'Saída' },
-    { value: 'desperdicio', label: 'Desperdício' },
-  ]}
-  onChange={(e) => {
-    const value = e.target.value;
-    setSelectedTipos(value); // Ensure value is an array
-  }}
-  value={selectedTipos} // This should be an array
-  multiple
-/>
+                width={'155px'}
+                icon={<AddchartIcon fontSize="small" />}
+                label={'Tipo'}
+                backgroundColor={"#D9D9D9"}
+                name={"tipo"}
+                fontWeight={500}
+                options={[
+                  { value: 'entrada', label: 'Entrada' },
+                  { value: 'saida', label: 'Saída' },
+                  { value: 'desperdicio', label: 'Desperdício' },
+                ]}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedTipos(value); // Ensure value is an array
+                }}
+                value={selectedTipos} // This should be an array
+                multiple
+              />
               <FormControlLabel
                 control={
                   <Switch

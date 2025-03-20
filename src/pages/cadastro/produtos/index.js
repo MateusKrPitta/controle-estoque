@@ -246,12 +246,12 @@ const Produtos = () => {
             CustomToast({ type: "error", message: "Preço inválido!" });
             return;
         }
-
-        let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", ".")) / 100; // Adjusting for decimal
+    
+        let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", ".")) / 100; // Ajustando para decimal
         if (isNaN(precoNumerico)) {
             precoNumerico = 0;
         }
-
+    
         const produtoAtualizado = {
             nome,
             qtdMin: parseFloat(qtdMin) || 0,
@@ -261,8 +261,9 @@ const Produtos = () => {
             unidadeMedida: selectedUnidade,
             unidadeId,
             categoriaId: selectedCategoria,
+            dataReajuste: new Date().toISOString().split('T')[0], // Define a data de reajuste como a data atual
         };
-
+    
         try {
             const response = await api.put(`/produto/${produtoEditado.id}`, produtoAtualizado);
             await carregaProdutos(unidadeId);
@@ -299,23 +300,27 @@ const Produtos = () => {
                 <head>
                     <title>Imprimir Produtos</title>
                     <style>
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            margin: 20px; 
-                        }
-                        table { 
-                            width: 100%; 
-                            border-collapse: collapse; 
-                        }
-                        th, td { 
-                            border: 1px solid #000; 
-                            padding: 8px; 
-                            text-align: left; 
-                        }
-                        th { 
-                            background-color: #f2f2f2; 
-                        }
-                    </style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 20px; 
+                    }
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                    }
+                    th, td { 
+                        border: 1px solid #000; 
+                        padding: 8px; 
+                        text-align: left; 
+                    }
+                    th { 
+                        background-color: #f2f2f2; 
+                    }
+                    /* Estilo para a coluna vazia */
+                    .coluna-vazia {
+                        width: 100px; /* Ajuste a largura conforme necessário */
+                    }
+                </style>
                 </head>
                 <body>
                     <img src="${Logo}" alt="Logo" />
@@ -324,20 +329,26 @@ const Produtos = () => {
                         <thead>
                             <tr>
                                 <th>Nome</th>
+                                 <th>Categoria</th>
                                 <th>Quantidade Mínima</th>
+                                <th>Unidade Medida</th>
                                 <th>Rendimento</th>
                                 <th>Preço</th>
                                 <th>Categoria</th>
+                               <th class="coluna-vazia">Informações</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${produtos.map(produto => `
                                 <tr>
                                     <td>${produto.nome}</td>
+                                    <td>${produto.categoriaNome}</td>
                                     <td>${produto.qtdMin}</td>
+                                    <td>${produto.unidadeMedida}</td>
                                     <td>${produto.rendimento}</td>
                                     <td>${produto.valor}</td>
                                     <td>${produto.categoriaNome}</td>
+                                    <td class="coluna-vazia"></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -715,25 +726,9 @@ const Produtos = () => {
                                                 ),
                                             }}
                                         />
-                                        <TextField
-                                            fullWidth
-                                            variant="outlined"
-                                            size="small"
-                                            label="Data Reajuste"
-                                            type='date'
-                                            value={dataReajuste}
-                                            onChange={(e) => setDataReajuste(e.target.value)}
-                                            sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '50%' } }}
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <AddchartIcon />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                        />
+                                       
                                         <SelectTextFields
-                                            width="155px"
+                                            width="330px"
                                             icon={<CategoryIcon fontSize="small" />}
                                             label="Categoria"
                                             backgroundColor="#D9D9D9"
