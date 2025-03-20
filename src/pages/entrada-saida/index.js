@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IconButton, InputAdornment, TextField } from '@mui/material';
+import { FormControlLabel, IconButton, InputAdornment, Switch, TextField } from '@mui/material';
 import AddchartIcon from '@mui/icons-material/Addchart';
 import Navbar from '../../components/navbars/header';
 import HeaderPerfil from '../../components/navbars/perfil/index.js';
@@ -45,10 +45,10 @@ const EntradaSaida = () => {
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [observacao, setObservacao] = useState('');
-  const [selectedTipo, setSelectedTipo] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTipos, setSelectedTipos] = useState([]);
   const [produto, setProduto] = useState('');
+  const [limparCampos, setLimparCampos] = useState(false);
   const [quantidade, setQuantidade] = useState('');
   const [tipo, setTipo] = useState('entrada');
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
@@ -66,6 +66,24 @@ const EntradaSaida = () => {
   const handleCloseCadastro = () => setCadastro(false);
 
   const handleCloseFiltro = () => setFiltro(false);
+
+  const handleLimparCampos = () => {
+    setLimparCampos(!limparCampos);
+
+    if (!limparCampos) {
+        // Limpa os campos de filtro
+        setDataInicial('');
+        setDataFinal(''); // Removido a duplicação
+        setSelectedCategoria('');
+        setSelectedTipos('');
+        
+        // Recarrega os produtos
+        fetchEntradasSaidas(unidadeId);
+        
+        // Fecha o modal de filtro
+        handleCloseFiltro();
+    }
+};
 
   const handleProdutoChange = (value) => {
     const produtoSelecionado = produtos.find(prod => prod.nome === value);
@@ -123,7 +141,7 @@ const EntradaSaida = () => {
         <td>${registro.dataCadastro}</td>
       </tr>
     `).join('');
-  
+
     const tableHTML = `
       <html>
         <head>
@@ -168,10 +186,10 @@ const EntradaSaida = () => {
         </body>
       </html>
     `;
-  
+
     printWindow.document.write(tableHTML);
     printWindow.document.close();
-  
+
     setTimeout(() => {
       printWindow.print();
     }, 1000);
@@ -572,20 +590,35 @@ const EntradaSaida = () => {
                 value={selectedCategoria}
               />
               <SelectTextFields
-                width={'155px'}
-                icon={<AddchartIcon fontSize="small" />}
-                label={'Tipo'}
-                backgroundColor={"#D9D9D9"}
-                name={"tipo"}
-                fontWeight={500}
-                options={[
-                  { value: 'entrada', label: 'Entrada' },
-                  { value: 'saida', label: 'Saída' },
-                  { value: 'desperdicio', label: 'Desperdício' },
-                ]}
-                onChange={(e) => setSelectedTipos(e.target.value)}
-                value={selectedTipos}
-                multiple
+  width={'155px'}
+  icon={<AddchartIcon fontSize="small" />}
+  label={'Tipo'}
+  backgroundColor={"#D9D9D9"}
+  name={"tipo"}
+  fontWeight={500}
+  options={[
+    { value: 'entrada', label: 'Entrada' },
+    { value: 'saida', label: 'Saída' },
+    { value: 'desperdicio', label: 'Desperdício' },
+  ]}
+  onChange={(e) => {
+    const value = e.target.value;
+    setSelectedTipos(value); // Ensure value is an array
+  }}
+  value={selectedTipos} // This should be an array
+  multiple
+/>
+              <FormControlLabel
+                control={
+                  <Switch
+                    style={{ marginLeft: '5px' }}
+                    size="small"
+                    checked={limparCampos}
+                    onChange={handleLimparCampos}
+                    color="primary"
+                  />
+                }
+                label="Limpar Filtro"
               />
             </div>
             <div className='w-[95%] mt-2 flex items-end justify-end'>

@@ -7,6 +7,7 @@ import SelectTextFields from '../../components/select';
 import ButtonComponent from '../../components/button';
 import { NumericFormat } from 'react-number-format';
 import ButtonClose from '../../components/buttons/button-close';
+import EqualizerIcon from '@mui/icons-material/Equalizer';
 import TabelaProdutos from '../../components/table-expanded';
 import CustomToast from '../../components/toast';
 import CentralModal from '../../components/modal-central';
@@ -30,6 +31,10 @@ export const formatValor = (valor) => {
     }).format(parsedValor);
 };
 
+export const formatarValorMoeda = (valor) => {
+    const parsedValor = parseFloat(valor);
+    return `R$ ${parsedValor.toFixed(2).replace('.', ',')}`; // Formata como moeda com vírgula
+};
 const unidadeMedidaMap = {
     1: 'Kilograma',
     2: 'Grama',
@@ -48,6 +53,7 @@ const FichaTecnica = () => {
     const [quantidade, setQuantidade] = useState('');
     const [nomePrato, setNomePrato] = useState('');
     const [unidade, setUnidade] = useState('');
+    const [tipoRendimentoSelecionado, setTipoRendimentoSelecionado] = useState('');
     const [valorUtilizado, setValorUtilizado] = useState('');
     const [isVisible, setIsVisible] = useState(false);
     const [pratoId, setPratoId] = useState(null);
@@ -65,6 +71,15 @@ const FichaTecnica = () => {
     const [pratoEmEdicao, setPratoEmEdicao] = useState(null);
     const [criarPrato, setCriarPrato] = useState(false);
     const [editar, setEditar] = useState(false);
+
+    const tipoRendimentoOptions = [
+        { label: 'Kilograma', value: 'kilograma' },
+        { label: 'Grama', value: 'grama' },
+        { label: 'Litro', value: 'litro' },
+        { label: 'Mililitro', value: 'mililitro' },
+        { label: 'Unidade', value: 'unidade' },
+    ];
+
 
 
     const handleSearch = (event) => {
@@ -90,6 +105,7 @@ const FichaTecnica = () => {
             return acc + (isNaN(valor) ? 0 : valor);
         }, 0);
         setCustoTotal(total);
+        console.log("Custo Total:", total); // Verifique o custo total aqui
     }, [produtosAdicionados]);
 
     useEffect(() => {
@@ -403,6 +419,51 @@ const FichaTecnica = () => {
             CustomToast({ type: "error", message: "Erro ao deletar prato!" });
         }
     };
+
+    useEffect(() => {
+        if (custoTotal && rendimento) {
+            const valorRendimentoCalculado = (custoTotal / parseFloat(rendimento)) * 1000;
+            setValorRendimento(valorRendimentoCalculado);
+        } else {
+            setValorRendimento(0);
+        }
+    }, [custoTotal, rendimento]);
+
+    const calcularValorRendimento = (tipo, valor) => {
+        if (!valor) return 0; // Se não houver valor, retorna 0
+
+        const valorNumerico = parseFloat(valor);
+        let resultado = 0;
+
+        switch (tipo) {
+            case 'kilograma':
+                resultado = custoTotal / valorNumerico; // Cálculo para kg
+                break;
+            case 'grama':
+                resultado = (custoTotal / valorNumerico) * 1000; // Cálculo para g (1 kg = 1000 g)
+                break;
+            case 'litro':
+                resultado = custoTotal / valorNumerico; // Cálculo para L
+                break;
+            case 'mililitro':
+                resultado = (custoTotal / valorNumerico) * 1000; // Cálculo para mL (1 L = 1000 mL)
+                break;
+            case 'unidade':
+                resultado = custoTotal * valorNumerico; // Multiplica o custo total pela quantidade de rendimento
+                break;
+            default:
+                resultado = 0;
+        }
+
+        console.log("Valor do Rendimento antes da formatação:", resultado); // Adicione aqui
+        setValorRendimento(resultado);
+    };
+
+    useEffect(() => {
+        if (tipoRendimentoSelecionado && rendimento) {
+            calcularValorRendimento(tipoRendimentoSelecionado, rendimento);
+        }
+    }, [tipoRendimentoSelecionado, rendimento, custoTotal]);
     useEffect(() => {
         if (unidadeId) {
             fetchProdutos();
@@ -654,12 +715,28 @@ const FichaTecnica = () => {
                                                 {formatValor(custoTotal)}
                                             </label>
                                         </div>
-                                        <div className='flex items-center w-full '>
-                                            <label className='text-xs font-bold w-[60%]'>Quantidade de Rendimento: </label>
+                                        <div className='flex items-center w-full gap-3 '>
+
+                                            <SelectTextFields
+                                                width={'150px'}
+                                                icon={<EqualizerIcon fontSize="small" />}
+                                                label={'Tipo de Rendimento'}
+                                                backgroundColor={"#D9D9D9"}
+                                                fontWeight={500}
+                                                options={tipoRendimentoOptions}
+                                                onChange={(e) => {
+                                                    setTipoRendimentoSelecionado(e.target.value);
+                                                    calcularValorRendimento(e.target.value, rendimento);
+                                                }}
+                                            />
+
                                             <input
                                                 type="text"
                                                 value={rendimento}
-                                                onChange={(e) => setRendimento(e.target.value)}
+                                                onChange={(e) => {
+                                                    setRendimento(e.target.value);
+                                                    calcularValorRendimento(tipoRendimentoSelecionado, e.target.value); // Recalcular quando o valor mudar
+                                                }}
                                                 style={{
                                                     backgroundColor: "#d9d9d9",
                                                     color: 'black',
@@ -672,11 +749,13 @@ const FichaTecnica = () => {
                                                     outline: 'none'
                                                 }}
                                             />
+
+
                                         </div>
                                         <div className='flex items-center w-full '>
                                             <label className='text-xs font-bold w-[60%]'>Valor do Rendimento(Kg/Ml/Uni): </label>
                                             <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
-                                                {formatValor((custoTotal / (parseFloat(rendimento) || 1)) * 1000)} {/* Cálculo do valor do rendimento */}
+                                                {formatValor(valorRendimento)}   {/* Exibindo o valor do rendimento calculado */}
                                             </label>
                                         </div>
                                         <div className='flex items-center w-full '>
@@ -705,7 +784,7 @@ const FichaTecnica = () => {
                                         <div className='flex items-center w-full '>
                                             <label className='text-xs font-bold w-[60%]'>CMV Real: </label>
                                             <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
-                                            {cmvReal.toFixed(2)}%
+                                                {cmvReal.toFixed(2)}%
                                             </label>
                                         </div>
                                         <div className='flex items-center w-full '>
@@ -944,12 +1023,28 @@ const FichaTecnica = () => {
                                             {formatValor(custoTotal)}
                                         </label>
                                     </div>
-                                    <div className='flex items-center w-full '>
-                                        <label className='text-xs font-bold w-[60%]'>Quantidade de Rendimento: </label>
+                                    <div className='flex items-center w-full gap-3 '>
+
+                                        <SelectTextFields
+                                            width={'150px'}
+                                            icon={<EqualizerIcon fontSize="small" />}
+                                            label={'Tipo de Rendimento'}
+                                            backgroundColor={"#D9D9D9"}
+                                            fontWeight={500}
+                                            options={tipoRendimentoOptions}
+                                            onChange={(e) => {
+                                                setTipoRendimentoSelecionado(e.target.value);
+                                                calcularValorRendimento(e.target.value, rendimento);
+                                            }}
+                                        />
+
                                         <input
                                             type="text"
                                             value={rendimento}
-                                            onChange={(e) => setRendimento(e.target.value)}
+                                            onChange={(e) => {
+                                                setRendimento(e.target.value);
+                                                calcularValorRendimento(tipoRendimentoSelecionado, e.target.value); // Recalcular quando o valor mudar
+                                            }}
                                             style={{
                                                 backgroundColor: "#d9d9d9",
                                                 color: 'black',
@@ -962,40 +1057,42 @@ const FichaTecnica = () => {
                                                 outline: 'none'
                                             }}
                                         />
+
+
                                     </div>
                                     <div className='flex items-center w-full '>
                                         <label className='text-xs font-bold w-[60%]'>Valor do Rendimento(Kg/Ml/Uni): </label>
                                         <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
-                                            {formatValor((custoTotal / (parseFloat(rendimento) || 1)) * 1000)} {/* Cálculo do valor do rendimento */}
+                                            {formatValor(valorRendimento)}   {/* Exibindo o valor do rendimento calculado */}
                                         </label>
                                     </div>
                                     <div className='flex items-center w-full '>
                                         <label className='text-xs font-bold w-[60%]'>Valor Venda: </label>
                                         <NumericFormat
-                                                value={valorVenda}
-                                                onValueChange={(values) => {
-                                                    const { formattedValue, value } = values;
-                                                    setValorVenda(formattedValue);
-                                                }}
-                                                thousandSeparator="."
-                                                decimalSeparator=","
-                                                decimalScale={2}
-                                                fixedDecimalScale={true}
-                                                prefix={'R$ '}
-                                                className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start'
-                                                style={{
-                                                    backgroundColor: '#BCDA72',
-                                                    borderRadius: '10px',
-                                                    border: '1px solid #ccc',
-                                                    outline: 'none',
-                                                    padding: '5px',
-                                                }}
-                                            />
+                                            value={valorVenda}
+                                            onValueChange={(values) => {
+                                                const { formattedValue, value } = values;
+                                                setValorVenda(formattedValue);
+                                            }}
+                                            thousandSeparator="."
+                                            decimalSeparator=","
+                                            decimalScale={2}
+                                            fixedDecimalScale={true}
+                                            prefix={'R$ '}
+                                            className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start'
+                                            style={{
+                                                backgroundColor: '#BCDA72',
+                                                borderRadius: '10px',
+                                                border: '1px solid #ccc',
+                                                outline: 'none',
+                                                padding: '5px',
+                                            }}
+                                        />
                                     </div>
                                     <div className='flex items-center w-full '>
                                         <label className='text-xs font-bold w-[60%]'>CMV Real: </label>
                                         <label className='text-xs font-bold w-[40%] p-1 pl- items-center justify-start' style={{ backgroundColor: '#BCDA72', borderRadius: '10px', }}>
-                                        {cmvReal.toFixed(2)}%
+                                            {cmvReal.toFixed(2)}%
                                         </label>
                                     </div>
                                     <div className='flex items-center w-full '>

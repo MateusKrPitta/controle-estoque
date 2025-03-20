@@ -22,7 +22,7 @@ import moment from 'moment';
 import Logo from '../../../assets/png/logo_preta.png';
 
 import { AddCircleOutline, DateRange, Edit, Print, ProductionQuantityLimitsTwoTone, Save } from '@mui/icons-material';
-import { IconButton, InputAdornment, TextField, } from '@mui/material';
+import { FormControlLabel, IconButton, InputAdornment, Switch, TextField, } from '@mui/material';
 import AddchartIcon from '@mui/icons-material/Addchart';
 import ArticleIcon from '@mui/icons-material/Article';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -47,6 +47,7 @@ const Produtos = () => {
     const [produtoEditado, setProdutoEditado] = useState(null);
     const [isVisible, setIsVisible] = useState(false);
     const [logoLoaded, setLogoLoaded] = useState(false);
+    const [limparCampos, setLimparCampos] = useState(false);
 
     const [quantidadeTotal, setQuantidadeTotal] = useState('');
     const [nome, setNome] = useState('');
@@ -70,6 +71,23 @@ const Produtos = () => {
         { value: 4, label: 'Mililitro' },
         { value: 5, label: 'Unidade' },
     ];
+
+    const handleLimparCampos = () => {
+        setLimparCampos(!limparCampos);
+    
+        if (!limparCampos) {
+            // Limpa os campos de filtro
+            setFiltroDataInicial('');
+            setFiltroDataFinal(''); // Removido a duplicação
+            setSelectedCategoria('');
+            
+            // Recarrega os produtos
+            carregaProdutos(unidadeId);
+            
+            // Fecha o modal de filtro
+            handleCloseFiltro();
+        }
+    };
 
 
     const clearCadastroFields = () => {
@@ -327,10 +345,10 @@ const Produtos = () => {
                 </body>
             </html>
         `;
-        
+
         printWindow.document.write(tableHTML);
         printWindow.document.close();
-    
+
         // Atrasar a impressão para garantir que a logo esteja carregada
         setTimeout(() => {
             printWindow.print();
@@ -807,6 +825,18 @@ const Produtos = () => {
                                             options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
                                             onChange={(e) => setSelectedCategoria(e.target.value)}
                                             value={selectedCategoria}
+                                        />
+                                        <FormControlLabel
+                                            control={
+                                                <Switch
+                                                    style={{ marginLeft: '5px' }}
+                                                    size="small"
+                                                    checked={limparCampos}
+                                                    onChange={handleLimparCampos}
+                                                    color="primary"
+                                                />
+                                            }
+                                            label="Limpar Filtro"
                                         />
                                     </div>
                                     <div className='w-[95%] mt-2 flex items-end justify-end'>
