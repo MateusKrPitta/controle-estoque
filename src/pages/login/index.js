@@ -56,11 +56,12 @@ const LoginPage = () => {
         try {
             const response = await api.post('/login', { cpf, senha });
     
-            const { token, nome, unidade } = response.data.data;
+            const { token, nome, unidade, tipo } = response.data.data;
     
             if (token) {
                 localStorage.setItem('token', token);
                 localStorage.setItem('userName', nome);
+                localStorage.setItem('tipo', tipo); // Salva o tipo de usuário
     
                 if (unidade && unidade.length > 0) {
                     const unidadeSelecionada = unidade[0];
@@ -85,7 +86,6 @@ const LoginPage = () => {
         } catch (error) {
             setLoading(false);
             if (error.response) {
-                // Verifica se a mensagem de erro é a específica que você mencionou
                 if (error.response.data.message === "Usuário inativo. Contate o administrador.") {
                     CustomToast({ type: 'warning', message: error.response.data.message });
                 } else if (error.response.data.message) {

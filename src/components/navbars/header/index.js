@@ -20,6 +20,11 @@ const Navbar = ({ user }) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [showCadastroSubMenu, setShowCadastroSubMenu] = useState(false);
 
+    // Obtenha o tipo de usuário do localStorage
+    const tipoUsuario = localStorage.getItem('tipo');
+
+    // Função para verificar se o usuário é do tipo "3"
+    const isUsuarioTipo3 = tipoUsuario === "3";
 
     const toggleMenu = () => {
         setMenuOpen(!menuOpen);
@@ -27,41 +32,43 @@ const Navbar = ({ user }) => {
 
     const handleNavigate = (route) => {
         navigate(route);
-        sessionStorage.setItem("page", route);
+        localStorage.setItem("page", route);
         setActiveRoute(route);
         if (route === '/cadastro') {
-            sessionStorage.setItem("page-cadastro", route);
+            localStorage.setItem("page-cadastro", route);
         }
     };
 
     useEffect(() => {
-        const savedPage = sessionStorage.getItem("page");
+        const savedPage = localStorage.getItem("page");
         if (savedPage && savedPage !== activeRoute) {
             setActiveRoute(savedPage);
         }
     }, []);
 
-
-
     return (
-        <div className='hidden sm:hidden md:hidden lg:block' style={{backgroundColor:'black'}}>
+        <div className='hidden sm:hidden md:hidden lg:block' style={{ backgroundColor: 'black' }}>
             <div className="lg:block hidden h-[100%]">
-                <div className={` transition-all w-64 h-screen bg-cover bg-no-repeat bg-center flex flex-col p-5`} style={{ backgroundColor: 'black' }}>
+                <div className={`transition-all w-64 h-screen bg-cover bg-no-repeat bg-center flex flex-col p-5`} style={{ backgroundColor: 'black' }}>
                     <div className="flex flex-col justify-center items-center mb-5 cursor-pointer" onClick={() => handleNavigate("/dashboard")}>
-                        <img src={logo} alt="Logo" style={{backgroundColor:'black', padding:'15px', borderRadius:"10px", width:'65%'}} title={user ? "Clique para acessar a Dashboard" : ''} className="w-24" />
+                        <img src={logo} alt="Logo" style={{ backgroundColor: 'black', padding: '15px', borderRadius: "10px", width: '65%' }} title={user ? "Clique para acessar a Dashboard" : ''} className="w-24" />
                         <label className='text-white text-xs'>Controle de Estoque</label>
                     </div>
-                    
+
                     <div className="flex flex-col gap-2 text-white overflow-hidden transition-all">
-                        <label className="text-sm mt-1 text-white font-bold">Home</label>
-                        <button
-                            onClick={() => handleNavigate("/dashboard")}
-                            className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/dashboard" ? "border-b-2 border-primary" : ""}`}
-                            title={'Dashboard'}
-                        >
-                            <DashboardIcon fontSize={"small"} />
-                            <span>Dashboard</span>
-                        </button>
+
+                            <>
+                                <label className="text-sm mt-1 text-white font-bold">Home</label>
+                                <button
+                                    onClick={() => handleNavigate("/dashboard")}
+                                    className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/dashboard" ? "border-b-2 border-primary" : ""}`}
+                                    title={'Dashboard'}
+                                >
+                                    <DashboardIcon fontSize={"small"} />
+                                    <span>Dashboard</span>
+                                </button>
+                            </>
+
                         <label className="text-sm mt-1 text-white font-bold">Funções</label>
                         <button
                             onClick={() => handleNavigate("/entrada-saida")}
@@ -71,24 +78,29 @@ const Navbar = ({ user }) => {
                             <AddchartIcon fontSize={"small"} />
                             <span>Entradas/Saída</span>
                         </button>
-                        
-                      
-                        <button
-                            onClick={() => handleNavigate("/cmv")}
-                            className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/cmv" ? "border-b-2 border-primary" : ""}`}
-                            title={'CMV'}
-                        >
-                            <AddToQueueIcon fontSize={"small"} />
-                            <span>CMV</span>
-                        </button>
-                        <button
-                            onClick={() => handleNavigate("/ficha-tecnica")}
-                            className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/ficha-tecnica" ? "border-b-2 border-primary" : ""}`}
-                            title={'Ficha Técnica'}
-                        >
-                            <ContentPasteSearchIcon fontSize={"small"} />
-                            <span>Ficha Técnica</span>
-                        </button>
+
+                        {/* Exibir "CMV" e "Ficha Técnica" apenas se não for usuário tipo 3 */}
+                        {!isUsuarioTipo3 && (
+                            <>
+                                <button
+                                    onClick={() => handleNavigate("/cmv")}
+                                    className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/cmv" ? "border-b-2 border-primary" : ""}`}
+                                    title={'CMV'}
+                                >
+                                    <AddToQueueIcon fontSize={"small"} />
+                                    <span>CMV</span>
+                                </button>
+                                <button
+                                    onClick={() => handleNavigate("/ficha-tecnica")}
+                                    className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/ficha-tecnica" ? "border-b-2 border-primary" : ""}`}
+                                    title={'Ficha Técnica'}
+                                >
+                                    <ContentPasteSearchIcon fontSize={"small"} />
+                                    <span>Ficha Técnica</span>
+                                </button>
+                            </>
+                        )}
+
                         <button
                             onClick={() => handleNavigate("/relatorio")}
                             className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/relatorios" ? "border-b-2 border-primary" : ""}`}
@@ -98,20 +110,17 @@ const Navbar = ({ user }) => {
                             <span>Relatório</span>
                         </button>
 
-                       
-                        
-                        
-                        <label className="text-sm mt-1 text-white font-bold">Configurações</label>
-                        <button
-                            onClick={() => handleNavigate("/cadastro")}
-                            className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm  ${activeRoute === "/cadastro" ? "border-b-2 border-primary" : ""}`}
-                            title={'Cadastro de Configurações'}
-                        >
-                            <MiscellaneousServicesIcon fontSize={"small"} />
-                            <span>Cadastro</span>
-                        </button>
+
+                                <label className="text-sm mt-1 text-white font-bold">Configurações</label>
+                                <button
+                                    onClick={() => handleNavigate("/cadastro")}
+                                    className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm  ${activeRoute === "/cadastro" ? "border-b-2 border-primary" : ""}`}
+                                    title={'Cadastro de Configurações'}
+                                >
+                                    <MiscellaneousServicesIcon fontSize={"small"} />
+                                    <span>Cadastro</span>
+                                </button>
                     </div>
-                    {/* ) : null} */}
                 </div>
             </div>
 
@@ -142,12 +151,95 @@ const Navbar = ({ user }) => {
                         </div>
 
                         <List>
+                            {/* Exibir "Dashboard" apenas se não for usuário tipo 3 */}
+                            {!isUsuarioTipo3 && (
+                                <Button
+                                    fullWidth
+                                    onClick={() => handleNavigate("/dashboard")}
+                                    startIcon={<DashboardIcon fontSize="small" />}
+                                    className="text-left"
+                                    title="Ir para Pagamentos"
+                                    sx={{
+                                        justifyContent: "flex-start",
+                                        padding: "10px 16px",
+                                        textTransform: "none",
+                                        "&:hover": {
+                                            backgroundColor: "#f4f4f4",
+                                        },
+                                    }}
+                                >
+                                    Pagamentos
+                                </Button>
+                            )}
+
+                            {/* Exibir "Cadastro" e submenu apenas se não for usuário tipo 3 */}
+                            {!isUsuarioTipo3 && (
+                                <div>
+                                    <Button
+                                        fullWidth
+                                        onClick={() => setShowCadastroSubMenu(!showCadastroSubMenu)}
+                                        startIcon={<MiscellaneousServicesIcon fontSize="small" />}
+                                        className="text-left"
+                                        title="Ir para Cadastro"
+                                        sx={{
+                                            justifyContent: "flex-start",
+                                            padding: "10px 16px",
+                                            textTransform: "none",
+                                            "&:hover": {
+                                                backgroundColor: "#f4f4f4",
+                                            },
+                                        }}
+                                    >
+                                        Cadastro
+                                    </Button>
+                                    {showCadastroSubMenu && (
+                                        <div>
+                                            <Button
+                                                fullWidth
+                                                onClick={() => handleNavigate("/cadastro")}
+                                                startIcon={<PersonIcon fontSize="small" />}
+                                                className="text-left"
+                                                title="Ir para Usuário"
+                                                sx={{
+                                                    justifyContent: "flex-start",
+                                                    padding: "10px 50px",
+                                                    textTransform: "none",
+                                                    "&:hover": {
+                                                        backgroundColor: "#f4f4f4",
+                                                    },
+                                                }}
+                                            >
+                                                Usuário
+                                            </Button>
+                                            <Button
+                                                fullWidth
+                                                onClick={() => handleNavigate("/cadastro-unidade")}
+                                                startIcon={<LocationCityIcon fontSize="small" />}
+                                                className="text-left"
+                                                title="Ir para Unidade"
+                                                sx={{
+                                                    justifyContent: "flex-start",
+                                                    padding: "10px 50px",
+                                                    textTransform: "none",
+                                                    "&:hover": {
+                                                        backgroundColor: "#f4f4f4",
+                                                    },
+                                                }}
+                                            >
+                                                Unidade
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Exibir "Relatório" para todos os usuários */}
                             <Button
                                 fullWidth
-                                onClick={() => handleNavigate("/dashboard")}
-                                startIcon={<DashboardIcon fontSize="small" />}
+                                onClick={() => handleNavigate("/relatorio")}
+                                startIcon={<BarChartIcon fontSize="small" />}
                                 className="text-left"
-                                title="Ir para Pagamentos"
+                                title="Ir para Relatorio"
                                 sx={{
                                     justifyContent: "flex-start",
                                     padding: "10px 16px",
@@ -157,87 +249,12 @@ const Navbar = ({ user }) => {
                                     },
                                 }}
                             >
-                                Pagamentos
+                                Relatório
                             </Button>
-                            <div>
-                                <Button
-                                    fullWidth
-                                    onClick={() => setShowCadastroSubMenu(!showCadastroSubMenu)}
-                                    startIcon={<MiscellaneousServicesIcon fontSize="small" />}
-                                    className="text-left"
-                                    title="Ir para Cadastro"
-                                    sx={{
-                                        justifyContent: "flex-start",
-                                        padding: "10px 16px",
-                                        textTransform: "none",
-                                        "&:hover": {
-                                            backgroundColor: "#f4f4f4",
-                                        },
-                                    }}
-                                >
-                                    Cadastro
-                                </Button>
-                                {showCadastroSubMenu && (
-                                    <div>
-                                        <Button
-                                            fullWidth
-                                            onClick={() => handleNavigate("/cadastro")}
-                                            startIcon={<PersonIcon fontSize="small" />}
-                                            className="text-left"
-                                            title="Ir para Usuário"
-                                            sx={{
-                                                justifyContent: "flex-start",
-                                                padding: "10px 50px",
-                                                textTransform: "none",
-                                                "&:hover": {
-                                                    backgroundColor: "#f4f4f4",
-                                                },
-                                            }}
-                                        >
-                                            Usuário
-                                        </Button>
-                                        <Button
-                                            fullWidth
-                                            onClick={() => handleNavigate("/cadastro-unidade")}
-                                            startIcon={<LocationCityIcon fontSize="small" />}
-                                            className="text-left"
-                                            title="Ir para Unidade"
-                                            sx={{
-                                                justifyContent: "flex-start",
-                                                padding: "10px 50px",
-                                                textTransform: "none",
-                                                "&:hover": {
-                                                    backgroundColor: "#f4f4f4",
-                                                },
-                                            }}
-                                        >
-                                            Unidade
-                                        </Button>
-                                    </div>
-                                )}
-                                <Button
-                                    fullWidth
-                                    onClick={() => handleNavigate("/relatorio")}
-                                    startIcon={<BarChartIcon fontSize="small" />}
-                                    className="text-left"
-                                    title="Ir para Relatorio"
-                                    sx={{
-                                        justifyContent: "flex-start",
-                                        padding: "10px 16px",
-                                        textTransform: "none",
-                                        "&:hover": {
-                                            backgroundColor: "#f4f4f4",
-                                        },
-                                    }}
-                                >
-                                    Relatório
-                                </Button>
-                            </div>
                         </List>
                     </div>
                 </Drawer>
             </div>
-
         </div>
     );
 };

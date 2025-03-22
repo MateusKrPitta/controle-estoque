@@ -6,5 +6,5 @@ export const headerEntradaSaida = [
   { key: 'quantidade', label: 'Quantidade' },
   { key: 'valorTotal', label: 'Valor Total' },
   { key: 'observacao', label: 'Observação' },
-  { key: 'dataCadastro', label: 'Data' },
+  { key: 'dataFormatada', label: 'Data' },
 ];

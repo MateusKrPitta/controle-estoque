@@ -16,11 +16,12 @@ import ListaCompra from '../pages/relatorio/lista-compra/index.js';
 import Desperdicio from '../pages/relatorio/desperdico/index.js';
 import PrivateRoute from './private-routes.js';
 
-const AppRoutes = () => {
+const AppRoutes = ({ user }) => {
     return (
         <Routes>
             <Route path="/" element={<LoginPage />} />
-            <Route element={<PrivateRoute />}>
+            
+            <Route element={<PrivateRoute user={user} />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/entrada-saida" element={<EntradaSaida />} />
                 <Route path="/cmv" element={<CMV />} />

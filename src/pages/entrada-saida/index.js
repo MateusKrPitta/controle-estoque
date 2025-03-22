@@ -69,17 +69,17 @@ const EntradaSaida = () => {
 
   const handleLimparCampos = () => {
     setLimparCampos(!limparCampos);
-
+  
     if (!limparCampos) {
       // Limpa os campos de filtro
       setDataInicial('');
-      setDataFinal(''); // Removido a duplicação
+      setDataFinal('');
       setSelectedCategoria('');
-      setSelectedTipos('');
-
+      setSelectedTipos([]); // Defina como um array vazio
+  
       // Recarrega os produtos
       fetchEntradasSaidas(unidadeId);
-
+  
       // Fecha o modal de filtro
       handleCloseFiltro();
     }
@@ -95,29 +95,31 @@ const EntradaSaida = () => {
     setDesativa(true);
     const quantidadeNumerica = parseFloat(quantidade) || 0;
     const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0;
-  
+
+    // Formatar a data corretamente
+    const dataFormatada = moment().format('YYYY-MM-DD'); // Formato ISO 8601 sem o 'Z' no final
+
     const novoRegistro = {
-      data: new Date().toISOString().split('T')[0],
+      data: dataFormatada, // Use a data formatada aqui
       movTipo: tipo === 'entrada' ? 1 : tipo === 'saida' ? 2 : 3,
       quantidade: quantidadeNumerica,
       produtoId: produtoSelecionado ? produtoSelecionado.id : null,
       observacao: observacao
     };
-  
-    console.log("Data do novo registro:", novoRegistro.data); // Exibe a data do novo registro
-  
+
     try {
       const response = await api.post('/movimentacao', novoRegistro);
+
       const updatedEntradasSaidas = [...entradasSaidas, { ...novoRegistro, valorTotal }];
       setEntradasSaidas(updatedEntradasSaidas);
-  
+
       setProduto('');
       setQuantidade('');
       setTipo('entrada');
       setProdutoSelecionado(null);
       setObservacao('');
       handleCloseCadastro();
-  
+
       fetchEntradasSaidas();
     } catch (error) {
       const errorMessage = error.response?.data?.errors || "Erro ao cadastrar registro!";
@@ -126,66 +128,70 @@ const EntradaSaida = () => {
       setDesativa(false);
     }
   };
-  
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
 
     const tableRows = filteredEntradasSaidas.map(registro => `
-      <tr>
-        <td>${registro.produtoNome}</td>
-        <td>${registro.quantidade}</td>
-        <td>${formatValor(registro.precoPorcao)}</td>
-        <td>${formatValor(registro.valorTotal)}</td>
-        <td>${registro.categoria}</td>
-        <td>${registro.dataCadastro}</td>
-      </tr>
-    `).join('');
+    <tr>
+          <td>${registro.tipo}</td> <!-- Tipo (entrada, saída, desperdício) -->
+      <td>${registro.produtoNome}</td>
+      <td>${registro.quantidade}</td>
+      <td>${formatValor(registro.precoPorcao)}</td>
+      <td>${formatValor(registro.valorTotal)}</td>
+      <td>${registro.categoria}</td>
+      <td>${registro.dataFormatada}</td> <!-- Data formatada -->
+
+    </tr>
+  `).join('');
 
     const tableHTML = `
-      <html>
-        <head>
-          <title>Imprimir Produtos</title>
-          <style>
-            body { 
-              font-family: Arial, sans-serif; 
-              margin: 20px; 
-            }
-            table { 
-              width: 100%; 
-              border-collapse: collapse; 
-            }
-            th, td { 
-              border: 1px solid #000; 
-              padding: 8px; 
-              text-align: left; 
-            }
-            th { 
-              background-color: #f2f2f2; 
-            }
-          </style>
-        </head>
-        <body>
-          <img src="${Logo}" alt="Logo" />
-          <h3>Lista de Produtos</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Quantidade</th>
-                <th>Preço por Porção</th>
-                <th>Valor Total</th>
-                <th>Categoria</th>
-                <th>Data</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
+    <html>
+      <head>
+        <title>Imprimir Produtos</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+          }
+          table { 
+            border-radius:10px;
+            width: 100%; 
+            border-collapse: collapse; 
+          }
+          th, td { 
+            border: 1px solid #000; 
+            padding: 8px; 
+            text-align: left; 
+          }
+          th { 
+            background-color: #f2f2f2; 
+          }
+        </style>
+      </head>
+      <body>
+        <img src="${Logo}" alt="Logo" />
+        <h3>Entrada / Saída / Desperdício</h3>
+        <table>
+          <thead>
+            <tr>
+            <th>Tipo</th> <!-- Nova coluna para Tipo -->
+              <th>Nome</th>
+              <th>Quantidade</th>
+              <th>Preço por Porção</th>
+              <th>Valor Total</th>
+              <th>Categoria</th>
+              <th>Data</th>
+              
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </body>
+    </html>
+  `;
 
     printWindow.document.write(tableHTML);
     printWindow.document.close();
@@ -194,7 +200,6 @@ const EntradaSaida = () => {
       printWindow.print();
     }, 1000);
   };
-
   const valorTotalEntradas = entradasSaidas
     .filter(registro => registro.tipo === 'entrada')
     .reduce((acc, registro) => acc + Number(registro.valorTotal), 0);
@@ -249,6 +254,14 @@ const EntradaSaida = () => {
       const movimentacoes = response.data.data;
       const formattedMovimentacoes = movimentacoes.map(mov => {
         const valorTotal = mov.precoPorcao * mov.quantidade;
+
+        // Interpreta a data como UTC e formata sem conversão para o fuso horário local
+        const dataUTC = moment.utc(mov.data); // Interpreta a data como UTC
+
+        // Debug: Exibe os valores das datas
+        console.log("Data recebida da API:", mov.data);
+        console.log("Data interpretada como UTC:", dataUTC.format());
+
         return {
           id: mov.id,
           tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === "2" ? 'saida' : 'desperdicio',
@@ -258,8 +271,8 @@ const EntradaSaida = () => {
           precoPorcao: mov.precoPorcao,
           valorTotal: valorTotal,
           observacao: mov.observacao,
-          dataCadastro: moment(mov.data).format('DD/MM/YYYY'),
-          dataISO: mov.data
+          dataISO: mov.data,
+          dataFormatada: dataUTC.format('DD/MM/YYYY')
         };
       });
 
@@ -271,7 +284,6 @@ const EntradaSaida = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     const categoriasSalvas = JSON.parse(localStorage.getItem('categorias')) || [];
     const categoriasUnicas = Array.from(new Set(categoriasSalvas.map(cat => cat.nome)))
@@ -285,18 +297,30 @@ const EntradaSaida = () => {
   const handlePesquisar = () => {
     const filteredData = entradasSaidasOriginais.filter((registro) => {
       const matchesSearchTerm = registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase());
-      const dataInicialMoment = dataInicial ? moment(dataInicial) : null;
-      const dataFinalMoment = dataFinal ? moment(dataFinal) : null;
-      const registroDataMoment = moment(registro.dataISO);
+  
+      // Converte as datas fornecidas pelo usuário para o formato UTC
+      const dataInicialMoment = dataInicial ? moment.utc(dataInicial).startOf('day') : null;
+      const dataFinalMoment = dataFinal ? moment.utc(dataFinal).endOf('day') : null;
+  
+      // Converte a data do registro para o formato UTC
+      const registroDataMoment = moment.utc(registro.dataISO);
+  
+      // Verifica se a data do registro está dentro do intervalo fornecido
       const matchesDataInicial = dataInicialMoment ? registroDataMoment.isSameOrAfter(dataInicialMoment) : true;
       const matchesDataFinal = dataFinalMoment ? registroDataMoment.isSameOrBefore(dataFinalMoment) : true;
+  
+      // Verifica os outros filtros (categoria e tipo)
       const matchesCategoria = selectedCategoria ? registro.categoria === selectedCategoria : true;
       const matchesTipo = selectedTipos.length > 0 ? selectedTipos.includes(registro.tipo) : true;
-
+  
+      // Retorna true apenas se todos os filtros forem atendidos
       return matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
     });
-
+  
+    // Atualiza a lista de entradas/saídas com os dados filtrados
     setEntradasSaidas(filteredData);
+  
+    // Fecha o modal de filtro
     handleCloseFiltro();
   };
   useEffect(() => {

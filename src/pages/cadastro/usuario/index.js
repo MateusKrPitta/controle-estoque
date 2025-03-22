@@ -34,13 +34,13 @@ const Usuario = () => {
   const [cadastroUsuario, setCadastroUsuario] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [editandoUsuario, setEditandoUsuario] = useState(false);
-  const [editUser , setEditUser ] = useState(null);
+  const [editUser, setEditUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUnidades, setSelectedUnidades] = useState([]);
   const [cpf, setCpf] = useState('');
   const [userOptionsUnidade, setUserOptionsUnidade] = useState([]);
   const [users, setUsers] = useState([]);
-  const [newUser , setNewUser ] = useState({
+  const [newUser, setNewUser] = useState({
     nome: '',
     cpf: '',
     senha: '',
@@ -48,23 +48,25 @@ const Usuario = () => {
     unidade: '',
     permissoes: {
       administrador: false,
+      geral: false,
       basico: false,
     },
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewUser ({ ...newUser , [name]: value });
+    setNewUser({ ...newUser, [name]: value });
   };
 
   const handleCheckboxChange = (permissao) => {
     const updatedPermissoes = {
       administrador: false,
+      geral: false,
       basico: false,
     };
     updatedPermissoes[permissao] = true;
-    setNewUser ({
-      ...newUser ,
+    setNewUser({
+      ...newUser,
       permissoes: updatedPermissoes,
     });
   };
@@ -76,7 +78,7 @@ const Usuario = () => {
   const handleCadastroUsuario = () => setCadastroUsuario(true);
   const handleCloseCadastroUsuario = () => {
     setCadastroUsuario(false);
-    setNewUser ({
+    setNewUser({
       nome: '',
       cpf: '',
       senha: '',
@@ -90,10 +92,10 @@ const Usuario = () => {
     setSelectedUnidades([]);
   };
 
-  const handleCloseEditUser  = () => {
+  const handleCloseEditUser = () => {
     setEditandoUsuario(false);
-    setEditUser (null);
-    setNewUser ({
+    setEditUser(null);
+    setNewUser({
       nome: '',
       cpf: '',
       senha: '',
@@ -114,33 +116,33 @@ const Usuario = () => {
     setIsSubmitting(true);
 
     try {
-      if (!newUser .nome) {
+      if (!newUser.nome) {
         return "O nome é obrigatório.";
       }
-      if (!newUser .cpf) {
+      if (!newUser.cpf) {
         return "O CPF é obrigatório.";
       }
-      if (!newUser .senha) {
+      if (!newUser.senha) {
         return "A senha é obrigatória.";
       }
       if (selectedUnidades.length === 0) {
         return "Pelo menos uma unidade deve ser selecionada.";
       }
 
-      const cpfExistente = users.find(user => user.cpf === newUser .cpf);
+      const cpfExistente = users.find(user => user.cpf === newUser.cpf);
       if (cpfExistente) {
         return "CPF já cadastrado. Não é possível cadastrar outro.";
       }
 
-      if (newUser .senha.length < 6) {
+      if (newUser.senha.length < 6) {
         return "A senha deve conter pelo menos 6 dígitos.";
       }
 
       const userData = {
-        nome: newUser .nome,
-        cpf: newUser .cpf,
-        senha: newUser .senha,
-        tipo: newUser .permissoes.administrador ? 1 : (newUser .permissoes.basico ? 2 : 0),
+        nome: newUser.nome,
+        cpf: newUser.cpf,
+        senha: newUser.senha,
+        tipo: newUser.permissoes.administrador ? 1 : (newUser.permissoes.geral ? 2 : 3),
         unidadeId: selectedUnidades.map(unidade => {
           const unidadeObj = userOptionsUnidade.find(option => option.label === unidade);
           return unidadeObj ? unidadeObj.value : null;
@@ -172,17 +174,18 @@ const Usuario = () => {
     }
   };
 
-  const handleEditUser  = (user) => {
-    setEditUser (user);
-    setNewUser ({
+  const handleEditUser = (user) => {
+    setEditUser(user);
+    setNewUser({
       nome: user.nome,
       cpf: formatCPF(user.cpf),
       senha: user.senha,
       funcao: user.funcao || '',
       unidade: user.unidade || '',
       permissoes: {
-        administrador: user.tipo === "1",
-        basico: user.tipo === "2",
+        administrador: user.tipo === 1, // Tipo 1: Administrador
+        geral: user.tipo === 2, // Tipo 2: Geral
+        basico: user.tipo === 3, // Tipo 3: Básico
       },
     });
 
@@ -195,46 +198,46 @@ const Usuario = () => {
     setEditandoUsuario(true);
   };
 
-  const handleUpdateUser  = async () => {
+  const handleUpdateUser = async () => {
     try {
-      if (!newUser .nome) {
+      if (!newUser.nome) {
         return "O nome é obrigatório.";
       }
-      if (!newUser .cpf) {
+      if (!newUser.cpf) {
         return "O CPF é obrigatório.";
       }
-      if (!newUser .senha) {
+      if (!newUser.senha) {
         return "A senha é obrigatória.";
       }
       if (selectedUnidades.length === 0) {
         return "Pelo menos uma unidade deve ser selecionada.";
       }
 
-      const cpfExistente = users.find(user => user.cpf === newUser .cpf && user.cpf !== editUser .cpf);
+      const cpfExistente = users.find(user => user.cpf === newUser.cpf && user.cpf !== editUser.cpf);
       if (cpfExistente) {
         return "CPF já cadastrado. Não é possível cadastrar outro.";
       }
 
-      if (newUser .senha.length < 6) {
+      if (newUser.senha.length < 6) {
         return "A senha deve conter pelo menos 6 dígitos.";
       }
 
       const userData = {
-        nome: newUser .nome,
-        cpf: newUser .cpf,
-        senha: newUser .senha,
-        tipo: newUser .permissoes.administrador ? 1 : (newUser .permissoes.basico ? 2 : 0),
+        nome: newUser.nome,
+        cpf: newUser.cpf,
+        senha: newUser.senha,
+        tipo: newUser.permissoes.administrador ? 1 : (newUser.permissoes.basico ? 2 : 0),
         unidadeId: selectedUnidades.map(unidade => {
           const unidadeObj = userOptionsUnidade.find(option => option.label === unidade);
           return unidadeObj ? unidadeObj.value : null;
         }).filter(id => id !== null),
       };
 
-      const response = await api.put(`/usuario/${editUser .id}`, userData);
+      const response = await api.put(`/usuario/${editUser.id}`, userData);
 
       if (response.status === 200 || response.status === 204) {
         const updatedUsers = users.map(user => {
-          if (user.id === editUser .id) {
+          if (user.id === editUser.id) {
             return { ...userData, unidades: selectedUnidades };
           }
           return user;
@@ -242,8 +245,8 @@ const Usuario = () => {
 
         setUsers(updatedUsers);
         setEditandoUsuario(false);
-        setEditUser (null);
-        setNewUser ({
+        setEditUser(null);
+        setNewUser({
           nome: '',
           cpf: '',
           senha: '',
@@ -253,10 +256,10 @@ const Usuario = () => {
             basico: false,
           },
         });
-        handleCloseEditUser ();
+        handleCloseEditUser();
         fetchUsers();
 
-        if (editUser .id === userId) {
+        if (editUser.id === userId) {
           navigate("/login");
         } else {
           return response.data.message || "Usuário atualizado com sucesso!";
@@ -276,7 +279,7 @@ const Usuario = () => {
   const handleCPFChange = (e) => {
     const formattedCPF = formatCPF(e.target.value);
     setCpf(formattedCPF);
-    setNewUser ({ ...newUser , cpf: formattedCPF });
+    setNewUser({ ...newUser, cpf: formattedCPF });
   };
 
   const fetchUsers = async () => {
@@ -300,25 +303,25 @@ const Usuario = () => {
     }
   };
 
-  const handleInactiveUser  = async (user) => {
+  const handleInactiveUser = async (user) => {
     try {
-        const response = await api.delete(`/usuario/${user.id}`);
-        if (response.status === 200) {
-            const updatedUsers = users.map(u => {
-                if (u.id === user.id) {
-                    return { ...u, isAtivo: !u.isAtivo }; // Alterna o estado isAtivo
-                }
-                return u;
-            });
-            setUsers(updatedUsers);
-            return response.data.message || (user.isAtivo ? "Usuário inativado com sucesso!" : "Usuário reativado com sucesso!");
-        } else {
-            return "Erro ao inativar/reativar usuário!";
-        }
+      const response = await api.delete(`/usuario/${user.id}`);
+      if (response.status === 200) {
+        const updatedUsers = users.map(u => {
+          if (u.id === user.id) {
+            return { ...u, isAtivo: !u.isAtivo }; // Alterna o estado isAtivo
+          }
+          return u;
+        });
+        setUsers(updatedUsers);
+        return response.data.message || (user.isAtivo ? "Usuário inativado com sucesso!" : "Usuário reativado com sucesso!");
+      } else {
+        return "Erro ao inativar/reativar usuário!";
+      }
     } catch (error) {
-        return error.response?.data?.message || "Erro ao inativar/reativar usuário!";
+      return error.response?.data?.message || "Erro ao inativar/reativar usuário!";
     }
-};
+  };
 
   const filteredUsers = Array.isArray(users)
     ? users.filter(user =>
@@ -334,7 +337,7 @@ const Usuario = () => {
     }
   };
 
-  const handleDeleteUser  = async (user) => {
+  const handleDeleteUser = async (user) => {
     try {
       const response = await api.delete(`/usuario/${user.id}`);
       if (response.status === 200) {
@@ -362,21 +365,22 @@ const Usuario = () => {
     }
   };
 
-const rows = filteredUsers.map(user => {
-  const unidadeNames = Array.isArray(user.unidadeId) ? user.unidadeId.map(id => {
-    const unidadeObj = userOptionsUnidade.find(option => option.value === id);
-    return unidadeObj ? unidadeObj.label : "Unidade Desconhecida";
-  }) : [];
-  
-  return {
-    ...user,
-    unidade: unidadeNames.join(", ") || "Unidade Desconhecida",
-    edit: () => handleEditUser (user),
-    delete: () => handleDeleteUser (user),
-    status: user.isAtivo ? "Ativado" : "Inativado", // Adiciona o status
-    toggleStatus: () => handleInactiveUser (user) // Função para alternar o status
-  };
-});
+  const rows = filteredUsers.map(user => {
+    const unidadeNames = Array.isArray(user.unidadeId) ? user.unidadeId.map(id => {
+      const unidadeObj = userOptionsUnidade.find(option => option.value === id);
+      return unidadeObj ? unidadeObj.label : "Unidade Desconhecida";
+    }) : [];
+
+    return {
+      ...user,
+      unidade: unidadeNames.join(", ") || "Unidade Desconhecida",
+      tipo: user.tipo === 1 ? "Administrador" : user.tipo === 2 ? "Geral" : "Básico", // Exibe o tipo de usuário
+      edit: () => handleEditUser(user),
+      delete: () => handleDeleteUser(user),
+      status: user.isAtivo ? "Ativado" : "Inativado",
+      toggleStatus: () => handleInactiveUser(user),
+    };
+  });
 
   useEffect(() => {
     carregarUnidades();
@@ -439,8 +443,8 @@ const rows = filteredUsers.map(user => {
                   rows={rows}
                   actionsLabel={"Ações"}
                   actionCalls={{
-                    edit: (user) => handleEditUser (user),
-                    inactivate: (user) => handleInactiveUser (user),
+                    edit: (user) => handleEditUser(user),
+                    inactivate: (user) => handleInactiveUser(user),
                   }}
                 />
               )}
@@ -465,7 +469,7 @@ const rows = filteredUsers.map(user => {
                     size="small"
                     label="Nome Completo"
                     name="nome"
-                    value={newUser .nome}
+                    value={newUser.nome}
                     onChange={handleInputChange}
                     autoComplete="off"
                     sx={{ width: { xs: '100%', sm: '50%', md: '40%', lg: '47%' } }}
@@ -505,7 +509,7 @@ const rows = filteredUsers.map(user => {
                     label="Senha"
                     name="senha"
                     type={showPassword ? "text" : "password"}
-                    value={newUser .senha}
+                    value={newUser.senha}
                     onChange={handleInputChange}
                     autoComplete="off"
                     sx={{ width: { xs: '48%', sm: '40%', md: '40%', lg: '47%' } }}
@@ -559,15 +563,19 @@ const rows = filteredUsers.map(user => {
                 </div>
 
                 <div className="w-[96%] border-[1px] p-2 rounded-lg">
-                  {Object.keys(newUser .permissoes).map((permissao) => (
+                  {Object.keys(newUser.permissoes).map((permissao) => (
                     <div className="w-full flex items-center" key={permissao}>
                       <div className="w-[12%]">
                         <Checkbox
-                          checked={newUser .permissoes[permissao].ler}
-                          onChange={() => handleCheckboxChange(permissao, 'ler')}
+                          checked={newUser.permissoes[permissao]}
+                          onChange={() => handleCheckboxChange(permissao)}
                         />
                       </div>
-                      <label className="text-xs w-[73%]">{permissao.charAt(0).toUpperCase() + permissao.slice(1)}</label>
+                      <label className="text-xs w-[73%]">
+                        {permissao === 'administrador' ? 'Administrador' :
+                          permissao === 'geral' ? 'Geral' :
+                            'Básico'}
+                      </label>
                     </div>
                   ))}
                 </div>
@@ -586,7 +594,7 @@ const rows = filteredUsers.map(user => {
 
             <ModalLateral
               open={editandoUsuario}
-              handleClose={handleCloseEditUser }
+              handleClose={handleCloseEditUser}
               tituloModal="Editar Usuário"
               icon={<Edit />}
               tamanhoTitulo="75%"
@@ -599,7 +607,7 @@ const rows = filteredUsers.map(user => {
                       size="small"
                       label="Nome Completo"
                       name="nome"
-                      value={newUser .nome}
+                      value={newUser.nome}
                       onChange={handleInputChange}
                       autoComplete="off"
                       sx={{ width: { xs: '100%', sm: '50%', md: '40%', lg: '47%' } }}
@@ -617,7 +625,7 @@ const rows = filteredUsers.map(user => {
                       size="small"
                       label="CPF"
                       name="cpf"
-                      value={newUser .cpf}
+                      value={newUser.cpf}
                       onChange={handleCPFChange}
                       autoComplete="off"
                       sx={{ width: { xs: '48%', sm: '45%', md: '40%', lg: '47%' } }}
@@ -639,7 +647,7 @@ const rows = filteredUsers.map(user => {
                       label="Senha"
                       name="senha"
                       type={showPassword ? "text" : "password"}
-                      value={newUser .senha}
+                      value={newUser.senha}
                       onChange={handleInputChange}
                       autoComplete="off"
                       sx={{ width: { xs: '47%', sm: '50%', md: '40%', lg: '47%' } }}
@@ -692,15 +700,19 @@ const rows = filteredUsers.map(user => {
                   </div>
 
                   <div className="w-[96%] border-[1px] p-2 rounded-lg">
-                    {Object.keys(newUser .permissoes).map((permissao) => (
+                    {Object.keys(newUser.permissoes).map((permissao) => (
                       <div className="w-full flex  items-center" key={permissao}>
                         <div className="w-[12%]">
                           <Checkbox
-                            checked={newUser .permissoes[permissao]}
+                            checked={newUser.permissoes[permissao]}
                             onChange={() => handleCheckboxChange(permissao)}
                           />
                         </div>
-                        <label className="text-xs w-[73%]">{permissao.charAt(0).toUpperCase() + permissao.slice(1)}</label>
+                        <label className="text-xs w-[73%]">
+                          {permissao === 'administrador' ? 'Administrador' :
+                            permissao === 'geral' ? 'Geral' :
+                              'Básico'}
+                        </label>
                       </div>
                     ))}
                   </div>
@@ -710,7 +722,7 @@ const rows = filteredUsers.map(user => {
                       title={'Salvar'}
                       subtitle={'Salvar'}
                       buttonSize="large"
-                      onClick={handleUpdateUser }
+                      onClick={handleUpdateUser}
                     />
                   </div>
                 </div>

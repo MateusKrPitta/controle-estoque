@@ -7,12 +7,14 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 const HeaderRelatorio = () => {
     const navigate = useNavigate();
 
+    const tipoUsuario = localStorage.getItem('tipo');
+
     const handleNavigation = (section) => {
         switch (section) {
-            case 'estoque-real': 
+            case 'estoque-real':
                 navigate('/relatorio/estoque-real');
                 break;
-            case 'lista-compra': 
+            case 'lista-compra':
                 navigate('/relatorio/lista-compra');
                 break;
             // case 'desperdicio': // Aqui estava 'usuario', mas o botão chama 'usuarios'
@@ -35,14 +37,16 @@ const HeaderRelatorio = () => {
                 className="w-[35%] sm:w-[50%] md:w-[25%] lg:w-[100%]"
 
             />
-            <ButtonComponent
-                startIcon={<AssignmentIcon fontSize="small" />}
-                title="Lista de Compra"
-                buttonSize="large"
-                onClick={() => handleNavigation('lista-compra')}
-                className="w-[40%] sm:w-[50%]  md:w-[25%] lg:w-[100%]"
+            {tipoUsuario !== "3" && (
+                <ButtonComponent
+                    startIcon={<AssignmentIcon fontSize="small" />}
+                    title="Lista de Compra"
+                    buttonSize="large"
+                    onClick={() => handleNavigation('lista-compra')}
+                    className="w-[40%] sm:w-[50%]  md:w-[25%] lg:w-[100%]"
 
-            />
+                />
+            )}
             {/* <ButtonComponent
                 startIcon={<DeleteForeverIcon fontSize="small" />}
                 title="Desperdício"

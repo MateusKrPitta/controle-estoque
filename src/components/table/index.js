@@ -10,7 +10,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import { Print } from '@mui/icons-material';
 
-const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowChange, rowStyle }) => {
+const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowChange, rowStyle, selectedCheckboxes, setSelectedCheckboxes }) => {
     const [pageList, setPageList] = useState([]);
     const hasActions = Object.keys(actionCalls).length > 0;
     const actionTypes = Object.keys(actionCalls);
@@ -22,12 +22,14 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
             label: actionsLabel,
         }])
         : [...headers];
+
     const handleInputChange = (rowIndex, key, value) => {
         const updatedRows = [...pageList];
         updatedRows[rowIndex][key] = value;
         setPageList(updatedRows);
-        onRowChange(updatedRows); 
+        onRowChange(updatedRows);
     };
+
     const calculateTotals = (rows) => {
         const newTotals = rows.reduce((acc, row) => {
             acc.entrada += Number(row.entrada || 0);
@@ -44,10 +46,9 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
             calculateTotals(rows);
         } else {
             console.error('As rows não são um array', rows);
-            setPageList([]); 
+            setPageList([]);
         }
     }, [rows]);
-
 
     const renderActions = (row, rowIndex) => {
         let actions = {
@@ -208,26 +209,29 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                 </TableHead>
 
                 <TableBody>
-    {pageList.map((row, rowIndex) => (
-        <TableRow key={rowIndex} style={rowStyle ? rowStyle(row) : {}}>
-            {headersList.map(({ key, label, sort, type }) => (
-                sort !== false && (
-                    key === "actions" && hasActions ? (
-                        <TableCell key={key} style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
-                            {renderActions(row, rowIndex)} {/* Pass rowIndex here */}
-                        </TableCell>
-                                    ) : type === 'checkbox' ? ( 
+                    {pageList.map((row, rowIndex) => (
+                        <TableRow key={rowIndex} style={rowStyle ? rowStyle(row) : {}}>
+                            {headersList.map(({ key, label, sort, type }) => (
+                                sort !== false && (
+                                    key === "actions" && hasActions ? (
+                                        <TableCell key={key} style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
+                                            {renderActions(row, rowIndex)} {/* Pass rowIndex here */}
+                                        </TableCell>
+                                    ) : type === 'checkbox' ? (
                                         <TableCell key={key}>
-                                            <input
-                                                type="checkbox"
-                                                checked={row[key] || false}
-                                                onChange={(e) => {
-                                                    const updatedRows = [...pageList];
-                                                    updatedRows[rowIndex][key] = e.target.checked;
-                                                    setPageList(updatedRows);
-                                                    if (onRowChange) onRowChange(updatedRows);
-                                                }}
-                                            />
+                                           <input
+    type="checkbox"
+    checked={selectedCheckboxes[row.produto] || false} // Use o nome do produto como chave
+    onChange={(e) => {
+        const updatedSelectedCheckboxes = { ...selectedCheckboxes };
+        if (e.target.checked) {
+            updatedSelectedCheckboxes[row.produto] = true; // Marcar como selecionado
+        } else {
+            delete updatedSelectedCheckboxes[row.produto]; // Remover da seleção
+        }
+        setSelectedCheckboxes(updatedSelectedCheckboxes); // Atualiza o estado no componente pai
+    }}
+/>
                                         </TableCell>
                                     ) : key === "tipo" ? (
                                         <TableCell key={key} style={{

@@ -18,6 +18,7 @@ import { useUnidade } from '../../components/unidade-context';
 import moment from 'moment';
 
 const Dashboard = () => {
+    const tipoUsuario = localStorage.getItem('tipo');
     const navigate = useNavigate();
     const { unidadeId } = useUnidade();
     const [totalProdutos, setTotalProdutos] = useState(0);
@@ -40,6 +41,9 @@ const Dashboard = () => {
         { value: 4, label: 'Mililitro' },
         { value: 5, label: 'Unidade' },
     ];
+
+    const isUsuarioTipo3 = tipoUsuario === "3";
+    
     const prepareDataForChart = (movimentacoes) => {
         const dataMap = {};
 
@@ -55,11 +59,11 @@ const Dashboard = () => {
                 };
             }
 
-            if (mov.tipo === "1") { 
+            if (mov.tipo === "1") {
                 dataMap[produtoNome].entradas += mov.quantidade;
             } else if (mov.tipo === "2") {
                 dataMap[produtoNome].saidas += mov.quantidade;
-            } else if (mov.tipo === "3") { 
+            } else if (mov.tipo === "3") {
                 dataMap[produtoNome].desperdicio += mov.quantidade;
             }
         });
@@ -159,7 +163,7 @@ const Dashboard = () => {
             const formattedMovimentacoes = movimentacoes.map(mov => {
                 return {
                     id: mov.id,
-                    tipo: mov.tipo, 
+                    tipo: mov.tipo,
                     produtoNome: mov.produtoNome,
                     quantidade: mov.quantidade,
                     categoria: mov.categoriaNome,
@@ -282,11 +286,11 @@ const Dashboard = () => {
                 };
             }
 
-            if (item.tipo === '1') { 
+            if (item.tipo === '1') {
                 movimentacoesContagem[produtoNome].entradas += item.quantidade;
-            } else if (item.tipo === '2') { 
+            } else if (item.tipo === '2') {
                 movimentacoesContagem[produtoNome].saidas += item.quantidade;
-            } else if (item.tipo === '3') { 
+            } else if (item.tipo === '3') {
                 movimentacoesContagem[produtoNome].desperdicio += item.quantidade;
             }
         });
@@ -295,7 +299,7 @@ const Dashboard = () => {
         const sortedData = dataArray.sort((a, b) => {
             const totalA = a.entradas + a.saidas + a.desperdicio;
             const totalB = b.entradas + b.saidas + b.desperdicio;
-            return totalB - totalA; 
+            return totalB - totalA;
         });
 
 
@@ -331,61 +335,66 @@ const Dashboard = () => {
                                 <label className='text-black font-semibold w-full'>{itensEmEstoque}</label>
                             </div>
                         </div>
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[22%] flex-col gap-2 flex items-center justify-center'>
-                            <label className='text-black text-xs font-semibold'>Valor Total</label>
-                            <div className='flex items-center justify-center gap-6'>
-                                <img src={Dinheiro} alt="Valor Total" />
-                                <label className='text-black font-semibold w-full'>R$ {formatValor(valorTotal)}</label>
+                        {!isUsuarioTipo3 && (
+                            <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[22%] flex-col gap-2 flex items-center justify-center'>
+                                <label className='text-black text-xs font-semibold'>Valor Total</label>
+                                <div className='flex items-center justify-center gap-6'>
+                                    <img src={Dinheiro} alt="Valor Total" />
+                                    <label className='text-black font-semibold w-full'>R$ {formatValor(valorTotal)}</label>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[22%] flex-col gap-2 flex items-center justify-center'>
-                            <label className='text-black text-xs font-semibold'>Itens para comprar</label>
-                            <div className='flex items-center justify-center gap-6'>
-                                <img src={Compra} alt="Produtos Abaixo do Mínimo" />
-                                <label className='text-black font-semibold w-full'>{produtosAbaixoMinimo}</label>
+                        {!isUsuarioTipo3 && (
+                            <div className='w-[50%] p-5 border-[2px] rounded-lg md:w-[43%] lg:w-[22%] flex-col gap-2 flex items-center justify-center'>
+                                <label className='text-black text-xs font-semibold'>Itens para comprar</label>
+                                <div className='flex items-center justify-center gap-6'>
+                                    <img src={Compra} alt="Produtos Abaixo do Mínimo" />
+                                    <label className='text-black font-semibold w-full'>{produtosAbaixoMinimo}</label>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
-                    <div className='flex w-full  items-end h-[70%] justify-center flex-wrap'>
-                        <div className="mt-8 w-[100%] lg:w-[30%] h-64">
-                            <h2 className="text-lg text-center font-bold text-primary mb-7">Estoque por Categoria</h2>
-                            <ResponsiveContainer>
-                                <PieChart>
-                                    <Pie
-                                        data={estoquePorCategoria}
-                                        dataKey="quantidade"
-                                        nameKey="name"
-                                        cx="50%"
-                                        cy="50%"
-                                        outerRadius={100}
-                                        fill="#8884d8"
-                                        label
-                                    >
-                                        {estoquePorCategoria.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={getColor(index)} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                </PieChart>
-                            </ResponsiveContainer>
-
+                    {!isUsuarioTipo3 && (
+                        <div className='flex w-full items-end h-[70%] justify-center flex-wrap'>
+                            <div className="mt-8 w-[100%] lg:w-[30%] h-64">
+                                <h2 className="text-lg text-center font-bold text-primary mb-7">Estoque por Categoria</h2>
+                                <ResponsiveContainer>
+                                    <PieChart>
+                                        <Pie
+                                            data={estoquePorCategoria}
+                                            dataKey="quantidade"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            outerRadius={100}
+                                            fill="#8884d8"
+                                            label
+                                        >
+                                            {estoquePorCategoria.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={getColor(index)} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="mt-8 w-[100%] lg:w-[30%] h-64">
+                                <h2 className="text-lg text-center w-full font-bold text-primary mt-12 lg:mt-0 mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <BarChart data={dataGrafico}>
+                                        <XAxis dataKey="nome" tick={{ fontSize: 10 }} />
+                                        <YAxis tick={{ fontSize: 10 }} />
+                                        <Tooltip content={<CustomTooltip />} contentStyle={{ fontSize: 12 }} />
+                                        <Bar dataKey="entradas" fill="#BCDA72" />
+                                        <Bar dataKey="saidas" fill="#FF0000" />
+                                        <Bar dataKey="desperdicio" fill="#000000" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
-                        <div className="mt-8 w-[100%] lg:w-[30%] h-64">
-                            <h2 className="text-lg text-center w-full font-bold text-primary mt-12 lg:mt-0 mb-7">Entradas, Saídas e Desperdícios por Produto</h2>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={dataGrafico}>
-                                    <XAxis dataKey="nome" tick={{ fontSize: 10 }} />
-                                    <YAxis tick={{ fontSize: 10 }} />
-                                    <Tooltip content={<CustomTooltip />} contentStyle={{ fontSize: 12 }} />
-                                    <Bar dataKey="entradas" fill="#BCDA72" />
-                                    <Bar dataKey="saidas" fill="#FF0000" />
-                                    <Bar dataKey="desperdicio" fill="#000000" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>

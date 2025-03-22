@@ -1,20 +1,40 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import CustomToast from '../components/toast';
 
 const PrivateRoute = () => {
     const token = localStorage.getItem('token');
-    const [showMessage, setShowMessage] = useState(false);
+    const tipoUsuario = localStorage.getItem('tipo');
+    const location = useLocation();
 
-    useEffect(() => {
-        if (!token) {
-            CustomToast({ type: 'warning', message: 'Faça login para acessar esta página!' });
-            setShowMessage(true);
-        }
-    }, [token]);
+    if (!token) {
+        CustomToast({ type: 'warning', message: 'Faça login para acessar esta página!' });
+        return <Navigate to="/" replace />;
+    }
 
-    if (showMessage) {
-        return <Navigate to="/" />;
+    // Rotas restritas para usuários do tipo "2"
+    if (tipoUsuario === "2" && location.pathname === "/entrada-saida") {
+        CustomToast({ type: 'warning', message: 'Você não tem permissão para acessar esta página!' });
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    // Rotas restritas para usuários do tipo "2"
+    if (tipoUsuario === "2" && (location.pathname === "/cadastro/unidade" || location.pathname === "/cadastro/usuario")) {
+        CustomToast({ type: 'warning', message: 'Você não tem permissão para acessar esta página!' });
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    // Rotas restritas para usuários do tipo "3"
+    const rotasRestritasTipo3 = [
+        "/cmv",
+        "/ficha-tecnica",
+        "/relatorio/lista-compra",
+        "/cadastro/usuario",
+        "/cadastro/unidade"
+    ];
+
+    if (tipoUsuario === "3" && rotasRestritasTipo3.includes(location.pathname)) {
+        CustomToast({ type: 'warning', message: 'Você não tem permissão para acessar esta página!' });
+        return <Navigate to="/dashboard" replace />;
     }
 
     return <Outlet />;

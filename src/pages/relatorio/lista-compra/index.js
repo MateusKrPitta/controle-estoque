@@ -4,18 +4,18 @@ import Navbar from '../../../components/navbars/header';
 import MenuMobile from '../../../components/menu-mobile';
 import HeaderPerfil from '../../../components/navbars/perfil';
 import TableComponent from '../../../components/table';
-import { formatValor } from '../../../utils/functions'; 
+import { formatValor } from '../../../utils/functions';
 import ButtonComponent from '../../../components/button';
-import { Category, Print,  Search } from '@mui/icons-material';
+import { Category, Print, Search } from '@mui/icons-material';
 import HeaderRelatorio from '../../../components/navbars/relatorios';
 import CentralModal from '../../../components/modal-central/index';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import SelectTextFields from '../../../components/select';
 import Logo from '../../../assets/png/logo_preta.png';
-import api from '../../../services/api'; 
+import api from '../../../services/api';
 import { useUnidade } from '../../../components/unidade-context';
 import CustomToast from '../../../components/toast';
-import { InputAdornment, TextField } from '@mui/material';
+import { FormControlLabel, InputAdornment, Switch, TextField } from '@mui/material';
 
 const ListaCompra = () => {
     const { unidadeId } = useUnidade();
@@ -23,11 +23,22 @@ const ListaCompra = () => {
     const [entradasSaidas, setEntradasSaidas] = useState([]);
     const [categorias, setCategorias] = useState([]);
     const [isVisible, setIsVisible] = useState(false);
+    const [limparCampos, setLimparCampos] = useState(false);
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
-    const [categoriaSelecionada, setCategoriaSelecionada] = useState(null); 
+    const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
     const [produtosFiltrados, setProdutosFiltrados] = useState([]);
     const [filtroNome, setFiltroNome] = useState('');
+    const [selectedCheckboxes, setSelectedCheckboxes] = useState({});
+    const [selectAllBelowMin, setSelectAllBelowMin] = useState(false); // Estado para o Switch
 
+    const handleLimparCampos = () => {
+        setLimparCampos(!limparCampos);
+        if (!limparCampos) {
+            setCategoriaSelecionada('');
+            fetchProdutos(unidadeId);
+            handleCloseCadastroProdutos();
+        }
+    };
 
     const calcularEstoqueAtual = (produtoNome) => {
         const estoque = {
@@ -75,32 +86,30 @@ const ListaCompra = () => {
         5: 'Unidade',
     };
 
-    const rows = produtosFiltrados 
-        .map(produto => {
-            const estoqueAtual = calcularEstoqueAtual(produto.nome);
-            const abaixoMinimo = estoqueAtual < produto.qtdMin;
+    const rows = produtosFiltrados.map(produto => {
+        const estoqueAtual = calcularEstoqueAtual(produto.nome);
+        const abaixoMinimo = estoqueAtual < produto.qtdMin;
 
-            return {
-                selecionado: abaixoMinimo,
-                produto: produto.nome,
-                categoria: produto.categoriaNome,
-                unidade: unidades[produto.unidadeMedida] || 'Desconhecida',
-                quantidadeMinima: produto.qtdMin,
-                quantidade: estoqueAtual,
-                precoUnitario: formatValor(produto.valor),
-                valorTotal: formatValor((produto.valor * estoqueAtual)),
-                comprar: Math.max(produto.qtdMin - estoqueAtual, 0),
-                isAbaixoMinimo: abaixoMinimo
-            };
-        })
-        .sort((a, b) => {
-            if (a.isAbaixoMinimo && !b.isAbaixoMinimo) return -1;
-            if (!a.isAbaixoMinimo && b.isAbaixoMinimo) return 1;
-            return 0;
-        });
+        return {
+            selecionado: abaixoMinimo,
+            produto: produto.nome,
+            categoria: produto.categoriaNome,
+            unidade: unidades[produto.unidadeMedida] || 'Desconhecida',
+            quantidadeMinima: produto.qtdMin,
+            quantidade: estoqueAtual,
+            precoUnitario: formatValor(produto.valor),
+            valorTotal: formatValor((produto.valor * estoqueAtual)),
+            comprar: Math.max(produto.qtdMin - estoqueAtual, 0),
+            isAbaixoMinimo: abaixoMinimo
+        };
+    }).sort((a, b) => {
+        if (a.isAbaixoMinimo && !b.isAbaixoMinimo) return -1;
+        if (!a.isAbaixoMinimo && b.isAbaixoMinimo) return 1;
+        return 0;
+    });
 
     const headers = [
-        { label: '', key: 'selecionado', type: 'checkbox' }, 
+        { label: '', key: 'selecionado', type: 'checkbox' },
         { label: 'Produto', key: 'produto' },
         { label: 'Categoria', key: 'categoria' },
         { label: 'Unidade', key: 'unidade' },
@@ -111,10 +120,10 @@ const ListaCompra = () => {
     ];
 
     const handlePrint = () => {
-        const selectedRows = rows.filter(row => row.selecionado); 
+        const selectedRows = rows.filter(row => row.selecionado);
         if (selectedRows.length === 0) {
             CustomToast({ type: "warning", message: "Nenhum item selecionado para imprimir!" });
-            return; 
+            return;
         }
 
         const printWindow = window.open('', '_blank');
@@ -199,7 +208,7 @@ const ListaCompra = () => {
             );
             setProdutosFiltrados(filtrados);
         } else {
-            setProdutosFiltrados(produtos); 
+            setProdutosFiltrados(produtos);
         }
         handleCloseCadastroProdutos(true);
     };
@@ -209,7 +218,7 @@ const ListaCompra = () => {
             const response = await api.get(`/produto?unidadeId=${unidadeId}`);
             const produtosCadastrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
             setProdutos(produtosCadastrados);
-            setProdutosFiltrados(produtosCadastrados); 
+            setProdutosFiltrados(produtosCadastrados);
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
         }
@@ -223,12 +232,12 @@ const ListaCompra = () => {
 
     useEffect(() => {
         if (unidadeId) {
-            carregarCategorias(unidadeId); 
+            carregarCategorias(unidadeId);
         }
     }, [unidadeId]);
 
     useEffect(() => {
-        setProdutosFiltrados(produtos); 
+        setProdutosFiltrados(produtos);
     }, [produtos]);
 
     useEffect(() => {
@@ -236,9 +245,17 @@ const ListaCompra = () => {
             produto.nome.toLowerCase().includes(filtroNome.toLowerCase())
         );
         setProdutosFiltrados(filtrados);
+
+        // Manter a seleção das checkboxes
+        const newSelectedCheckboxes = {};
+        filtrados.forEach(produto => {
+            if (selectedCheckboxes[produto.nome]) {
+                newSelectedCheckboxes[produto.nome] = true; // Manter selecionado se já estava
+            }
+        });
+        setSelectedCheckboxes(newSelectedCheckboxes);
     }, [filtroNome, produtos]);
 
-    
     useEffect(() => {
         fetchProdutos();
         carregarCategorias();
@@ -251,6 +268,22 @@ const ListaCompra = () => {
 
         return () => clearTimeout(timer);
     }, []);
+
+    const handleSelectAllBelowMin = (event) => {
+        const isChecked = event.target.checked;
+        setSelectAllBelowMin(isChecked);
+    
+        const newSelectedCheckboxes = { ...selectedCheckboxes }; // Copia o estado atual
+    
+        rows.forEach(row => {
+            if (row.isAbaixoMinimo) {
+                newSelectedCheckboxes[row.produto] = isChecked; // Seleciona ou desmarca
+            }
+        });
+    
+        setSelectedCheckboxes(newSelectedCheckboxes);
+    };
+
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -267,7 +300,7 @@ const ListaCompra = () => {
                     </div>
                     <div className={`w-[100%]  itens-center mt-2 ml-2 sm:mt-0 md:flex md:justify-start flex-col lg:w-[80%] transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                         <div className="flex gap-2 flex-wrap w-full justify-center md:justify-start">
-                            <div className='flex items-center gap-2'>
+                            <div className='flex w-full items-center gap-2'>
                                 <TextField
                                     fullWidth
                                     variant="outlined"
@@ -283,7 +316,7 @@ const ListaCompra = () => {
                                         ),
                                     }}
                                     autoComplete="off"
-                                    sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '80%' }, }}
+                                    sx={{ width: { xs: '95%', sm: '50%', md: '40%', lg: '20%' }, }}
                                 />
                                 <ButtonComponent
                                     title="Imprimir"
@@ -297,15 +330,30 @@ const ListaCompra = () => {
                                     startIcon={<FilterAltIcon />}
                                     onClick={handleCadastroProdutos}
                                 />
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            style={{ marginLeft: '5px' }}
+                                            size="small"
+                                            color="primary"
+                                            checked={selectAllBelowMin} // Estado do Switch
+                                            onChange={handleSelectAllBelowMin} // Função para lidar com a mudança
+                                        />
+                                    }
+                                    label="Selecionar Produtos"
+                                />
                             </div>
                             <div className=' sm:w-[100%] lg:w-[95%] flex flex-col' >
-                                <TableComponent
-                                    headers={headers}
-                                    rows={rows}
-                                    actionsLabel={'Ações'}
-                                    actionCalls={{}}
-                                    rowStyle={(row) => row.isAbaixoMinimo ? { backgroundColor: '#ffcccc' } : {}} 
-                                />
+                            <TableComponent
+    headers={headers}
+    rows={rows}
+    actionsLabel={'Ações'}
+    actionCalls={{}}
+    rowStyle={(row) => row.isAbaixoMinimo ? { backgroundColor: '#ffcccc' } : {}}
+    selectedCheckboxes={selectedCheckboxes} // Passando o estado das checkboxes
+    setSelectedCheckboxes={setSelectedCheckboxes} // Passando a função para atualizar o estado
+/>
+
                             </div>
                         </div>
                     </div>
@@ -329,8 +377,20 @@ const ListaCompra = () => {
                                 label={'Categorias'}
                                 backgroundColor={"#D9D9D9"}
                                 options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
-                                onChange={(e) => setCategoriaSelecionada(e.target.value)} 
+                                onChange={(e) => setCategoriaSelecionada(e.target.value)}
                                 value={categoriaSelecionada}
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        style={{ marginLeft: '5px' }}
+                                        size="small"
+                                        checked={limparCampos}
+                                        onChange={handleLimparCampos}
+                                        color="primary"
+                                    />
+                                }
+                                label="Limpar Filtro"
                             />
                         </div>
                         <div className='w-[95%] mt-2 flex items-end justify-end'>

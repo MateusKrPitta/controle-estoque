@@ -26,7 +26,7 @@ export const UnidadeProvider = ({ children }) => {
 
     const atualizarUnidades = (unidades) => {
         setUnidades(unidades);
-        localStorage.setItem('unidades', JSON.stringify(unidades)); // Armazena as unidades no localStorage
+        localStorage.setItem('unidades', JSON.stringify(unidades)); 
     };
 
     return (
