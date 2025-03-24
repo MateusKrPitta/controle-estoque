@@ -500,7 +500,7 @@ const Produtos = () => {
                                                 actionsLabel={"Ações"}
                                                 actionCalls={{
                                                     edit: (produto) => handleEditProduto(produto),
-                                                    delete: (produto) => handleDeleteProduto(produto.id),
+                                                    inactivate: (produto) => handleDeleteProduto(produto.id),
                                                 }}
                                             />
                                         )}
@@ -565,6 +565,7 @@ const Produtos = () => {
                                             size="small"
                                             label="Rendimento"
                                             name="rendimento"
+                                            type='number'
                                             value={rendimento}
                                             onChange={(e) => setRendimento(e.target.value)}
                                             autoComplete="off"
@@ -704,31 +705,10 @@ const Produtos = () => {
                                             }}
                                         />
 
-                                        <NumericFormat
-                                            customInput={TextField}
-                                            full Width
-                                            variant="outlined"
-                                            size="small"
-                                            label="Valor Reajuste"
-                                            sx={{ width: { xs: '45%', sm: '45%', md: '40%', lg: '47%' }, }}
-                                            value={valorReajuste}
-                                            onValueChange={(values) => setValorReajuste(values.value)}
-                                            thousandSeparator="."
-                                            decimalSeparator=","
-                                            prefix="R$ "
-                                            decimalScale={2}
-                                            fixedDecimalScale={true}
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <MoneyOutlined />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                        />
+                                        
                                        
                                         <SelectTextFields
-                                            width="330px"
+                                            width="155px"
                                             icon={<CategoryIcon fontSize="small" />}
                                             label="Categoria"
                                             backgroundColor="#D9D9D9"

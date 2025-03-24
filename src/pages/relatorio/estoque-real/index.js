@@ -12,7 +12,7 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Objeto from '../../../assets/icones/objetos.png';
 import Baixo from '../../../assets/icones/abaixo.png';
-import { IconButton } from '@mui/material';
+import { FormControlLabel, IconButton, Switch } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CentralModal from '../../../components/modal-central';
 import SelectTextFields from '../../../components/select';
@@ -32,6 +32,7 @@ const EstoqueReal = () => {
     const [dataInicio, setDataInicio] = useState('');
     const [dataFim, setDataFim] = useState('');
     const [filtro, setFiltro] = useState(false);
+    const [limparCampos, setLimparCampos] = useState(false);
     const [categorias, setCategorias] = useState([]);
     const [selectedCategoria, setSelectedCategoria] = useState('');
     const [isVisible, setIsVisible] = useState(false);
@@ -46,19 +47,38 @@ const EstoqueReal = () => {
         return () => clearTimeout(timer);
     }, []);
 
+    const handleLimparCampos = () => {
+        setLimparCampos(!limparCampos);
+
+        if (!limparCampos) {
+            // Limpa os campos de filtro
+            setDataInicio('');
+            setDataFim('');
+            setSelectedCategoria('');
+
+            // Recarrega os produtos
+            fetchProdutos();
+            fetchEntradasSaidas();
+            fetchCategorias();
+
+            // Fecha o modal de filtro
+            handleCloseFiltro();
+        }
+    };
+
     const fetchEntradasSaidas = async () => {
         try {
             const response = await api.get('/movimentacao');
             const movimentacoes = response.data.data;
-    
+
             const movimentacoesFiltradas = movimentacoes.filter(mov => {
                 const produto = produtos.find(prod => prod.nome === mov.produtoNome);
                 return produto && produto.unidadeId === unidadeId;
             });
-    
+
             const formattedMovimentacoes = await Promise.all(movimentacoesFiltradas.map(async (mov) => {
                 const valorTotal = mov.precoPorcao * mov.quantidade;
-    
+
                 return {
                     tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === '2' ? 'saida' : 'desperdicio',
                     produtoNome: mov.produtoNome,
@@ -71,7 +91,7 @@ const EstoqueReal = () => {
                     id: mov.id
                 };
             }));
-    
+
             setEntradasSaidas(formattedMovimentacoes);
             setEntradasSaidasOriginais(formattedMovimentacoes);
         } catch (error) {
@@ -179,18 +199,18 @@ const EstoqueReal = () => {
         const produtosFiltrados = produtos.filter(produto => {
             const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
             const dataCriacaoProduto = moment(produto.createdAt);
-            const dataInicioFiltro = moment(dataInicio).startOf('day'); 
-            const dataFimFiltro = moment(dataFim).endOf('day');   
+            const dataInicioFiltro = moment(dataInicio).startOf('day');
+            const dataFimFiltro = moment(dataFim).endOf('day');
             const dataMatch = (dataInicio && dataFim) ?
                 dataCriacaoProduto.isBetween(dataInicioFiltro, dataFimFiltro, null, '[]') : true;
 
-    
+
             return categoriaMatch && dataMatch;
         });
-    
+
         setProdutosFiltrados(produtosFiltrados);
         handleCloseFiltro();
-    
+
         if (produtosFiltrados.length === 0) {
             CustomToast({ type: "error", message: "Nenhum produto encontrado com os critérios de pesquisa." });
         } else {
@@ -389,6 +409,18 @@ const EstoqueReal = () => {
                             options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
                             onChange={(e) => setSelectedCategoria(e.target.value)}
                             value={selectedCategoria}
+                        />
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    style={{ marginLeft: '5px' }}
+                                    size="small"
+                                    checked={limparCampos}
+                                    onChange={handleLimparCampos}
+                                    color="primary"
+                                />
+                            }
+                            label="Limpar Filtro"
                         />
                     </div>
                     <div className='w-[95%] mt-2 flex items-end justify-end'>

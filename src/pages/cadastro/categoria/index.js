@@ -44,23 +44,25 @@ const Categoria = () => {
     const handleCadastroCategoria = () => setCadastroCategoria(true);
     const handleCloseCadastroCategoria = () => setCadastroCategoria(false);
 
-    const carregarCategorias = async (unidadeId) => {
+    const carregarCategorias = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/categoria?unidade=${unidadeId}`);
+            const response = await api.get(`/categoria`);
             if (Array.isArray(response.data.data)) {
-                const categoriasComEstado = response.data.data.map(categoria => ({
-                    ...categoria,
-                    isActive: true // ou false, dependendo da lógica do seu backend
-                }));
-                setCategorias(categoriasComEstado);
+                const categoriasFiltradas = response.data.data
+                    .filter(cat => cat.unidadeId === unidadeId)
+                    .map(categoria => ({
+                        ...categoria,
+                        status: categoria.isAtivo ? "Ativo" : "Inativo" // Adiciona campo status
+                    }));
+                
+                setCategorias(categoriasFiltradas);
             } else {
                 setCategorias([]);
             }
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
-            CustomToast({ type: "error", message: "Sessão expirada. Faça login novamente." });
-            navigate("/");
+            CustomToast({ type: "error", message: "Erro ao buscar categorias." });
         } finally {
             setLoading(false);
         }
@@ -112,9 +114,13 @@ const Categoria = () => {
 
     const handleDeleteCategoria = async (categoria) => {
         try {
-            await api.delete(`/categoria/${categoria.id}`);
+            const response = await api.delete(`/categoria/${categoria.id}`);
             await carregarCategorias(unidadeId);
-            CustomToast({ type: "success", message: "Categoria deletada com sucesso!" });
+            
+            // Exibe a mensagem da resposta da API
+            if (response.data && response.data.message) {
+                CustomToast({ type: "success", message: response.data.message });
+            } 
         } catch (error) {
             CustomToast({ type: "error", message: "Erro ao deletar categoria." });
         }
@@ -147,14 +153,15 @@ const Categoria = () => {
 
     useEffect(() => {
         if (unidadeId) {
-            carregarCategorias(unidadeId);
+            carregarCategorias(); 
         }
     }, [unidadeId]);
 
     useEffect(() => {
 
         const categoriasFiltradas = categorias.filter(categoria =>
-            categoria.nome.toLowerCase().includes(filtroNome.toLowerCase())
+            categoria.nome.toLowerCase().includes(filtroNome.toLowerCase()),
+            categoria.isAtivo
         );
         setProdutosFiltrados(categoriasFiltradas);
 
@@ -233,7 +240,7 @@ const Categoria = () => {
                                             actionsLabel={"Ações"}
                                             actionCalls={{
                                                 edit: handleEditCategoria,
-                                                delete: handleDeleteCategoria,
+                                                inactivate: handleDeleteCategoria,
                                             }}
                                         />
                                     )}

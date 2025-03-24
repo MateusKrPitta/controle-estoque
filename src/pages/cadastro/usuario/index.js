@@ -26,6 +26,7 @@ import { LocationOnOutlined, Password } from "@mui/icons-material";
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from "../../../components/auth-context";
+import CustomToast from "../../../components/toast";
 
 const Usuario = () => {
   const { userId } = useAuth();
@@ -57,14 +58,12 @@ const Usuario = () => {
     const { name, value } = e.target;
     setNewUser({ ...newUser, [name]: value });
   };
-
   const handleCheckboxChange = (permissao) => {
     const updatedPermissoes = {
-      administrador: false,
-      geral: false,
-      basico: false,
+      administrador: permissao === 'administrador',
+      geral: permissao === 'geral',
+      basico: permissao === 'basico',
     };
-    updatedPermissoes[permissao] = true;
     setNewUser({
       ...newUser,
       permissoes: updatedPermissoes,
@@ -175,18 +174,24 @@ const Usuario = () => {
   };
 
   const handleEditUser = (user) => {
+
     setEditUser(user);
+
+    const permissoes = {
+      administrador: user.tipo === "1",
+      geral: user.tipo === "2",
+      basico: user.tipo === "3",
+    };
+
+    console.log('Permissões definidas:', permissoes);
+
     setNewUser({
       nome: user.nome,
       cpf: formatCPF(user.cpf),
       senha: user.senha,
       funcao: user.funcao || '',
       unidade: user.unidade || '',
-      permissoes: {
-        administrador: user.tipo === 1, // Tipo 1: Administrador
-        geral: user.tipo === 2, // Tipo 2: Geral
-        basico: user.tipo === 3, // Tipo 3: Básico
-      },
+      permissoes: permissoes,
     });
 
     setSelectedUnidades(
@@ -201,81 +206,80 @@ const Usuario = () => {
   const handleUpdateUser = async () => {
     try {
       if (!newUser.nome) {
-        return "O nome é obrigatório.";
+        CustomToast({ type: "error", message: "O nome é obrigatório." });
+        return;
       }
       if (!newUser.cpf) {
-        return "O CPF é obrigatório.";
+        CustomToast({ type: "error", message: "O CPF é obrigatório." });
+        return;
       }
       if (!newUser.senha) {
-        return "A senha é obrigatória.";
+        CustomToast({ type: "error", message: "A senha é obrigatória." });
+        return;
       }
       if (selectedUnidades.length === 0) {
-        return "Pelo menos uma unidade deve ser selecionada.";
+        CustomToast({ type: "error", message: "Pelo menos uma unidade deve ser selecionada." });
+        return;
       }
-
+  
       const cpfExistente = users.find(user => user.cpf === newUser.cpf && user.cpf !== editUser.cpf);
       if (cpfExistente) {
-        return "CPF já cadastrado. Não é possível cadastrar outro.";
+        CustomToast({ type: "error", message: "CPF já cadastrado. Não é possível cadastrar outro." });
+        return;
       }
-
+  
       if (newUser.senha.length < 6) {
-        return "A senha deve conter pelo menos 6 dígitos.";
+        CustomToast({ type: "error", message: "A senha deve conter pelo menos 6 dígitos." });
+        return;
       }
-
+  
       const userData = {
         nome: newUser.nome,
         cpf: newUser.cpf,
         senha: newUser.senha,
-        tipo: newUser.permissoes.administrador ? 1 : (newUser.permissoes.basico ? 2 : 0),
+        tipo: newUser.permissoes.administrador ? "1" : 
+              (newUser.permissoes.geral ? "2" : "3"),
         unidadeId: selectedUnidades.map(unidade => {
           const unidadeObj = userOptionsUnidade.find(option => option.label === unidade);
           return unidadeObj ? unidadeObj.value : null;
         }).filter(id => id !== null),
       };
-
+  
       const response = await api.put(`/usuario/${editUser.id}`, userData);
-
-      if (response.status === 200 || response.status === 204) {
+      console.log('Resposta da API:', response.data); // Log para depuração
+  
+      if (response.data.status) { // Verifica se status é true
+        CustomToast({ type: "success", message: response.data.message });
+  
+        // Atualiza o usuário na lista local
         const updatedUsers = users.map(user => {
           if (user.id === editUser.id) {
-            return { ...userData, unidades: selectedUnidades };
+            return { 
+              ...user, 
+              ...response.data.data, // Usa os dados atualizados da resposta
+              unidadeId: response.data.data.unidadeId 
+            };
           }
           return user;
         });
-
+  
         setUsers(updatedUsers);
-        setEditandoUsuario(false);
-        setEditUser(null);
-        setNewUser({
-          nome: '',
-          cpf: '',
-          senha: '',
-          unidade: '',
-          permissoes: {
-            administrador: false,
-            basico: false,
-          },
-        });
-        handleCloseEditUser();
-        fetchUsers();
-
+        handleCloseEditUser(); // Fecha a modal
+        
         if (editUser.id === userId) {
           navigate("/login");
-        } else {
-          return response.data.message || "Usuário atualizado com sucesso!";
         }
       } else {
-        return response.data.message || "Erro ao atualizar usuário!";
+        CustomToast({ type: "error", message: response.data.message || "Erro ao atualizar usuário!" });
       }
     } catch (error) {
-      if (error.response) {
-        return error.response.data.message || "Erro ao atualizar usuário!";
-      } else {
-        return "Erro ao atualizar usuário!";
-      }
+      console.error('Erro ao atualizar usuário:', error);
+      CustomToast({ 
+        type: "error", 
+        message: error.response?.data?.message || "Erro ao atualizar usuário!" 
+      });
     }
   };
-
   const handleCPFChange = (e) => {
     const formattedCPF = formatCPF(e.target.value);
     setCpf(formattedCPF);
@@ -302,24 +306,21 @@ const Usuario = () => {
       }
     }
   };
-
   const handleInactiveUser = async (user) => {
     try {
       const response = await api.delete(`/usuario/${user.id}`);
       if (response.status === 200) {
         const updatedUsers = users.map(u => {
           if (u.id === user.id) {
-            return { ...u, isAtivo: !u.isAtivo }; // Alterna o estado isAtivo
+            return { ...u, isAtivo: !u.isAtivo };
           }
           return u;
         });
         setUsers(updatedUsers);
-        return response.data.message || (user.isAtivo ? "Usuário inativado com sucesso!" : "Usuário reativado com sucesso!");
-      } else {
-        return "Erro ao inativar/reativar usuário!";
+        CustomToast({ type: "success", message: response.data.message });
       }
     } catch (error) {
-      return error.response?.data?.message || "Erro ao inativar/reativar usuário!";
+      CustomToast({ type: "error", message: error.response?.data?.message });
     }
   };
 
@@ -371,10 +372,11 @@ const Usuario = () => {
       return unidadeObj ? unidadeObj.label : "Unidade Desconhecida";
     }) : [];
 
+    // Mantenha o tipo original (1, 2, 3) no objeto user
     return {
       ...user,
       unidade: unidadeNames.join(", ") || "Unidade Desconhecida",
-      tipo: user.tipo === 1 ? "Administrador" : user.tipo === 2 ? "Geral" : "Básico", // Exibe o tipo de usuário
+      tipoDisplay: user.tipo === "1" ? "Administrador" : user.tipo === "2" ? "Geral" : "Básico", // Apenas para exibição
       edit: () => handleEditUser(user),
       delete: () => handleDeleteUser(user),
       status: user.isAtivo ? "Ativado" : "Inativado",
@@ -700,21 +702,34 @@ const Usuario = () => {
                   </div>
 
                   <div className="w-[96%] border-[1px] p-2 rounded-lg">
-                    {Object.keys(newUser.permissoes).map((permissao) => (
-                      <div className="w-full flex  items-center" key={permissao}>
-                        <div className="w-[12%]">
-                          <Checkbox
-                            checked={newUser.permissoes[permissao]}
-                            onChange={() => handleCheckboxChange(permissao)}
-                          />
-                        </div>
-                        <label className="text-xs w-[73%]">
-                          {permissao === 'administrador' ? 'Administrador' :
-                            permissao === 'geral' ? 'Geral' :
-                              'Básico'}
-                        </label>
+                    {console.log('Permissões atuais no render:', newUser.permissoes)}
+                    <div className="w-full flex items-center">
+                      <div className="w-[12%]">
+                        <Checkbox
+                          checked={newUser.permissoes.administrador}
+                          onChange={() => handleCheckboxChange('administrador')}
+                        />
                       </div>
-                    ))}
+                      <label className="text-xs w-[73%]">Administrador</label>
+                    </div>
+                    <div className="w-full flex items-center">
+                      <div className="w-[12%]">
+                        <Checkbox
+                          checked={newUser.permissoes.geral}
+                          onChange={() => handleCheckboxChange('geral')}
+                        />
+                      </div>
+                      <label className="text-xs w-[73%]">Geral</label>
+                    </div>
+                    <div className="w-full flex items-center">
+                      <div className="w-[12%]">
+                        <Checkbox
+                          checked={newUser.permissoes.basico}
+                          onChange={() => handleCheckboxChange('basico')}
+                        />
+                      </div>
+                      <label className="text-xs w-[73%]">Básico</label>
+                    </div>
                   </div>
                   <div className="flex w-[96%] items-end justify-end mt-2 ">
                     <ButtonComponent

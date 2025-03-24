@@ -120,12 +120,14 @@ const ListaCompra = () => {
     ];
 
     const handlePrint = () => {
-        const selectedRows = rows.filter(row => row.selecionado);
+        // Filtra as linhas que estão marcadas no selectedCheckboxes
+        const selectedRows = rows.filter(row => selectedCheckboxes[row.produto]);
+        
         if (selectedRows.length === 0) {
             CustomToast({ type: "warning", message: "Nenhum item selecionado para imprimir!" });
             return;
         }
-
+    
         const printWindow = window.open('', '_blank');
         const tableContent = `
             <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
@@ -155,11 +157,11 @@ const ListaCompra = () => {
                 </tbody>
             </table>
         `;
-
+    
         printWindow.document.write(`
             <html>
                 <head>
-                    <title>Imprimir Tabela</title>
+                    <title>Lista de Compra</title>
                     <style>
                         body { 
                             font-family: Arial, sans-serif; 
@@ -182,6 +184,11 @@ const ListaCompra = () => {
                             margin: 0 auto;
                             background-color: black; 
                         }
+                        .total {
+                            margin-top: 20px;
+                            text-align: right;
+                            font-weight: bold;
+                        }
                     </style>
                 </head>
                 <body>
@@ -192,12 +199,11 @@ const ListaCompra = () => {
             </html>
         `);
         printWindow.document.close();
-
+    
         setTimeout(() => {
             printWindow.print();
         }, 500);
     };
-
     const handleCadastroProdutos = () => setCadastroAdicionais(true);
     const handleCloseCadastroProdutos = () => setCadastroAdicionais(false);
 
