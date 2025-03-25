@@ -48,37 +48,33 @@ const EstoqueReal = () => {
     }, []);
 
     const handleLimparCampos = () => {
-        setLimparCampos(!limparCampos);
-
-        if (!limparCampos) {
-            // Limpa os campos de filtro
-            setDataInicio('');
-            setDataFim('');
-            setSelectedCategoria('');
-
-            // Recarrega os produtos
-            fetchProdutos();
-            fetchEntradasSaidas();
-            fetchCategorias();
-
-            // Fecha o modal de filtro
-            handleCloseFiltro();
-        }
+        // Limpa os campos de filtro
+        setDataInicio('');
+        setDataFim('');
+        setSelectedCategoria('');
+        
+        // Reseta para os produtos originais
+        setProdutosFiltrados(produtos);
+        
+        // Fecha o modal de filtro
+        handleCloseFiltro();
+        
+        CustomToast({ type: "success", message: "Filtros limpos com sucesso!" });
     };
+
 
     const fetchEntradasSaidas = async () => {
         try {
             const response = await api.get('/movimentacao');
             const movimentacoes = response.data.data;
-
-            const movimentacoesFiltradas = movimentacoes.filter(mov => {
-                const produto = produtos.find(prod => prod.nome === mov.produtoNome);
-                return produto && produto.unidadeId === unidadeId;
-            });
-
-            const formattedMovimentacoes = await Promise.all(movimentacoesFiltradas.map(async (mov) => {
+    
+            const formattedMovimentacoes = movimentacoes.map(mov => {
                 const valorTotal = mov.precoPorcao * mov.quantidade;
-
+                
+                // Corrige a conversão de data para considerar o fuso horário local
+                const dataUTC = new Date(mov.data);
+                const dataLocal = new Date(dataUTC.getTime() + dataUTC.getTimezoneOffset() * 60000);
+                
                 return {
                     tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === '2' ? 'saida' : 'desperdicio',
                     produtoNome: mov.produtoNome,
@@ -87,11 +83,12 @@ const EstoqueReal = () => {
                     precoPorcao: mov.precoPorcao,
                     valorTotal: valorTotal,
                     observacao: mov.observacao,
-                    dataCadastro: new Date(mov.data).toLocaleDateString('pt-BR'),
+                    dataCadastro: dataLocal.toLocaleDateString('pt-BR'),
+                    dataOriginal: mov.data, // Mantém a data original em UTC para filtros
                     id: mov.id
                 };
-            }));
-
+            });
+    
             setEntradasSaidas(formattedMovimentacoes);
             setEntradasSaidasOriginais(formattedMovimentacoes);
         } catch (error) {
@@ -117,32 +114,31 @@ const EstoqueReal = () => {
 
     const calcularEstoqueAtual = () => {
         const estoque = {};
-
+    
+        // Inicializa todos os produtos, mesmo com quantidade zero
         produtos.forEach(produto => {
             estoque[produto.nome] = {
                 totalEntradas: 0,
                 totalSaidas: 0,
-                quantidadeInicial: produto.quantidade
+                estoqueAtual: produto.quantidade || 0 // Garante que seja número
             };
         });
-
+    
+        // Processa todas as movimentações
         entradasSaidas.forEach(registro => {
             const { produtoNome, quantidade, tipo } = registro;
-
-            if (estoque[produtoNome]) {
+    
+            if (estoque[produtoNome] !== undefined) {
                 if (tipo === 'entrada') {
                     estoque[produtoNome].totalEntradas += quantidade;
+                    estoque[produtoNome].estoqueAtual += quantidade;
                 } else if (tipo === 'saida' || tipo === 'desperdicio') {
                     estoque[produtoNome].totalSaidas += quantidade;
+                    estoque[produtoNome].estoqueAtual -= quantidade;
                 }
             }
         });
-
-        Object.keys(estoque).forEach(produtoNome => {
-            const { totalEntradas, totalSaidas, quantidadeInicial } = estoque[produtoNome];
-            estoque[produtoNome].estoqueAtual = quantidadeInicial + totalEntradas - totalSaidas;
-        });
-
+    
         return estoque;
     };
 
@@ -196,25 +192,52 @@ const EstoqueReal = () => {
 
 
     const handlePesquisar = () => {
-        const produtosFiltrados = produtos.filter(produto => {
-            const categoriaMatch = selectedCategoria ? produto.categoriaId === selectedCategoria : true;
-            const dataCriacaoProduto = moment(produto.createdAt);
-            const dataInicioFiltro = moment(dataInicio).startOf('day');
-            const dataFimFiltro = moment(dataFim).endOf('day');
-            const dataMatch = (dataInicio && dataFim) ?
-                dataCriacaoProduto.isBetween(dataInicioFiltro, dataFimFiltro, null, '[]') : true;
-
-
-            return categoriaMatch && dataMatch;
-        });
-
-        setProdutosFiltrados(produtosFiltrados);
-        handleCloseFiltro();
-
-        if (produtosFiltrados.length === 0) {
-            CustomToast({ type: "error", message: "Nenhum produto encontrado com os critérios de pesquisa." });
-        } else {
-            CustomToast({ type: "success", message: "Resultados filtrados com sucesso!" });
+        try {
+            const movimentacoesFiltradas = entradasSaidasOriginais.filter(mov => {
+                const dataMov = moment(mov.dataOriginal);
+                const dataInicioValida = dataInicio ? moment(dataInicio).startOf('day') : null;
+                const dataFimValida = dataFim ? moment(dataFim).endOf('day') : null;
+                
+                const dataMatch = 
+                    (!dataInicioValida && !dataFimValida) ||
+                    (dataInicioValida && dataFimValida && dataMov.isBetween(dataInicioValida, dataFimValida, null, '[]')) || // Entre datas
+                    (dataInicioValida && !dataFimValida && dataMov.isSameOrAfter(dataInicioValida)) || // Apenas data inicial
+                    (!dataInicioValida && dataFimValida && dataMov.isSameOrBefore(dataFimValida)) // Apenas data final
+    
+                const categoriaMatch = !selectedCategoria || 
+                    produtos.some(prod => 
+                        prod.nome === mov.produtoNome && 
+                        prod.categoriaId == selectedCategoria
+                    );
+    
+                return dataMatch && categoriaMatch;
+            });
+    
+            // Atualiza as movimentações com as filtradas
+            setEntradasSaidas(movimentacoesFiltradas);
+    
+            // Filtra os produtos que têm movimentações no período ou correspondem à categoria
+            const produtosComMovimentacao = produtos.filter(produto => {
+                // Se há categoria selecionada, verifica se o produto pertence a ela
+                const categoriaMatch = !selectedCategoria || produto.categoriaId == selectedCategoria;
+                
+                // Verifica se o produto tem movimentações no período (se há filtro de data)
+                const temMovimentacao = movimentacoesFiltradas.some(mov => mov.produtoNome === produto.nome);
+                
+                return categoriaMatch && (!dataInicio || !dataFim || temMovimentacao);
+            });
+    
+            setProdutosFiltrados(produtosComMovimentacao);
+            handleCloseFiltro();
+    
+            if (produtosComMovimentacao.length === 0) {
+                CustomToast({ type: "info", message: "Nenhum produto encontrado com os critérios de pesquisa." });
+            } else {
+                CustomToast({ type: "success", message: "Filtro aplicado com sucesso!" });
+            }
+        } catch (error) {
+            console.error("Erro ao filtrar:", error);
+            CustomToast({ type: "error", message: "Erro ao aplicar filtro." });
         }
     };
 
@@ -285,6 +308,56 @@ const EstoqueReal = () => {
     };
 
     const handleCloseFiltro = () => setFiltro(false);
+
+    
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                // Carrega categorias primeiro
+                const categoriasResponse = await api.get(`/categoria?unidadeId=${unidadeId}`);
+                const categoriasFiltradas = categoriasResponse.data.data.filter(c => c.unidadeId === unidadeId);
+                setCategorias(categoriasFiltradas);
+                
+                // Depois carrega produtos
+                const produtosResponse = await api.get(`/produto?unidadeId=${unidadeId}`);
+                const produtosCadastrados = produtosResponse.data.data.filter(p => p.unidadeId === unidadeId);
+                setProdutos(produtosCadastrados);
+                setProdutosFiltrados(produtosCadastrados);
+                
+                // Finalmente carrega movimentações
+                const movimentacoesResponse = await api.get('/movimentacao');
+                const movimentacoes = movimentacoesResponse.data.data;
+                
+                const movimentacoesFiltradas = movimentacoes.filter(mov => {
+                    return produtosCadastrados.some(prod => prod.nome === mov.produtoNome);
+                });
+                
+                const formattedMovimentacoes = movimentacoesFiltradas.map(mov => {
+                    const valorTotal = mov.precoPorcao * mov.quantidade;
+                    return {
+                        tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === '2' ? 'saida' : 'desperdicio',
+                        produtoNome: mov.produtoNome,
+                        quantidade: mov.quantidade,
+                        categoria: categoriasFiltradas.find(cat => cat.id === mov.categoria_id)?.nome || 'Desconhecida',
+                        precoPorcao: mov.precoPorcao,
+                        valorTotal: valorTotal,
+                        observacao: mov.observacao,
+                        dataCadastro: new Date(mov.data).toLocaleDateString('pt-BR'),
+                        id: mov.id
+                    };
+                });
+                
+                setEntradasSaidas(formattedMovimentacoes);
+                setEntradasSaidasOriginais(formattedMovimentacoes);
+            } catch (error) {
+                CustomToast({ type: "error", message: "Erro ao carregar dados!" });
+            }
+        };
+        
+        if (unidadeId) {
+            loadData();
+        }
+    }, [unidadeId]);
 
     return (
         <div className="flex w-full ">

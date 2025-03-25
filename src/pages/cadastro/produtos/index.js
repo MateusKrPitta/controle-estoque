@@ -500,7 +500,7 @@ const Produtos = () => {
                                                 actionsLabel={"Ações"}
                                                 actionCalls={{
                                                     edit: (produto) => handleEditProduto(produto),
-                                                    inactivate: (produto) => handleDeleteProduto(produto.id),
+                                                    delete: (produto) => handleDeleteProduto(produto.id),
                                                 }}
                                             />
                                         )}

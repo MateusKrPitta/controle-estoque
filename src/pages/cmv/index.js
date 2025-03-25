@@ -82,7 +82,13 @@ const CMV = () => {
     });
   };
 
-
+  const formatPercentage = (value) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return '0,00%';
+    }
+    return `${(value).toFixed(2).replace('.', ',')}%`;
+  };
+  
   const handleCadastro = () => {
     setCadastro(true);
     carregaProdutos(unidadeId);
@@ -90,27 +96,37 @@ const CMV = () => {
 
   const handleEditar = (row) => {
     if (row) {
-      setCmvId(row.id);
-      setNome(row.nome || '');
+        setCmvId(row.id);
+        setNome(row.nome || '');
 
+        const faturamentoNumerico = parseFloat(row.faturamento.replace('R$', '').replace('.', '').replace(',', '.').trim());
+        setFaturamento(isNaN(faturamentoNumerico) ? '' : faturamentoNumerico.toString());
 
-      const faturamentoNumerico = parseFloat(row.faturamento.replace('R$', '').replace('.', '').replace(',', '.').trim());
-      setFaturamento(isNaN(faturamentoNumerico) ? '' : faturamentoNumerico.toString());
-      setCmv(row.valorCMV || 0);
-      const mappedProdutos = row.itens.map(item => ({
-        ...item,
-        nome: item.produto.nome,
-        preco: item.produto.valor,
-      }));
+        // Ensure that row.valorCMV is a number
+        const valorCMV = parseFloat(row.valorCMV);
+        setCmv(isNaN(valorCMV) ? 0 : valorCMV); // Set cmv to 0 if it's not a number
 
-      setProdutos(mappedProdutos);
-      calculateTotals(mappedProdutos);
+        const mappedProdutos = row.itens.map(item => ({
+            ...item,
+            nome: item.produto.nome,
+            preco: item.produto.valor,
+        }));
 
-      setEditar(true);
+        const newTotals = row.itens.reduce((acc, item) => {
+            acc.totalEntradas += item.valorEntrada;
+            acc.estoqueInicial += item.valorInicial;
+            acc.estoqueFinal += item.valorEstoqueFinal;
+            acc.totalUtilizado += item.valorUtilizado;
+            return acc;
+        }, { totalEntradas: 0, estoqueInicial: 0, estoqueFinal: 0, totalUtilizado: 0 });
+
+        setProdutos(mappedProdutos);
+        calculateTotals(mappedProdutos);
+        setEditar(true);
     } else {
-      console.error("Row data is undefined");
+        console.error("Row data is undefined");
     }
-  };
+};
 
   const handleCloseEditar = () => {
     clearFields();
@@ -162,8 +178,9 @@ const CMV = () => {
       const estoqueInicial = Number(row.estoqueInicial || 0);
       const estoqueFinal = Number(row.estoqueFinal || 0);
       const entrada = Number(row.entrada || 0);
-      const preco = Number(row.preco || 0);
+      const preco = Number(row.preco || 0); // Use o preço atual
 
+      // Calcule a quantidade utilizada
       const utilizado = estoqueInicial + entrada - estoqueFinal;
 
       if (utilizado < 0) {
@@ -176,6 +193,7 @@ const CMV = () => {
         };
       }
 
+      // Calcule o valor utilizado como preço * quantidade utilizada
       const valorTotal = utilizado * preco;
 
       return {
@@ -184,7 +202,7 @@ const CMV = () => {
         estoqueFinal,
         entrada,
         utilizado,
-        valorUtilizado: formatCurrency(valorTotal),
+        valorUtilizado: formatCurrency(valorTotal), // Atualize aqui
       };
     });
 
@@ -354,7 +372,7 @@ const CMV = () => {
         if (pastedValues[index] !== undefined) {
           return {
             ...produto,
-            estoqueInicial: pastedValues[index], 
+            estoqueInicial: pastedValues[index],
           };
         }
         return produto;
@@ -519,10 +537,15 @@ const CMV = () => {
       setLoading(false);
     }
   };
+
+  
+
   const formattedLista = lista.map(item => ({
     ...item,
     faturamento: formatValor(item.faturamento),
+    valorCMV: `${item.valorCMV.toFixed(2).replace('.', ',')}%`, // Formata como porcentagem
   }));
+
   useEffect(() => {
     if (unidadeId && typeof unidadeId === 'number') {
       fetchCMVData();
@@ -533,13 +556,13 @@ const CMV = () => {
     const faturamentoValue = parseFloat(faturamento) || 1;
 
     if (faturamentoValue === 0) {
-      setCmv(0);
-      return;
+        setCmv(0);
+        return;
     }
 
     const cmvValue = (totalUtilizado / faturamentoValue) * 100;
-    setCmv(cmvValue);
-  };
+    setCmv(Number(cmvValue)); // Ensure cmvValue is a number
+};
 
   const handleAdicionarProduto = () => {
     if (produtoSelecionado) {
@@ -929,7 +952,7 @@ const CMV = () => {
                     size="large"
                     label="CMV"
                     name="CMV"
-                    value={`${cmv.toFixed(2).replace('.', ',')} %`}
+                    value={typeof cmv === 'number' ? `${cmv.toFixed(2)}%` : '0.00%'}
                     autoComplete="off"
                     InputProps={{
                       startAdornment: (
@@ -1031,7 +1054,10 @@ const CMV = () => {
 
           <TableComponent
             headers={headerCmv}
-            rows={produtos}
+            rows={produtos.map(produto => ({
+              ...produto,
+              valorUtilizado: formatCurrency(produto.utilizado * produto.preco), 
+            }))}
             onRowChange={handleRowChangeEditar}
             actionCalls={{
               tirar: handleDelete,

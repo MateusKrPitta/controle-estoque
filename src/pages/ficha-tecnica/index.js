@@ -297,36 +297,39 @@ const FichaTecnica = () => {
 
     const handleFecharEditar = () => setEditar(false);
 
-    const handleEditar = (prato) => {
-        if (!prato || prato.id === 0) {
-            CustomToast({ type: "error", message: "Prato não encontrado!" });
-            return;
-        }
+const handleEditar = (prato) => {
+    if (!prato || prato.id === 0) {
+        CustomToast({ type: "error", message: "Prato não encontrado!" });
+        return;
+    }
 
-        setPratoId(prato.id);
-        setNomePrato(prato.nome);
-        setCustoTotal(prato.custoTotal);
-        setRendimento(prato.qtdRendimento);
-        setValorVenda(formatValor(prato.valorVenda));
+    setPratoId(prato.id);
+    setNomePrato(prato.nome);
+    setCustoTotal(prato.custoTotal);
+    setRendimento(prato.qtdRendimento);
+    setValorVenda(formatValor(prato.valorVenda));
 
-        if (Array.isArray(prato.produtos)) {
-            const produtosAdicionados = prato.produtos.map(prod => {
-                const produtoSelecionado = produtos.find(p => p.id === prod.produtoId);
-                return {
-                    nome: produtoSelecionado.nome,
-                    quantidade: prod.qtdUtilizado,
-                    valorUtilizado: formatValor(prod.valorUtilizado),
-                    unidade: unidadeMedidaMap[produtoSelecionado.unidadeMedida],
-                    precoPorcao: formatValor(produtoSelecionado.valorPorcao)
-                };
-            });
-            setProdutosAdicionados(produtosAdicionados);
-        } else {
-            setProdutosAdicionados([]);
-        }
+    if (Array.isArray(prato.produtos)) {
+        const produtosAtualizados = prato.produtos.map(prod => {
+            const produtoSelecionado = produtos.find(p => p.id === prod.produtoId);
+            if (!produtoSelecionado) return null;
 
-        setEditar(true);
-    };
+            return {
+                nome: produtoSelecionado.nome,
+                quantidade: prod.qtdUtilizado,
+                valorUtilizado: formatValor(prod.qtdUtilizado * produtoSelecionado.valorPorcao), 
+                unidade: unidadeMedidaMap[produtoSelecionado.unidadeMedida],
+                precoPorcao: formatValor(produtoSelecionado.valorPorcao), 
+            };
+        }).filter(Boolean);
+
+        setProdutosAdicionados(produtosAtualizados);
+    } else {
+        setProdutosAdicionados([]);
+    }
+
+    setEditar(true);
+};
     const handleCriarPrato = () => setCriarPrato(true);
     const handleFecharPrato = () => {
         setCriarPrato(false);
@@ -419,6 +422,27 @@ const FichaTecnica = () => {
             CustomToast({ type: "error", message: "Erro ao deletar prato!" });
         }
     };
+
+    useEffect(() => {
+        if (produtosAdicionados.length > 0) {
+            const novosProdutos = produtosAdicionados.map(produto => {
+                const produtoAtualizado = produtos.find(p => p.nome === produto.nome);
+                if (produtoAtualizado) {
+                    const novoValorPorcao = formatValor(produtoAtualizado.valorPorcao);
+                    const novoValorUtilizado = parseFloat(produto.quantidade) * parseFloat(novoValorPorcao.replace('R$', '').replace(',', '.'));
+                    
+                    return {
+                        ...produto,
+                        precoPorcao: novoValorPorcao,
+                        valorUtilizado: formatValor(novoValorUtilizado),
+                    };
+                }
+                return produto;
+            });
+    
+            setProdutosAdicionados(novosProdutos);
+        }
+    }, [produtos]);
 
     useEffect(() => {
         if (custoTotal && rendimento) {
