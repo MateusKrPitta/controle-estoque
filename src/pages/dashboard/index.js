@@ -340,7 +340,7 @@ const Dashboard = () => {
                                 <label className='text-black text-xs font-semibold'>Valor Total</label>
                                 <div className='flex items-center justify-center gap-6'>
                                     <img src={Dinheiro} alt="Valor Total" />
-                                    <label className='text-black font-semibold w-full'>R$ {formatValor(valorTotal)}</label>
+                                    <label className='text-black font-semibold w-full'> {formatValor(valorTotal)}</label>
                                 </div>
                             </div>
                         )}
