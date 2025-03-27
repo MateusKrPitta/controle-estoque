@@ -37,7 +37,7 @@ const HeaderRelatorio = () => {
                 className="w-[35%] sm:w-[50%] md:w-[25%] lg:w-[100%]"
 
             />
-            {tipoUsuario !== "3" && (
+          
                 <ButtonComponent
                     startIcon={<AssignmentIcon fontSize="small" />}
                     title="Lista de Compra"
@@ -46,7 +46,7 @@ const HeaderRelatorio = () => {
                     className="w-[40%] sm:w-[50%]  md:w-[25%] lg:w-[100%]"
 
                 />
-            )}
+           
             {/* <ButtonComponent
                 startIcon={<DeleteForeverIcon fontSize="small" />}
                 title="Desperdício"

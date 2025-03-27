@@ -27,7 +27,6 @@ const PrivateRoute = () => {
     const rotasRestritasTipo3 = [
         "/cmv",
         "/ficha-tecnica",
-        "/relatorio/lista-compra",
         "/cadastro/usuario",
         "/cadastro/unidade"
     ];

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, TextField } from '@mui/material';
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -49,6 +50,12 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
             setPageList([]);
         }
     }, [rows]);
+    
+    const userTipo = localStorage.getItem('tipo');
+    const location = useLocation();
+    console.log('Tipo do usuário:', userTipo); // Deve mostrar "3"
+    console.log('Rota atual:', location.pathname); // Deve mostrar "/cadastro/produto"
+    console.log('Condição delete:', !(location.pathname === '/cadastro/produto' && userTipo === "3"));
 
     const renderActions = (row, rowIndex) => {
         let actions = {
@@ -100,7 +107,8 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                 </IconButton>
             ),
             delete: (
-                row.status !== "Pagamento Realizado" && (
+                row.status !== "Pagamento Realizado" &&
+                !(location.pathname.includes('/cadastro/produto') && String(localStorage.getItem('tipo')) === "3") && (
                     <IconButton onClick={() => actionCalls.delete(row)} title="Excluir Registro"
                         className='delete-button'
                         sx={{
@@ -219,19 +227,19 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                                         </TableCell>
                                     ) : type === 'checkbox' ? (
                                         <TableCell key={key}>
-                                           <input
-    type="checkbox"
-    checked={selectedCheckboxes[row.produto] || false} // Use o nome do produto como chave
-    onChange={(e) => {
-        const updatedSelectedCheckboxes = { ...selectedCheckboxes };
-        if (e.target.checked) {
-            updatedSelectedCheckboxes[row.produto] = true; // Marcar como selecionado
-        } else {
-            delete updatedSelectedCheckboxes[row.produto]; // Remover da seleção
-        }
-        setSelectedCheckboxes(updatedSelectedCheckboxes); // Atualiza o estado no componente pai
-    }}
-/>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedCheckboxes[row.produto] || false} // Use o nome do produto como chave
+                                                onChange={(e) => {
+                                                    const updatedSelectedCheckboxes = { ...selectedCheckboxes };
+                                                    if (e.target.checked) {
+                                                        updatedSelectedCheckboxes[row.produto] = true; // Marcar como selecionado
+                                                    } else {
+                                                        delete updatedSelectedCheckboxes[row.produto]; // Remover da seleção
+                                                    }
+                                                    setSelectedCheckboxes(updatedSelectedCheckboxes); // Atualiza o estado no componente pai
+                                                }}
+                                            />
                                         </TableCell>
                                     ) : key === "tipo" ? (
                                         <TableCell key={key} style={{
