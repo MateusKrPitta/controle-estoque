@@ -22,7 +22,7 @@ import TableLoading from '../../components/loading/loading-table/loading.js';
 import moment from 'moment';
 import Logo from '../../assets/png/logo_preta.png';
 
-import { AddCircleOutline, Save, DateRange, Print } from '@mui/icons-material';
+import { AddCircleOutline, Save, DateRange, Print, ProductionQuantityLimits } from '@mui/icons-material';
 import ArticleIcon from '@mui/icons-material/Article';
 import ScaleIcon from '@mui/icons-material/Scale';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
@@ -40,6 +40,7 @@ const EntradaSaida = () => {
   const [loading, setLoading] = useState(false);
   const [filtro, setFiltro] = useState(false);
   const [dataInicial, setDataInicial] = useState('');
+  const [selectedProdutoFiltro, setSelectedProdutoFiltro] = useState('');
   const [dataFinal, setDataFinal] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('');
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
@@ -69,18 +70,16 @@ const EntradaSaida = () => {
 
   const handleLimparCampos = () => {
     setLimparCampos(!limparCampos);
-  
+    
     if (!limparCampos) {
-      // Limpa os campos de filtro
       setDataInicial('');
       setDataFinal('');
       setSelectedCategoria('');
-      setSelectedTipos([]); // Defina como um array vazio
-  
-      // Recarrega os produtos
+      setSelectedTipos([]);
+      setSelectedProdutoFiltro(''); // Limpa o filtro de produto
+      setSearchTerm(''); // Limpa a busca geral
+      
       fetchEntradasSaidas(unidadeId);
-  
-      // Fecha o modal de filtro
       handleCloseFiltro();
     }
   };
@@ -296,31 +295,36 @@ const EntradaSaida = () => {
 
   const handlePesquisar = () => {
     const filteredData = entradasSaidasOriginais.filter((registro) => {
-      const matchesSearchTerm = registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase());
+      // Filtro por produto (se selecionado)
+      const matchesProduto = selectedProdutoFiltro ? 
+        registro.produtoNome && registro.produtoNome.toLowerCase().includes(selectedProdutoFiltro.toLowerCase()) : 
+        true;
   
-      // Converte as datas fornecidas pelo usuário para o formato UTC
+      // Filtro por termo de busca (se houver)
+      const matchesSearchTerm = searchTerm ? 
+        registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase()) : 
+        true;
+  
+      // Converte as datas para UTC
       const dataInicialMoment = dataInicial ? moment.utc(dataInicial).startOf('day') : null;
       const dataFinalMoment = dataFinal ? moment.utc(dataFinal).endOf('day') : null;
-  
-      // Converte a data do registro para o formato UTC
       const registroDataMoment = moment.utc(registro.dataISO);
   
-      // Verifica se a data do registro está dentro do intervalo fornecido
+      // Filtro por data
       const matchesDataInicial = dataInicialMoment ? registroDataMoment.isSameOrAfter(dataInicialMoment) : true;
       const matchesDataFinal = dataFinalMoment ? registroDataMoment.isSameOrBefore(dataFinalMoment) : true;
   
-      // Verifica os outros filtros (categoria e tipo)
+      // Filtro por categoria
       const matchesCategoria = selectedCategoria ? registro.categoria === selectedCategoria : true;
+  
+      // Filtro por tipo
       const matchesTipo = selectedTipos.length > 0 ? selectedTipos.includes(registro.tipo) : true;
   
-      // Retorna true apenas se todos os filtros forem atendidos
-      return matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
+      // Aplica todos os filtros
+      return matchesProduto && matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
     });
   
-    // Atualiza a lista de entradas/saídas com os dados filtrados
     setEntradasSaidas(filteredData);
-  
-    // Fecha o modal de filtro
     handleCloseFiltro();
   };
   useEffect(() => {
@@ -389,23 +393,23 @@ const EntradaSaida = () => {
         </div>
         <div className={`ml-0 flex flex-col w-[98%] md:ml-0 lg:ml-2 mr-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
           <div className='flex gap-2 justify-center flex-wrap md:justify-start items-center md:items-start'>
-            <TextField
-              fullWidth
-              variant="outlined"
-              size="small"
-              label="Entrada e Saída"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <AddchartIcon />
-                  </InputAdornment>
-                ),
-              }}
-              value={searchTerm}
-              onChange={handlePesquisarProduto}
-              autoComplete="off"
-              sx={{ width: { xs: '60%', sm: '50%', md: '40%', lg: '40%' } }}
-            />
+          <TextField
+  fullWidth
+  variant="outlined"
+  size="small"
+  label="Pesquisar por nome"
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <SearchIcon />
+      </InputAdornment>
+    ),
+  }}
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+  autoComplete="off"
+  sx={{ width: { xs: '60%', sm: '50%', md: '40%', lg: '40%' } }}
+/>
 
             <ButtonComponent
               startIcon={<AddCircleOutline fontSize='small' />}
@@ -566,6 +570,23 @@ const EntradaSaida = () => {
         >
           <div>
             <div className='mt-4 flex gap-3 flex-wrap'>
+            <SelectTextFields
+  width={'320px'}
+  icon={<ProductionQuantityLimits fontSize="small" />}
+  label={'Produto'}
+  backgroundColor={"#D9D9D9"}
+  name={"produtoFiltro"}
+  fontWeight={500}
+  options={[
+    { value: '', label: 'Todos os Produtos' }, // Opção para limpar o filtro
+    ...produtos.map(produto => ({
+      value: produto.nome,
+      label: `${produto.nome} - ${formatValor(produto.valorPorcao)}`
+    }))
+  ]}
+  value={selectedProdutoFiltro}
+  onChange={(e) => setSelectedProdutoFiltro(e.target.value)}
+/>
               <TextField
                 fullWidth
                 variant="outlined"

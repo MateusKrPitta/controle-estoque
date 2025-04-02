@@ -56,18 +56,25 @@ const LoginPage = () => {
         try {
             const response = await api.post('/login', { cpf, senha });
     
+            // Verifica primeiro se há uma mensagem de erro na resposta (mesmo com status true)
+            if (response.data.message && (response.data.message === "Usuário não encontrado" || 
+                                        response.data.message === "Senha inválida")) {
+                CustomToast({ type: 'error', message: response.data.message });
+                setLoading(false);
+                return;
+            }
+    
             const { token, nome, unidade, tipo } = response.data.data;
     
             if (token) {
                 localStorage.setItem('token', token);
                 localStorage.setItem('userName', nome);
-                localStorage.setItem('tipo', tipo); // Salva o tipo de usuário
+                localStorage.setItem('tipo', tipo);
     
                 if (unidade && unidade.length > 0) {
                     const unidadeSelecionada = unidade[0];
                     setUnidadeId(unidadeSelecionada.id);
                     setUnidadeNome(unidadeSelecionada.nome);
-                   
                     localStorage.setItem('unidadeId', unidadeSelecionada.id);
                     localStorage.setItem('unidadeNome', unidadeSelecionada.nome);
                 }
@@ -86,19 +93,23 @@ const LoginPage = () => {
         } catch (error) {
             setLoading(false);
             if (error.response) {
-                if (error.response.data.message === "Usuário inativo. Contate o administrador.") {
-                    CustomToast({ type: 'warning', message: error.response.data.message });
-                } else if (error.response.data.message) {
-                    CustomToast({ type: 'warning', message: error.response.data.message });
-                } else {
-                    CustomToast({ type: 'error', message: 'Usuário inativo. Contate o administrador.' });
+                // Verifica se há uma mensagem específica no response.data
+                if (error.response.data && error.response.data.message) {
+                    CustomToast({ type: 'error', message: error.response.data.message });
+                } 
+                // Caso para usuário inativo
+                else if (error.response.status === 401) {
+                    CustomToast({ type: 'warning', message: 'Usuário inativo. Contate o administrador.' });
+                } 
+                // Outros erros genéricos
+                else {
+                    CustomToast({ type: 'error', message: 'Erro ao tentar fazer login. Tente novamente.' });
                 }
             } else {
-                CustomToast({ type: 'error', message: 'Usuário inativo. Contate o administrador.' });
+                CustomToast({ type: 'error', message: 'Erro de conexão. Verifique sua internet.' });
             }
         }
     };
-
     return (
         <div className="login-container flex h-screen items-center justify-center ">
             <div className="relative bg-black p-8 rounded-lg shadow-lg max-w-md w-full z-10">
