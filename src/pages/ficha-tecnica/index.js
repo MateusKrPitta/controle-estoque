@@ -16,7 +16,7 @@ import { useUnidade } from '../../components/unidade-context';
 import api from '../../services/api';
 import TableLoading from '../../components/loading/loading-table/loading';
 
-import { InputAdornment, TextField } from '@mui/material';
+import { Autocomplete, InputAdornment, TextField } from '@mui/material';
 import { AddCircleOutline, Edit, MoneySharp, Save, Search } from '@mui/icons-material';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -297,39 +297,39 @@ const FichaTecnica = () => {
 
     const handleFecharEditar = () => setEditar(false);
 
-const handleEditar = (prato) => {
-    if (!prato || prato.id === 0) {
-        CustomToast({ type: "error", message: "Prato não encontrado!" });
-        return;
-    }
+    const handleEditar = (prato) => {
+        if (!prato || prato.id === 0) {
+            CustomToast({ type: "error", message: "Prato não encontrado!" });
+            return;
+        }
 
-    setPratoId(prato.id);
-    setNomePrato(prato.nome);
-    setCustoTotal(prato.custoTotal);
-    setRendimento(prato.qtdRendimento);
-    setValorVenda(formatValor(prato.valorVenda));
+        setPratoId(prato.id);
+        setNomePrato(prato.nome);
+        setCustoTotal(prato.custoTotal);
+        setRendimento(prato.qtdRendimento);
+        setValorVenda(formatValor(prato.valorVenda));
 
-    if (Array.isArray(prato.produtos)) {
-        const produtosAtualizados = prato.produtos.map(prod => {
-            const produtoSelecionado = produtos.find(p => p.id === prod.produtoId);
-            if (!produtoSelecionado) return null;
+        if (Array.isArray(prato.produtos)) {
+            const produtosAtualizados = prato.produtos.map(prod => {
+                const produtoSelecionado = produtos.find(p => p.id === prod.produtoId);
+                if (!produtoSelecionado) return null;
 
-            return {
-                nome: produtoSelecionado.nome,
-                quantidade: prod.qtdUtilizado,
-                valorUtilizado: formatValor(prod.qtdUtilizado * produtoSelecionado.valorPorcao), 
-                unidade: unidadeMedidaMap[produtoSelecionado.unidadeMedida],
-                precoPorcao: formatValor(produtoSelecionado.valorPorcao), 
-            };
-        }).filter(Boolean);
+                return {
+                    nome: produtoSelecionado.nome,
+                    quantidade: prod.qtdUtilizado,
+                    valorUtilizado: formatValor(prod.qtdUtilizado * produtoSelecionado.valorPorcao),
+                    unidade: unidadeMedidaMap[produtoSelecionado.unidadeMedida],
+                    precoPorcao: formatValor(produtoSelecionado.valorPorcao),
+                };
+            }).filter(Boolean);
 
-        setProdutosAdicionados(produtosAtualizados);
-    } else {
-        setProdutosAdicionados([]);
-    }
+            setProdutosAdicionados(produtosAtualizados);
+        } else {
+            setProdutosAdicionados([]);
+        }
 
-    setEditar(true);
-};
+        setEditar(true);
+    };
     const handleCriarPrato = () => setCriarPrato(true);
     const handleFecharPrato = () => {
         setCriarPrato(false);
@@ -430,7 +430,7 @@ const handleEditar = (prato) => {
                 if (produtoAtualizado) {
                     const novoValorPorcao = formatValor(produtoAtualizado.valorPorcao);
                     const novoValorUtilizado = parseFloat(produto.quantidade) * parseFloat(novoValorPorcao.replace('R$', '').replace(',', '.'));
-                    
+
                     return {
                         ...produto,
                         precoPorcao: novoValorPorcao,
@@ -439,7 +439,7 @@ const handleEditar = (prato) => {
                 }
                 return produto;
             });
-    
+
             setProdutosAdicionados(novosProdutos);
         }
     }, [produtos]);
@@ -565,15 +565,41 @@ const handleEditar = (prato) => {
                     <div>
                         <div className={` w-[94.5%] overflow-auto transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                             <div className='p-6 flex flex-wrap gap-2' style={{ border: '1px solid black', borderRadius: '10px' }}>
-                                <SelectTextFields
-                                    width={'240px'}
-                                    icon={<ArticleIcon fontSize="small" />}
-                                    label={'Produto'}
-                                    backgroundColor={"#D9D9D9"}
-                                    name={"produto"}
-                                    fontWeight={500}
-                                    options={produtos.map(produto => ({ label: produto.nome, value: produto.id }))}
-                                    onChange={(e) => handleProdutoChange(e.target.value)}
+                                <Autocomplete
+                                    options={produtos}
+                                    getOptionLabel={(option) => `${option.nome} - ${formatValor(option.valorPorcao)}`}
+                                    value={produtoSelecionado}
+                                    noOptionsText="Nenhum produto encontrado" // Mensagem personalizada
+                                    onChange={(event, newValue) => {
+                                        setProdutoSelecionado(newValue);
+                                        if (newValue) {
+                                            setUnidade(unidadeMedidaMap[newValue.unidadeMedida]);
+                                            setPrecoPorcao(formatValor(newValue.valorPorcao));
+                                        } else {
+                                            setUnidade('');
+                                            setPrecoPorcao('');
+                                        }
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Produto"
+                                            variant="outlined"
+                                            size="small"
+                                            sx={{
+                                                width: '240px',
+                                                
+                                            }}
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <ArticleIcon fontSize="small" />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                    )}
                                 />
 
                                 <TextField
@@ -868,15 +894,41 @@ const handleEditar = (prato) => {
                 <div>
                     <div className={` w-[94.5%] overflow-auto transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
                         <div className='p-6 flex flex-wrap gap-2' style={{ border: '1px solid black', borderRadius: '10px' }}>
-                            <SelectTextFields
-                                width={'240px'}
-                                icon={<ArticleIcon fontSize="small" />}
-                                label={'Produto'}
-                                backgroundColor={"#D9D9D9"}
-                                name={"produto"}
-                                fontWeight={500}
-                                options={produtos.map(produto => ({ label: produto.nome, value: produto.id }))}
-                                onChange={(e) => handleProdutoChange(e.target.value)}
+                            <Autocomplete
+                                options={produtos}
+                                getOptionLabel={(option) => `${option.nome} - ${formatValor(option.valorPorcao)}`}
+                                value={produtoSelecionado}
+                                noOptionsText="Nenhum produto encontrado"
+                                onChange={(event, newValue) => {
+                                    setProdutoSelecionado(newValue);
+                                    if (newValue) {
+                                        setUnidade(unidadeMedidaMap[newValue.unidadeMedida]);
+                                        setPrecoPorcao(formatValor(newValue.valorPorcao));
+                                    } else {
+                                        setUnidade('');
+                                        setPrecoPorcao('');
+                                    }
+                                }}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Produto"
+                                        variant="outlined"
+                                        size="small"
+                                        sx={{
+                                            width: '240px',
+                                            
+                                        }}
+                                        InputProps={{
+                                            ...params.InputProps,
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <ArticleIcon fontSize="small" />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
+                                )}
                             />
 
                             <TextField

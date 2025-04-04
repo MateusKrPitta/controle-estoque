@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FormControlLabel, IconButton, InputAdornment, Switch, TextField } from '@mui/material';
+import { Autocomplete, FormControlLabel, IconButton, InputAdornment, Switch, TextField } from '@mui/material';
 import AddchartIcon from '@mui/icons-material/Addchart';
 import Navbar from '../../components/navbars/header';
 import HeaderPerfil from '../../components/navbars/perfil/index.js';
@@ -70,7 +70,7 @@ const EntradaSaida = () => {
 
   const handleLimparCampos = () => {
     setLimparCampos(!limparCampos);
-    
+
     if (!limparCampos) {
       setDataInicial('');
       setDataFinal('');
@@ -78,7 +78,7 @@ const EntradaSaida = () => {
       setSelectedTipos([]);
       setSelectedProdutoFiltro(''); // Limpa o filtro de produto
       setSearchTerm(''); // Limpa a busca geral
-      
+
       fetchEntradasSaidas(unidadeId);
       handleCloseFiltro();
     }
@@ -296,34 +296,34 @@ const EntradaSaida = () => {
   const handlePesquisar = () => {
     const filteredData = entradasSaidasOriginais.filter((registro) => {
       // Filtro por produto (se selecionado)
-      const matchesProduto = selectedProdutoFiltro ? 
-        registro.produtoNome && registro.produtoNome.toLowerCase().includes(selectedProdutoFiltro.toLowerCase()) : 
+      const matchesProduto = selectedProdutoFiltro ?
+        registro.produtoNome && registro.produtoNome.toLowerCase().includes(selectedProdutoFiltro.toLowerCase()) :
         true;
-  
+
       // Filtro por termo de busca (se houver)
-      const matchesSearchTerm = searchTerm ? 
-        registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase()) : 
+      const matchesSearchTerm = searchTerm ?
+        registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase()) :
         true;
-  
+
       // Converte as datas para UTC
       const dataInicialMoment = dataInicial ? moment.utc(dataInicial).startOf('day') : null;
       const dataFinalMoment = dataFinal ? moment.utc(dataFinal).endOf('day') : null;
       const registroDataMoment = moment.utc(registro.dataISO);
-  
+
       // Filtro por data
       const matchesDataInicial = dataInicialMoment ? registroDataMoment.isSameOrAfter(dataInicialMoment) : true;
       const matchesDataFinal = dataFinalMoment ? registroDataMoment.isSameOrBefore(dataFinalMoment) : true;
-  
+
       // Filtro por categoria
       const matchesCategoria = selectedCategoria ? registro.categoria === selectedCategoria : true;
-  
+
       // Filtro por tipo
       const matchesTipo = selectedTipos.length > 0 ? selectedTipos.includes(registro.tipo) : true;
-  
+
       // Aplica todos os filtros
       return matchesProduto && matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
     });
-  
+
     setEntradasSaidas(filteredData);
     handleCloseFiltro();
   };
@@ -393,23 +393,23 @@ const EntradaSaida = () => {
         </div>
         <div className={`ml-0 flex flex-col w-[98%] md:ml-0 lg:ml-2 mr-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-4'}`}>
           <div className='flex gap-2 justify-center flex-wrap md:justify-start items-center md:items-start'>
-          <TextField
-  fullWidth
-  variant="outlined"
-  size="small"
-  label="Pesquisar por nome"
-  InputProps={{
-    startAdornment: (
-      <InputAdornment position="start">
-        <SearchIcon />
-      </InputAdornment>
-    ),
-  }}
-  value={searchTerm}
-  onChange={(e) => setSearchTerm(e.target.value)}
-  autoComplete="off"
-  sx={{ width: { xs: '60%', sm: '50%', md: '40%', lg: '40%' } }}
-/>
+            <TextField
+              fullWidth
+              variant="outlined"
+              size="small"
+              label="Pesquisar por nome"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoComplete="off"
+              sx={{ width: { xs: '60%', sm: '50%', md: '40%', lg: '40%' } }}
+            />
 
             <ButtonComponent
               startIcon={<AddCircleOutline fontSize='small' />}
@@ -480,19 +480,39 @@ const EntradaSaida = () => {
         >
           <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
             <div className='mt-4 flex gap-3 flex-wrap'>
-              <SelectTextFields
-                width={'200px'}
-                icon={<ArticleIcon fontSize="small" />}
-                label={'Produto'}
-                backgroundColor={"#D9D9D9"}
-                name={"produto"}
-                fontWeight={500}
-                options={produtos.map(produto => ({
-                  value: produto.nome,
-                  label: `${produto.nome} - ${formatValor(produto.valorPorcao)}`
-                }))}
-                value={produto}
-                onChange={(e) => handleProdutoChange(e.target.value)}
+              <Autocomplete
+                options={produtos}
+                getOptionLabel={(option) => {
+                  // Verifica se a propriedade existe e tem valor
+                  const preco = option.valorPorcao || option.precoPorcao || 0;
+                  return `${option.nome} - ${formatValor(preco)}`;
+                }}
+                value={produtoSelecionado}
+                noOptionsText="Nenhum produto encontrado"
+                onChange={(event, newValue) => {
+                  setProdutoSelecionado(newValue);
+                  setProduto(newValue ? newValue.nome : '');
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Produto"
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      width: '200px',
+                      
+                    }}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <ArticleIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
               />
               <TextField
                 fullWidth
@@ -570,23 +590,23 @@ const EntradaSaida = () => {
         >
           <div>
             <div className='mt-4 flex gap-3 flex-wrap'>
-            <SelectTextFields
-  width={'320px'}
-  icon={<ProductionQuantityLimits fontSize="small" />}
-  label={'Produto'}
-  backgroundColor={"#D9D9D9"}
-  name={"produtoFiltro"}
-  fontWeight={500}
-  options={[
-    { value: '', label: 'Todos os Produtos' }, // Opção para limpar o filtro
-    ...produtos.map(produto => ({
-      value: produto.nome,
-      label: `${produto.nome} - ${formatValor(produto.valorPorcao)}`
-    }))
-  ]}
-  value={selectedProdutoFiltro}
-  onChange={(e) => setSelectedProdutoFiltro(e.target.value)}
-/>
+              <SelectTextFields
+                width={'320px'}
+                icon={<ProductionQuantityLimits fontSize="small" />}
+                label={'Produto'}
+                backgroundColor={"#D9D9D9"}
+                name={"produtoFiltro"}
+                fontWeight={500}
+                options={[
+                  { value: '', label: 'Todos os Produtos' }, // Opção para limpar o filtro
+                  ...produtos.map(produto => ({
+                    value: produto.nome,
+                    label: `${produto.nome} - ${formatValor(produto.valorPorcao)}`
+                  }))
+                ]}
+                value={selectedProdutoFiltro}
+                onChange={(e) => setSelectedProdutoFiltro(e.target.value)}
+              />
               <TextField
                 fullWidth
                 variant="outlined"
