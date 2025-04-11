@@ -11,19 +11,16 @@ const PrivateRoute = () => {
         return <Navigate to="/" replace />;
     }
 
-    // Rotas restritas para usuários do tipo "2"
     if (tipoUsuario === "2" && location.pathname === "/entrada-saida") {
         CustomToast({ type: 'warning', message: 'Você não tem permissão para acessar esta página!' });
         return <Navigate to="/dashboard" replace />;
     }
 
-    // Rotas restritas para usuários do tipo "2"
     if (tipoUsuario === "2" && (location.pathname === "/cadastro/unidade" || location.pathname === "/cadastro/usuario")) {
         CustomToast({ type: 'warning', message: 'Você não tem permissão para acessar esta página!' });
         return <Navigate to="/dashboard" replace />;
     }
 
-    // Rotas restritas para usuários do tipo "3"
     const rotasRestritasTipo3 = [
         "/cmv",
         "/ficha-tecnica",

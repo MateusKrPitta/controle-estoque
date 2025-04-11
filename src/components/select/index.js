@@ -18,7 +18,7 @@ export default function SelectTextFields({
   optionFontSize = '0.875rem',
   placeholder,
   height,
-  multiple = false, // Adicionando a propriedade multiple
+  multiple = false, 
 }) {
   return (
     <Box
@@ -61,7 +61,7 @@ export default function SelectTextFields({
           },
         }}
         SelectProps={{
-          multiple, // Adicionando a propriedade multiple
+          multiple,
         }}
       >
         {options.map((option) => (
@@ -72,12 +72,12 @@ export default function SelectTextFields({
             fontSize: optionFontSize,
             padding: '4px 8px',
             '&:hover': {
-              backgroundColor: '#BCDA72', // Highlight color on hover
+              backgroundColor: '#BCDA72', 
             },
             '&.Mui-selected': {
-              backgroundColor: '#BCDA72', // Highlight color when selected
+              backgroundColor: '#BCDA72',
               '&:hover': {
-                backgroundColor: '#BCDA72', // Keep the same color on hover when selected
+                backgroundColor: '#BCDA72', 
               },
             },
           }}

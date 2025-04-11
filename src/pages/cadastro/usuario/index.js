@@ -183,7 +183,6 @@ const Usuario = () => {
       basico: user.tipo === "3",
     };
 
-    console.log('Permissões definidas:', permissoes);
 
     setNewUser({
       nome: user.nome,
@@ -246,17 +245,16 @@ const Usuario = () => {
       };
   
       const response = await api.put(`/usuario/${editUser.id}`, userData);
-      console.log('Resposta da API:', response.data); // Log para depuração
+
   
-      if (response.data.status) { // Verifica se status é true
+      if (response.data.status) { 
         CustomToast({ type: "success", message: response.data.message });
   
-        // Atualiza o usuário na lista local
         const updatedUsers = users.map(user => {
           if (user.id === editUser.id) {
             return { 
               ...user, 
-              ...response.data.data, // Usa os dados atualizados da resposta
+              ...response.data.data, 
               unidadeId: response.data.data.unidadeId 
             };
           }
@@ -264,7 +262,7 @@ const Usuario = () => {
         });
   
         setUsers(updatedUsers);
-        handleCloseEditUser(); // Fecha a modal
+        handleCloseEditUser(); 
         
         if (editUser.id === userId) {
           navigate("/login");
@@ -372,11 +370,10 @@ const Usuario = () => {
       return unidadeObj ? unidadeObj.label : "Unidade Desconhecida";
     }) : [];
 
-    // Mantenha o tipo original (1, 2, 3) no objeto user
     return {
       ...user,
       unidade: unidadeNames.join(", ") || "Unidade Desconhecida",
-      tipoDisplay: user.tipo === "1" ? "Administrador" : user.tipo === "2" ? "Geral" : "Básico", // Apenas para exibição
+      tipoDisplay: user.tipo === "1" ? "Administrador" : user.tipo === "2" ? "Geral" : "Básico",
       edit: () => handleEditUser(user),
       delete: () => handleDeleteUser(user),
       status: user.isAtivo ? "Ativado" : "Inativado",
@@ -601,7 +598,7 @@ const Usuario = () => {
               icon={<Edit />}
               tamanhoTitulo="75%"
               conteudo={
-                <div className="">
+                <div className="  max-h-[500px]">
                   <div className='mt-4 flex gap-3 flex-wrap'>
                     <TextField
                       fullWidth
@@ -702,7 +699,6 @@ const Usuario = () => {
                   </div>
 
                   <div className="w-[96%] border-[1px] p-2 rounded-lg">
-                    {console.log('Permissões atuais no render:', newUser.permissoes)}
                     <div className="w-full flex items-center">
                       <div className="w-[12%]">
                         <Checkbox

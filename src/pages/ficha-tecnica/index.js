@@ -11,7 +11,6 @@ import EqualizerIcon from '@mui/icons-material/Equalizer';
 import TabelaProdutos from '../../components/table-expanded';
 import CustomToast from '../../components/toast';
 import CentralModal from '../../components/modal-central';
-import { formatCmvReal } from '../../utils/functions';
 import { useUnidade } from '../../components/unidade-context';
 import api from '../../services/api';
 import TableLoading from '../../components/loading/loading-table/loading';
@@ -33,7 +32,7 @@ export const formatValor = (valor) => {
 
 export const formatarValorMoeda = (valor) => {
     const parsedValor = parseFloat(valor);
-    return `R$ ${parsedValor.toFixed(2).replace('.', ',')}`; // Formata como moeda com vírgula
+    return `R$ ${parsedValor.toFixed(2).replace('.', ',')}`; 
 };
 const unidadeMedidaMap = {
     1: 'Kilograma',
@@ -44,8 +43,6 @@ const unidadeMedidaMap = {
 };
 
 const FichaTecnica = () => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [itemToEdit, setItemToEdit] = useState(null);
     const { unidadeId } = useUnidade();
     const [produtos, setProdutos] = useState([]);
     const [produtoSelecionado, setProdutoSelecionado] = useState(null);
@@ -64,7 +61,6 @@ const FichaTecnica = () => {
     const [produtosDaFicha, setProdutosDaFicha] = useState([]);
     const [valorVenda, setValorVenda] = useState('');
     const [lucroReal, setLucroReal] = useState(0);
-    const [produtosCadastrados, setProdutosCadastrados] = useState([]);
     const [rendimento, setRendimento] = useState('');
     const [valorRendimento, setValorRendimento] = useState(0);
     const [cmvReal, setCmvReal] = useState(0);
@@ -105,7 +101,6 @@ const FichaTecnica = () => {
             return acc + (isNaN(valor) ? 0 : valor);
         }, 0);
         setCustoTotal(total);
-        console.log("Custo Total:", total); // Verifique o custo total aqui
     }, [produtosAdicionados]);
 
     useEffect(() => {
@@ -188,17 +183,7 @@ const FichaTecnica = () => {
         }
     }, [quantidade, precoPorcao]);
 
-    const handleProdutoChange = (value) => {
-        const produto = produtos.find(prod => prod.id === value);
-        setProdutoSelecionado(produto);
-        if (produto) {
-            setUnidade(unidadeMedidaMap[produto.unidadeMedida]);
-            setPrecoPorcao(formatValor(produto.valorPorcao));
-        } else {
-            setUnidade('');
-            setPrecoPorcao('');
-        }
-    };
+
     const handleAdicionarProduto = () => {
         if (!produtoSelecionado) {
             CustomToast({ type: "error", message: "Selecione o produto!" });
@@ -210,7 +195,7 @@ const FichaTecnica = () => {
         }
 
         const valorCalculado = parseFloat(quantidade) * parseFloat(precoPorcao.replace('R$', '').replace('.', '').replace(',', '.'));
-        console.log("Valor Calculado:", valorCalculado);
+
 
         const novoProduto = {
             nome: produtoSelecionado.nome,
@@ -454,32 +439,32 @@ const FichaTecnica = () => {
     }, [custoTotal, rendimento]);
 
     const calcularValorRendimento = (tipo, valor) => {
-        if (!valor) return 0; // Se não houver valor, retorna 0
+        if (!valor) return 0; 
 
         const valorNumerico = parseFloat(valor);
         let resultado = 0;
 
         switch (tipo) {
             case 'kilograma':
-                resultado = custoTotal / valorNumerico; // Cálculo para kg
+                resultado = custoTotal / valorNumerico; 
                 break;
             case 'grama':
-                resultado = (custoTotal / valorNumerico) * 1000; // Cálculo para g (1 kg = 1000 g)
+                resultado = (custoTotal / valorNumerico) * 1000; 
                 break;
             case 'litro':
-                resultado = custoTotal / valorNumerico; // Cálculo para L
+                resultado = custoTotal / valorNumerico; 
                 break;
             case 'mililitro':
-                resultado = (custoTotal / valorNumerico) * 1000; // Cálculo para mL (1 L = 1000 mL)
+                resultado = (custoTotal / valorNumerico) * 1000;
                 break;
             case 'unidade':
-                resultado = custoTotal * valorNumerico; // Multiplica o custo total pela quantidade de rendimento
+                resultado = custoTotal * valorNumerico; 
                 break;
             default:
                 resultado = 0;
         }
 
-        console.log("Valor do Rendimento antes da formatação:", resultado); // Adicione aqui
+  
         setValorRendimento(resultado);
     };
 
@@ -569,7 +554,7 @@ const FichaTecnica = () => {
                                     options={produtos}
                                     getOptionLabel={(option) => `${option.nome} - ${formatValor(option.valorPorcao)}`}
                                     value={produtoSelecionado}
-                                    noOptionsText="Nenhum produto encontrado" // Mensagem personalizada
+                                    noOptionsText="Nenhum produto encontrado" 
                                     onChange={(event, newValue) => {
                                         setProdutoSelecionado(newValue);
                                         if (newValue) {
@@ -785,7 +770,7 @@ const FichaTecnica = () => {
                                                 value={rendimento}
                                                 onChange={(e) => {
                                                     setRendimento(e.target.value);
-                                                    calcularValorRendimento(tipoRendimentoSelecionado, e.target.value); // Recalcular quando o valor mudar
+                                                    calcularValorRendimento(tipoRendimentoSelecionado, e.target.value);
                                                 }}
                                                 style={{
                                                     backgroundColor: "#d9d9d9",
@@ -1119,7 +1104,7 @@ const FichaTecnica = () => {
                                             value={rendimento}
                                             onChange={(e) => {
                                                 setRendimento(e.target.value);
-                                                calcularValorRendimento(tipoRendimentoSelecionado, e.target.value); // Recalcular quando o valor mudar
+                                                calcularValorRendimento(tipoRendimentoSelecionado, e.target.value); 
                                             }}
                                             style={{
                                                 backgroundColor: "#d9d9d9",

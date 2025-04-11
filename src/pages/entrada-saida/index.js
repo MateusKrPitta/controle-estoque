@@ -76,30 +76,24 @@ const EntradaSaida = () => {
       setDataFinal('');
       setSelectedCategoria('');
       setSelectedTipos([]);
-      setSelectedProdutoFiltro(''); // Limpa o filtro de produto
-      setSearchTerm(''); // Limpa a busca geral
+      setSelectedProdutoFiltro(''); 
+      setSearchTerm('');
 
       fetchEntradasSaidas(unidadeId);
       handleCloseFiltro();
     }
   };
 
-  const handleProdutoChange = (value) => {
-    const produtoSelecionado = produtos.find(prod => prod.nome === value);
-    setProdutoSelecionado(produtoSelecionado);
-    setProduto(value);
-  };
-
   const handleCadastrarRegistro = async () => {
-    setDesativa(true);
+    setDesativa(true); 
     const quantidadeNumerica = parseFloat(quantidade) || 0;
     const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0;
 
-    // Formatar a data corretamente
-    const dataFormatada = moment().format('YYYY-MM-DD'); // Formato ISO 8601 sem o 'Z' no final
+
+    const dataFormatada = moment().format('YYYY-MM-DD'); 
 
     const novoRegistro = {
-      data: dataFormatada, // Use a data formatada aqui
+      data: dataFormatada, 
       movTipo: tipo === 'entrada' ? 1 : tipo === 'saida' ? 2 : 3,
       quantidade: quantidadeNumerica,
       produtoId: produtoSelecionado ? produtoSelecionado.id : null,
@@ -139,6 +133,7 @@ const EntradaSaida = () => {
       <td>${formatValor(registro.precoPorcao)}</td>
       <td>${formatValor(registro.valorTotal)}</td>
       <td>${registro.categoria}</td>
+      <td>${registro.observacao}</td>
       <td>${registro.dataFormatada}</td> <!-- Data formatada -->
 
     </tr>
@@ -180,6 +175,7 @@ const EntradaSaida = () => {
               <th>Preço por Porção</th>
               <th>Valor Total</th>
               <th>Categoria</th>
+              <th>Observação</th>
               <th>Data</th>
               
             </tr>
@@ -254,12 +250,9 @@ const EntradaSaida = () => {
       const formattedMovimentacoes = movimentacoes.map(mov => {
         const valorTotal = mov.precoPorcao * mov.quantidade;
 
-        // Interpreta a data como UTC e formata sem conversão para o fuso horário local
-        const dataUTC = moment.utc(mov.data); // Interpreta a data como UTC
+    
+        const dataUTC = moment.utc(mov.data); 
 
-        // Debug: Exibe os valores das datas
-        console.log("Data recebida da API:", mov.data);
-        console.log("Data interpretada como UTC:", dataUTC.format());
 
         return {
           id: mov.id,
@@ -295,38 +288,45 @@ const EntradaSaida = () => {
 
   const handlePesquisar = () => {
     const filteredData = entradasSaidasOriginais.filter((registro) => {
-      // Filtro por produto (se selecionado)
+
       const matchesProduto = selectedProdutoFiltro ?
         registro.produtoNome && registro.produtoNome.toLowerCase().includes(selectedProdutoFiltro.toLowerCase()) :
         true;
 
-      // Filtro por termo de busca (se houver)
       const matchesSearchTerm = searchTerm ?
         registro.produtoNome && registro.produtoNome.toLowerCase().includes(searchTerm.toLowerCase()) :
         true;
 
-      // Converte as datas para UTC
       const dataInicialMoment = dataInicial ? moment.utc(dataInicial).startOf('day') : null;
       const dataFinalMoment = dataFinal ? moment.utc(dataFinal).endOf('day') : null;
       const registroDataMoment = moment.utc(registro.dataISO);
 
-      // Filtro por data
+
       const matchesDataInicial = dataInicialMoment ? registroDataMoment.isSameOrAfter(dataInicialMoment) : true;
       const matchesDataFinal = dataFinalMoment ? registroDataMoment.isSameOrBefore(dataFinalMoment) : true;
 
-      // Filtro por categoria
       const matchesCategoria = selectedCategoria ? registro.categoria === selectedCategoria : true;
 
-      // Filtro por tipo
+
       const matchesTipo = selectedTipos.length > 0 ? selectedTipos.includes(registro.tipo) : true;
 
-      // Aplica todos os filtros
       return matchesProduto && matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
     });
 
     setEntradasSaidas(filteredData);
     handleCloseFiltro();
   };
+
+  const handleDeleteMovimentacao = async (id) => {
+    try {
+      await api.delete(`/movimentacao/${id}`);
+      CustomToast({ type: "success", message: "Movimentação deletada com sucesso!" });
+      fetchEntradasSaidas(); 
+    } catch (error) {
+      CustomToast({ type: "error", message: "Erro ao deletar movimentação!" });
+    }
+  };
+
   useEffect(() => {
     if (unidadeId) {
       fetchProdutos();
@@ -463,6 +463,9 @@ const EntradaSaida = () => {
                 headers={headerEntradaSaida}
                 rows={filteredEntradasSaidas}
                 actionsLabel={"Ações"}
+                actionCalls={{
+                  delete: (row) => handleDeleteMovimentacao(row.id)
+                }}
               />
             )}
           </div>
@@ -483,7 +486,7 @@ const EntradaSaida = () => {
               <Autocomplete
                 options={produtos}
                 getOptionLabel={(option) => {
-                  // Verifica se a propriedade existe e tem valor
+                  
                   const preco = option.valorPorcao || option.precoPorcao || 0;
                   return `${option.nome} - ${formatValor(preco)}`;
                 }}
@@ -501,7 +504,7 @@ const EntradaSaida = () => {
                     size="small"
                     sx={{
                       width: '200px',
-                      
+
                     }}
                     InputProps={{
                       ...params.InputProps,
@@ -598,7 +601,7 @@ const EntradaSaida = () => {
                 name={"produtoFiltro"}
                 fontWeight={500}
                 options={[
-                  { value: '', label: 'Todos os Produtos' }, // Opção para limpar o filtro
+                  { value: '', label: 'Todos os Produtos' },
                   ...produtos.map(produto => ({
                     value: produto.nome,
                     label: `${produto.nome} - ${formatValor(produto.valorPorcao)}`
@@ -668,9 +671,9 @@ const EntradaSaida = () => {
                 ]}
                 onChange={(e) => {
                   const value = e.target.value;
-                  setSelectedTipos(value); // Ensure value is an array
+                  setSelectedTipos(value); 
                 }}
-                value={selectedTipos} // This should be an array
+                value={selectedTipos} 
                 multiple
               />
               <FormControlLabel

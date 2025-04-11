@@ -48,15 +48,12 @@ const EstoqueReal = () => {
     }, []);
 
     const handleLimparCampos = () => {
-        // Limpa os campos de filtro
         setDataInicio('');
         setDataFim('');
         setSelectedCategoria('');
         
-        // Reseta para os produtos originais
         setProdutosFiltrados(produtos);
         
-        // Fecha o modal de filtro
         handleCloseFiltro();
         
         CustomToast({ type: "success", message: "Filtros limpos com sucesso!" });
@@ -68,13 +65,14 @@ const EstoqueReal = () => {
             const response = await api.get('/movimentacao');
             const movimentacoes = response.data.data;
     
+
+    
             const formattedMovimentacoes = movimentacoes.map(mov => {
                 const valorTotal = mov.precoPorcao * mov.quantidade;
-                
-                // Corrige a conversão de data para considerar o fuso horário local
+    
                 const dataUTC = new Date(mov.data);
                 const dataLocal = new Date(dataUTC.getTime() + dataUTC.getTimezoneOffset() * 60000);
-                
+    
                 return {
                     tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === '2' ? 'saida' : 'desperdicio',
                     produtoNome: mov.produtoNome,
@@ -84,7 +82,7 @@ const EstoqueReal = () => {
                     valorTotal: valorTotal,
                     observacao: mov.observacao,
                     dataCadastro: dataLocal.toLocaleDateString('pt-BR'),
-                    dataOriginal: mov.data, // Mantém a data original em UTC para filtros
+                    dataOriginal: mov.data,
                     id: mov.id
                 };
             });
@@ -96,6 +94,38 @@ const EstoqueReal = () => {
         }
     };
 
+    const mostrarResumoMovimentacoes = () => {
+        const resumo = {};
+    
+        entradasSaidas.forEach(mov => {
+            const { produtoNome, quantidade, tipo } = mov;
+    
+            if (!resumo[produtoNome]) {
+                resumo[produtoNome] = {
+                    entradas: 0,
+                    saidas: 0,
+                    desperdicios: 0
+                };
+            }
+    
+            if (tipo === 'entrada') {
+                resumo[produtoNome].entradas += quantidade;
+            } else if (tipo === 'saida') {
+                resumo[produtoNome].saidas += quantidade;
+            } else if (tipo === 'desperdicio') {
+                resumo[produtoNome].desperdicios += quantidade;
+            }
+        });
+
+    };
+    
+    useEffect(() => {
+        if (entradasSaidas.length > 0) {
+            mostrarResumoMovimentacoes();
+        }
+    }, [entradasSaidas]);
+
+
     const fetchProdutos = async () => {
         try {
             const response = await api.get(`/produto?unidadeId=${unidadeId}`);
@@ -106,36 +136,32 @@ const EstoqueReal = () => {
             CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
         }
     };
-
-    useEffect(() => {
-        fetchProdutos();
-        fetchEntradasSaidas();
-    }, []);
-
     const calcularEstoqueAtual = () => {
         const estoque = {};
     
-        // Inicializa todos os produtos, mesmo com quantidade zero
         produtos.forEach(produto => {
             estoque[produto.nome] = {
                 totalEntradas: 0,
                 totalSaidas: 0,
-                estoqueAtual: produto.quantidade || 0 // Garante que seja número
+                totalDesperdicio: 0,
+                estoqueAtual: 0
             };
         });
     
-        // Processa todas as movimentações
-        entradasSaidas.forEach(registro => {
-            const { produtoNome, quantidade, tipo } = registro;
+        entradasSaidas.forEach(mov => {
+            const { produtoNome, quantidade, tipo } = mov;
     
-            if (estoque[produtoNome] !== undefined) {
-                if (tipo === 'entrada') {
-                    estoque[produtoNome].totalEntradas += quantidade;
-                    estoque[produtoNome].estoqueAtual += quantidade;
-                } else if (tipo === 'saida' || tipo === 'desperdicio') {
-                    estoque[produtoNome].totalSaidas += quantidade;
-                    estoque[produtoNome].estoqueAtual -= quantidade;
-                }
+            if (!estoque[produtoNome]) return;
+    
+            if (tipo === 'entrada') {
+                estoque[produtoNome].totalEntradas += quantidade;
+                estoque[produtoNome].estoqueAtual += quantidade;
+            } else if (tipo === 'saida') {
+                estoque[produtoNome].totalSaidas += quantidade;
+                estoque[produtoNome].estoqueAtual -= quantidade;
+            } else if (tipo === 'desperdicio') {
+                estoque[produtoNome].totalDesperdicio += quantidade;
+                estoque[produtoNome].estoqueAtual -= quantidade;
             }
         });
     
@@ -161,25 +187,31 @@ const EstoqueReal = () => {
     };
 
     const rows = produtosFiltrados.map(produto => {
-        const estoqueAtualData = calcularEstoqueAtual();
-        const estoqueAtual = estoqueAtualData[produto.nome]?.estoqueAtual || 0;
-        const isBelowMin = estoqueAtual < produto.qtdMin;
-
-        const precoUnitario = produto.valorPorcao;
+        const estoqueData = calcularEstoqueAtual();
+        const produtoEstoque = estoqueData[produto.nome] || {
+            estoqueAtual: produto.quantidade || 0,
+            totalEntradas: 0,
+            totalSaidas: 0,
+            totalDesperdicio: 0
+        };
+    
+        const estoqueAtual = produtoEstoque.estoqueAtual;
+        const isBelowMin = estoqueAtual < (produto.qtdMin || 0);
+        const precoUnitario = produto.valorPorcao || 0;
         const valorTotal = estoqueAtual * precoUnitario;
-
+    
         return {
             categoria: produto.categoriaNome || 'Sem Categoria',
             produto: produto.nome,
             unidade: unidades[produto.unidadeMedida] || 'Desconhecida',
-            quantidadeMinima: produto.qtdMin,
+            quantidadeMinima: produto.qtdMin || 0,
             estoqueAtual,
             precoUnitario: formatValor(precoUnitario),
             valorTotal: formatValor(valorTotal),
             isBelowMin,
         };
     });
-
+    
     const headers = [
         { label: 'Produto', key: 'produto' },
         { label: 'Categoria', key: 'categoria' },
@@ -200,9 +232,9 @@ const EstoqueReal = () => {
                 
                 const dataMatch = 
                     (!dataInicioValida && !dataFimValida) ||
-                    (dataInicioValida && dataFimValida && dataMov.isBetween(dataInicioValida, dataFimValida, null, '[]')) || // Entre datas
-                    (dataInicioValida && !dataFimValida && dataMov.isSameOrAfter(dataInicioValida)) || // Apenas data inicial
-                    (!dataInicioValida && dataFimValida && dataMov.isSameOrBefore(dataFimValida)) // Apenas data final
+                    (dataInicioValida && dataFimValida && dataMov.isBetween(dataInicioValida, dataFimValida, null, '[]')) || 
+                    (dataInicioValida && !dataFimValida && dataMov.isSameOrAfter(dataInicioValida)) || 
+                    (!dataInicioValida && dataFimValida && dataMov.isSameOrBefore(dataFimValida)) 
     
                 const categoriaMatch = !selectedCategoria || 
                     produtos.some(prod => 
@@ -213,15 +245,11 @@ const EstoqueReal = () => {
                 return dataMatch && categoriaMatch;
             });
     
-            // Atualiza as movimentações com as filtradas
             setEntradasSaidas(movimentacoesFiltradas);
     
-            // Filtra os produtos que têm movimentações no período ou correspondem à categoria
             const produtosComMovimentacao = produtos.filter(produto => {
-                // Se há categoria selecionada, verifica se o produto pertence a ela
                 const categoriaMatch = !selectedCategoria || produto.categoriaId == selectedCategoria;
                 
-                // Verifica se o produto tem movimentações no período (se há filtro de data)
                 const temMovimentacao = movimentacoesFiltradas.some(mov => mov.produtoNome === produto.nome);
                 
                 return categoriaMatch && (!dataInicio || !dataFim || temMovimentacao);
@@ -313,18 +341,15 @@ const EstoqueReal = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
-                // Carrega categorias primeiro
                 const categoriasResponse = await api.get(`/categoria?unidadeId=${unidadeId}`);
                 const categoriasFiltradas = categoriasResponse.data.data.filter(c => c.unidadeId === unidadeId);
                 setCategorias(categoriasFiltradas);
                 
-                // Depois carrega produtos
                 const produtosResponse = await api.get(`/produto?unidadeId=${unidadeId}`);
                 const produtosCadastrados = produtosResponse.data.data.filter(p => p.unidadeId === unidadeId);
                 setProdutos(produtosCadastrados);
                 setProdutosFiltrados(produtosCadastrados);
                 
-                // Finalmente carrega movimentações
                 const movimentacoesResponse = await api.get('/movimentacao');
                 const movimentacoes = movimentacoesResponse.data.data;
                 
@@ -359,6 +384,9 @@ const EstoqueReal = () => {
         }
     }, [unidadeId]);
 
+
+
+
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -377,9 +405,9 @@ const EstoqueReal = () => {
                             <div className='w-[80%] md:w-[30%] lg:w-[20%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
                                 <label className='text-xs font-bold'>Itens em Estoque</label>
                                 <div className='flex items-center justify-center gap-5'>
-                                    <img src={Objeto} alt="Total Movimentações" />
-                                    <label>{rows.reduce((total, row) => total + row.estoqueAtual, 0)}</label>
-                                </div>
+  <img src={Objeto} alt="Total Movimentações" />
+  <label>{rows.reduce((total, row) => total + row.estoqueAtual, 0).toFixed(2)}</label>
+</div>
                             </div>
                             <div className='w-[80%] md:w-[30%] lg:w-[30%] p-2 bg-primary flex flex-col gap-3 justify-center items-center' style={{ border: '1px solid black', borderRadius: '10px' }}>
                                 <label className='text-xs font-bold'>Quantidade Itens Mínimo</label>

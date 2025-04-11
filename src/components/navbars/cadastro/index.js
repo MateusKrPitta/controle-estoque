@@ -9,7 +9,7 @@ import { ProductionQuantityLimitsTwoTone } from '@mui/icons-material';
 const HeaderCadastro = () => {
     const navigate = useNavigate();
 
-    // Obtenha o tipo de usuário do localStorage
+    
     const tipoUsuario = localStorage.getItem('tipo');
 
     const handleNavigation = (section) => {

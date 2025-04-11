@@ -53,9 +53,6 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
     
     const userTipo = localStorage.getItem('tipo');
     const location = useLocation();
-    console.log('Tipo do usuário:', userTipo); // Deve mostrar "3"
-    console.log('Rota atual:', location.pathname); // Deve mostrar "/cadastro/produto"
-    console.log('Condição delete:', !(location.pathname === '/cadastro/produto' && userTipo === "3"));
 
     const renderActions = (row, rowIndex) => {
         let actions = {
@@ -143,7 +140,7 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                 <IconButton onClick={() => actionCalls.inactivate(row)} title={row.isAtivo ? "Inativar Registro" : "Reativar Registro"}
                     className='inactivate-button'
                     sx={{
-                        color: row.isAtivo ? '#ff9800' : '#4caf50', // Cor para inativar e reativar
+                        color: row.isAtivo ? '#ff9800' : '#4caf50', 
                         border: `1px solid ${row.isAtivo ? '#ff9800' : '#4caf50'}`,
                         '&:hover': {
                             color: '#fff',
@@ -223,21 +220,21 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
                                 sort !== false && (
                                     key === "actions" && hasActions ? (
                                         <TableCell key={key} style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
-                                            {renderActions(row, rowIndex)} {/* Pass rowIndex here */}
+                                            {renderActions(row, rowIndex)} 
                                         </TableCell>
                                     ) : type === 'checkbox' ? (
                                         <TableCell key={key}>
                                             <input
                                                 type="checkbox"
-                                                checked={selectedCheckboxes[row.produto] || false} // Use o nome do produto como chave
+                                                checked={selectedCheckboxes[row.produto] || false}  
                                                 onChange={(e) => {
                                                     const updatedSelectedCheckboxes = { ...selectedCheckboxes };
                                                     if (e.target.checked) {
-                                                        updatedSelectedCheckboxes[row.produto] = true; // Marcar como selecionado
+                                                        updatedSelectedCheckboxes[row.produto] = true; 
                                                     } else {
-                                                        delete updatedSelectedCheckboxes[row.produto]; // Remover da seleção
+                                                        delete updatedSelectedCheckboxes[row.produto]; 
                                                     }
-                                                    setSelectedCheckboxes(updatedSelectedCheckboxes); // Atualiza o estado no componente pai
+                                                    setSelectedCheckboxes(updatedSelectedCheckboxes);
                                                 }}
                                             />
                                         </TableCell>

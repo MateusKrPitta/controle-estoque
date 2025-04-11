@@ -7,7 +7,6 @@ import MenuMobile from '../../components/menu-mobile';
 import Estoque from '../../assets/png/estoque.png';
 import Produtos from '../../assets/png/produtos.png';
 import Dinheiro from '../../assets/png/dinheiro.png';
-import Dados from '../../assets/png/dados.png';
 import Compra from '../../assets/png/compra.png';
 import CustomTooltip from '../../components/grafico';
 import CustomToast from '../../components/toast';

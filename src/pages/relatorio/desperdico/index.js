@@ -230,7 +230,7 @@ const Desperdicio = () => {
                                     ...row,
                                     total: formatValor(row.precoPorcao * row.quantidade), 
                                     precoPorcao: formatValor(row.precoPorcao), 
-                                    dataCadastro: new Date(row.dataCadastro).toLocaleDateString('pt-BR'), // Formata a data
+                                    dataCadastro: new Date(row.dataCadastro).toLocaleDateString('pt-BR'),
                                 }))}
                                 actionsLabel={"Ações"} 
                                 actionCalls={{

@@ -17,10 +17,10 @@ export function openAppStoreLink() {
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (isIOS) {
-        window.location.href = 'ios://open'; // URI personalizada para iOS
+        window.location.href = 'ios://open';
         setTimeout(() => {
-            window.location.href = appStoreURL; // Link universal para a App Store
-        }, 1000); // Redirecionamento após 1 segundo
+            window.location.href = appStoreURL; 
+        }, 1000);
     } else {
         window.open(appStoreURL, '_blank');
     }
@@ -31,36 +31,30 @@ export function openPlayStoreLink() {
     const isAndroid = /Android/i.test(navigator.userAgent);
 
     if (isAndroid) {
-        window.location.href = playStoreURL; // URI personalizada para Android
+        window.location.href = playStoreURL; 
         setTimeout(() => {
-            window.location.href = playStoreURL; // Link universal para a Play Store
-        }, 1000); // Redirecionamento após 1 segundo
+            window.location.href = playStoreURL;
+        }, 1000); 
     } else {
         window.open(playStoreURL, '_blank');
     }
 }
 export function formatPhoneNumber(phoneNumber) {
-    // Remova todos os caracteres não numéricos do número de telefone
     const cleanedPhoneNumber = phoneNumber.replace(/\D/g, '');
 
-    // Verifique o comprimento do número de telefone para determinar o formato
     if (cleanedPhoneNumber.length === 10) {
-        // Formato para números de telefone fixos: (dd) xxxx-xxxx
         return `(${cleanedPhoneNumber.slice(0, 2)}) ${cleanedPhoneNumber.slice(2, 6)}-${cleanedPhoneNumber.slice(6)}`;
     } else if (cleanedPhoneNumber.length === 11) {
-        // Formato para números de telefone móvel: (dd) x xxxx-xxxx
         return `(${cleanedPhoneNumber.slice(0, 2)}) ${cleanedPhoneNumber.charAt(2)} ${cleanedPhoneNumber.slice(3, 7)}-${cleanedPhoneNumber.slice(7)}`;
     } else {
-        // Retorne o número de telefone original se não corresponder a nenhum dos comprimentos esperados
+     
         return phoneNumber;
     }
 }
 
 export function formatCPF(cpf) {
-    // Remova todos os caracteres não numéricos do CPF
     const cleanedCPF = cpf.replace(/\D/g, '');
 
-    // Aplica a máscara para CPF: xxx.xxx.xxx-xx
     return cleanedCPF.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
@@ -94,10 +88,8 @@ export function formatDate(dateString) {
     if (!dateString) {
         return '';
     }
-    // Dividir a data em ano, mês e dia
     const [year, month, day] = dateString.split('-');
 
-    // Retorna a data formatada: dd/mm/yyyy
     return `${day}/${month}/${year}`;
 }
 
@@ -106,21 +98,17 @@ export function primeiraLetraMaiuscula(input) {
 }
 
 export function validarCPF(cpf) {
-    // Remove caracteres não numéricos
     cpf = cpf.replace(/\D/g, '');
 
-    // Verifica se o CPF possui 11 dígitos
     if (cpf.length !== 11) {
         return false;
     }
 
-    // Verifica se todos os dígitos são iguais, o que não é válido para um CPF
     const digits = cpf.split('').map(Number);
     if (digits.every(digit => digit === digits[0])) {
         return false;
     }
 
-    // Calcula o primeiro dígito verificador
     let sum = 0;
     for (let i = 0; i < 9; i++) {
         sum += parseInt(cpf.charAt(i)) * (10 - i);
@@ -130,12 +118,10 @@ export function validarCPF(cpf) {
         firstDigit = 0;
     }
 
-    // Verifica se o primeiro dígito verificador está correto
     if (parseInt(cpf.charAt(9)) !== firstDigit) {
         return false;
     }
 
-    // Calcula o segundo dígito verificador
     sum = 0;
     for (let i = 0; i < 10; i++) {
         sum += parseInt(cpf.charAt(i)) * (11 - i);
@@ -145,28 +131,25 @@ export function validarCPF(cpf) {
         secondDigit = 0;
     }
 
-    // Verifica se o segundo dígito verificador está correto
     if (parseInt(cpf.charAt(10)) !== secondDigit) {
         return false;
     }
 
-    // CPF válido
     return true;
 }
 
 export const formatValor = (valor) => {
-    const parsedValor = parseFloat(valor); // Converte o valor para número
+    const parsedValor = parseFloat(valor); 
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
-        minimumFractionDigits: 2, // Garante que sempre tenha duas casas decimais
-        maximumFractionDigits: 2, // Garante que não tenha mais que duas casas decimais
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2, 
     }).format(parsedValor);
 };
 
-// Função para formatar o preço por porção sem arredondar
 export const formatPrecoPorcao = (valor) => {
-    return `R$ ${valor.toFixed(3).replace('.', ',')}`; // Formata com 3 casas decimais
+    return `R$ ${valor.toFixed(3).replace('.', ',')}`;
 };
 
 export const formatCmvReal = (valor) => {
@@ -174,5 +157,5 @@ export const formatCmvReal = (valor) => {
         style: 'percent',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-    }).format(valor / 100); // Divida por 100 para formatar corretamente
+    }).format(valor / 100); 
 };

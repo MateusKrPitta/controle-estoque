@@ -53,7 +53,7 @@ const Categoria = () => {
                     .filter(cat => cat.unidadeId === unidadeId)
                     .map(categoria => ({
                         ...categoria,
-                        status: categoria.isAtivo ? "Ativo" : "Inativo" // Adiciona campo status
+                        status: categoria.isAtivo ? "Ativo" : "Inativo" 
                     }));
                 
                 setCategorias(categoriasFiltradas);
@@ -117,7 +117,6 @@ const Categoria = () => {
             const response = await api.delete(`/categoria/${categoria.id}`);
             await carregarCategorias(unidadeId);
             
-            // Exibe a mensagem da resposta da API
             if (response.data && response.data.message) {
                 CustomToast({ type: "success", message: response.data.message });
             } 

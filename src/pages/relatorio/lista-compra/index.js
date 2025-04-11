@@ -29,7 +29,7 @@ const ListaCompra = () => {
     const [produtosFiltrados, setProdutosFiltrados] = useState([]);
     const [filtroNome, setFiltroNome] = useState('');
     const [selectedCheckboxes, setSelectedCheckboxes] = useState({});
-    const [selectAllBelowMin, setSelectAllBelowMin] = useState(false); // Estado para o Switch
+    const [selectAllBelowMin, setSelectAllBelowMin] = useState(false); 
 
     const handleLimparCampos = () => {
         setLimparCampos(!limparCampos);
@@ -41,30 +41,20 @@ const ListaCompra = () => {
     };
 
     const calcularEstoqueAtual = (produtoNome) => {
-        const estoque = {
-            totalEntradas: 0,
-            totalSaidas: 0,
-            quantidadeInicial: 0
-        };
-
-        const produto = produtos.find(p => p.nome === produtoNome);
-        if (produto) {
-            estoque.quantidadeInicial = produto.quantidade;
-        }
-
+        let estoqueAtual = 0;
+    
         entradasSaidas.forEach(registro => {
             if (registro.produtoNome === produtoNome) {
-                if (registro.tipo === 'entrada') {
-                    estoque.totalEntradas += registro.quantidade;
-                } else if (registro.tipo === 'saida' || registro.tipo === 'desperdicio') {
-                    estoque.totalSaidas += registro.quantidade;
+                if (registro.tipo === '1') { 
+                    estoqueAtual += registro.quantidade;
+                } else if (registro.tipo === '2' || registro.tipo === '3') {
+                    estoqueAtual -= registro.quantidade;
                 }
             }
         });
-
-        return estoque.quantidadeInicial + estoque.totalEntradas - estoque.totalSaidas;
+    
+        return estoqueAtual > 0 ? estoqueAtual : 0; 
     };
-
     const carregarCategorias = async () => {
         try {
             const response = await api.get(`/categoria?unidade=${unidadeId}`);
@@ -86,6 +76,16 @@ const ListaCompra = () => {
         5: 'Unidade',
     };
 
+    const fetchEntradasSaidas = async () => {
+        try {
+            const response = await api.get(`/movimentacao?unidadeId=${unidadeId}`);
+            setEntradasSaidas(response.data.data);
+        } catch (error) {
+            console.error("Erro ao carregar entradas/saídas:", error);
+        }
+    };
+
+
     const rows = produtosFiltrados.map(produto => {
         const estoqueAtual = calcularEstoqueAtual(produto.nome);
         const abaixoMinimo = estoqueAtual < produto.qtdMin;
@@ -94,7 +94,7 @@ const ListaCompra = () => {
             selecionado: abaixoMinimo,
             produto: produto.nome,
             categoria: produto.categoriaNome,
-            unidade: unidades[produto.unidadeMedida] || 'Desconhecida',
+            unidade: produto.unidadeMedida, 
             quantidadeMinima: produto.qtdMin,
             quantidade: estoqueAtual,
             precoUnitario: formatValor(produto.valor),
@@ -120,14 +120,13 @@ const ListaCompra = () => {
     ];
 
     const handlePrint = () => {
-        // Filtra as linhas que estão marcadas no selectedCheckboxes
         const selectedRows = rows.filter(row => selectedCheckboxes[row.produto]);
-        
+
         if (selectedRows.length === 0) {
             CustomToast({ type: "warning", message: "Nenhum item selecionado para imprimir!" });
             return;
         }
-    
+
         const printWindow = window.open('', '_blank');
         const tableContent = `
             <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
@@ -157,7 +156,7 @@ const ListaCompra = () => {
                 </tbody>
             </table>
         `;
-    
+
         printWindow.document.write(`
             <html>
                 <head>
@@ -199,7 +198,7 @@ const ListaCompra = () => {
             </html>
         `);
         printWindow.document.close();
-    
+
         setTimeout(() => {
             printWindow.print();
         }, 500);
@@ -233,6 +232,7 @@ const ListaCompra = () => {
     useEffect(() => {
         if (unidadeId) {
             fetchProdutos();
+            fetchEntradasSaidas();
         }
     }, [unidadeId]);
 
@@ -252,11 +252,10 @@ const ListaCompra = () => {
         );
         setProdutosFiltrados(filtrados);
 
-        // Manter a seleção das checkboxes
         const newSelectedCheckboxes = {};
         filtrados.forEach(produto => {
             if (selectedCheckboxes[produto.nome]) {
-                newSelectedCheckboxes[produto.nome] = true; // Manter selecionado se já estava
+                newSelectedCheckboxes[produto.nome] = true; 
             }
         });
         setSelectedCheckboxes(newSelectedCheckboxes);
@@ -278,15 +277,15 @@ const ListaCompra = () => {
     const handleSelectAllBelowMin = (event) => {
         const isChecked = event.target.checked;
         setSelectAllBelowMin(isChecked);
-    
-        const newSelectedCheckboxes = { ...selectedCheckboxes }; // Copia o estado atual
-    
+
+        const newSelectedCheckboxes = { ...selectedCheckboxes };
+
         rows.forEach(row => {
             if (row.isAbaixoMinimo) {
-                newSelectedCheckboxes[row.produto] = isChecked; // Seleciona ou desmarca
+                newSelectedCheckboxes[row.produto] = isChecked; 
             }
         });
-    
+
         setSelectedCheckboxes(newSelectedCheckboxes);
     };
 
@@ -342,23 +341,23 @@ const ListaCompra = () => {
                                             style={{ marginLeft: '5px' }}
                                             size="small"
                                             color="primary"
-                                            checked={selectAllBelowMin} // Estado do Switch
-                                            onChange={handleSelectAllBelowMin} // Função para lidar com a mudança
+                                            checked={selectAllBelowMin}
+                                            onChange={handleSelectAllBelowMin} 
                                         />
                                     }
                                     label="Selecionar Produtos"
                                 />
                             </div>
                             <div className=' sm:w-[100%] lg:w-[95%] flex flex-col' >
-                            <TableComponent
-    headers={headers}
-    rows={rows}
-    actionsLabel={'Ações'}
-    actionCalls={{}}
-    rowStyle={(row) => row.isAbaixoMinimo ? { backgroundColor: '#ffcccc' } : {}}
-    selectedCheckboxes={selectedCheckboxes} // Passando o estado das checkboxes
-    setSelectedCheckboxes={setSelectedCheckboxes} // Passando a função para atualizar o estado
-/>
+                                <TableComponent
+                                    headers={headers}
+                                    rows={rows}
+                                    actionsLabel={'Ações'}
+                                    actionCalls={{}}
+                                    rowStyle={(row) => row.isAbaixoMinimo ? { backgroundColor: '#ffcccc' } : {}}
+                                    selectedCheckboxes={selectedCheckboxes} 
+                                    setSelectedCheckboxes={setSelectedCheckboxes} 
+                                />
 
                             </div>
                         </div>

@@ -1,5 +1,5 @@
-// unidade-context.js
-import React, { createContext, useContext, useState, useEffect } from 'react';
+
+import React, { createContext, useContext, useState,  } from 'react';
 
 const UnidadeContext = createContext();
 
@@ -36,7 +36,6 @@ export const UnidadeProvider = ({ children }) => {
     );
 };
 
-// Hook para usar o contexto
 export const useUnidade = () => {
     return useContext(UnidadeContext);
 };

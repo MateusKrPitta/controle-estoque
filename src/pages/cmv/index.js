@@ -102,9 +102,8 @@ const CMV = () => {
         const faturamentoNumerico = parseFloat(row.faturamento.replace('R$', '').replace('.', '').replace(',', '.').trim());
         setFaturamento(isNaN(faturamentoNumerico) ? '' : faturamentoNumerico.toString());
 
-        // Ensure that row.valorCMV is a number
         const valorCMV = parseFloat(row.valorCMV);
-        setCmv(isNaN(valorCMV) ? 0 : valorCMV); // Set cmv to 0 if it's not a number
+        setCmv(isNaN(valorCMV) ? 0 : valorCMV); 
 
         const mappedProdutos = row.itens.map(item => ({
             ...item,
@@ -178,9 +177,8 @@ const CMV = () => {
       const estoqueInicial = Number(row.estoqueInicial || 0);
       const estoqueFinal = Number(row.estoqueFinal || 0);
       const entrada = Number(row.entrada || 0);
-      const preco = Number(row.preco || 0); // Use o preço atual
+      const preco = Number(row.preco || 0); 
 
-      // Calcule a quantidade utilizada
       const utilizado = estoqueInicial + entrada - estoqueFinal;
 
       if (utilizado < 0) {
@@ -193,7 +191,6 @@ const CMV = () => {
         };
       }
 
-      // Calcule o valor utilizado como preço * quantidade utilizada
       const valorTotal = utilizado * preco;
 
       return {
@@ -202,7 +199,7 @@ const CMV = () => {
         estoqueFinal,
         entrada,
         utilizado,
-        valorUtilizado: formatCurrency(valorTotal), // Atualize aqui
+        valorUtilizado: formatCurrency(valorTotal), 
       };
     });
 
@@ -543,7 +540,7 @@ const CMV = () => {
   const formattedLista = lista.map(item => ({
     ...item,
     faturamento: formatValor(item.faturamento),
-    valorCMV: `${item.valorCMV.toFixed(2).replace('.', ',')}%`, // Formata como porcentagem
+    valorCMV: `${item.valorCMV.toFixed(2).replace('.', ',')}%`,
   }));
 
   useEffect(() => {
@@ -561,7 +558,7 @@ const CMV = () => {
     }
 
     const cmvValue = (totalUtilizado / faturamentoValue) * 100;
-    setCmv(Number(cmvValue)); // Ensure cmvValue is a number
+    setCmv(Number(cmvValue));
 };
 
   const handleAdicionarProduto = () => {

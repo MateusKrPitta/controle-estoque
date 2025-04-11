@@ -20,10 +20,8 @@ const Navbar = ({ user }) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [showCadastroSubMenu, setShowCadastroSubMenu] = useState(false);
 
-    // Obtenha o tipo de usuário do localStorage
     const tipoUsuario = localStorage.getItem('tipo');
 
-    // Função para verificar se o usuário é do tipo "3"
     const isUsuarioTipo3 = tipoUsuario === "3";
 
     const toggleMenu = () => {

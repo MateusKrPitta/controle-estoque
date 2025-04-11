@@ -56,7 +56,7 @@ const LoginPage = () => {
         try {
             const response = await api.post('/login', { cpf, senha });
     
-            // Verifica primeiro se há uma mensagem de erro na resposta (mesmo com status true)
+          
             if (response.data.message && (response.data.message === "Usuário não encontrado" || 
                                         response.data.message === "Senha inválida")) {
                 CustomToast({ type: 'error', message: response.data.message });
@@ -93,15 +93,15 @@ const LoginPage = () => {
         } catch (error) {
             setLoading(false);
             if (error.response) {
-                // Verifica se há uma mensagem específica no response.data
+              
                 if (error.response.data && error.response.data.message) {
                     CustomToast({ type: 'error', message: error.response.data.message });
                 } 
-                // Caso para usuário inativo
+              
                 else if (error.response.status === 401) {
                     CustomToast({ type: 'warning', message: 'Usuário inativo. Contate o administrador.' });
                 } 
-                // Outros erros genéricos
+             
                 else {
                     CustomToast({ type: 'error', message: 'Erro ao tentar fazer login. Tente novamente.' });
                 }

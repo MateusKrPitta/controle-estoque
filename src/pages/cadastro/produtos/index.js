@@ -46,7 +46,6 @@ const Produtos = () => {
     const [loading, setLoading] = useState(false);
     const [produtoEditado, setProdutoEditado] = useState(null);
     const [isVisible, setIsVisible] = useState(false);
-    const [logoLoaded, setLogoLoaded] = useState(false);
     const [limparCampos, setLimparCampos] = useState(false);
 
     const [quantidadeTotal, setQuantidadeTotal] = useState('');
@@ -76,15 +75,12 @@ const Produtos = () => {
         setLimparCampos(!limparCampos);
     
         if (!limparCampos) {
-            // Limpa os campos de filtro
             setFiltroDataInicial('');
-            setFiltroDataFinal(''); // Removido a duplicação
+            setFiltroDataFinal(''); 
             setSelectedCategoria('');
             
-            // Recarrega os produtos
             carregaProdutos(unidadeId);
             
-            // Fecha o modal de filtro
             handleCloseFiltro();
         }
     };
@@ -127,7 +123,7 @@ const Produtos = () => {
         setIsSubmitting(true);
 
         const quantidadeNumerica = parseFloat(quantidadeTotal) || 0;
-        let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", ".")) / 100; // Adjusting for decimal
+        let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", ".")) / 100; 
         if (isNaN(precoNumerico)) {
             precoNumerico = 0;
         }
@@ -247,7 +243,7 @@ const Produtos = () => {
             return;
         }
     
-        let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", ".")) / 100; // Ajustando para decimal
+        let precoNumerico = parseFloat(preco.replace("R$ ", "").replace(/\./g, "").replace(",", ".")) / 100;
         if (isNaN(precoNumerico)) {
             precoNumerico = 0;
         }
@@ -261,7 +257,7 @@ const Produtos = () => {
             unidadeMedida: selectedUnidade,
             unidadeId,
             categoriaId: selectedCategoria,
-            dataReajuste: new Date().toISOString().split('T')[0], // Define a data de reajuste como a data atual
+            dataReajuste: new Date().toISOString().split('T')[0], 
         };
     
         try {
@@ -360,10 +356,9 @@ const Produtos = () => {
         printWindow.document.write(tableHTML);
         printWindow.document.close();
 
-        // Atrasar a impressão para garantir que a logo esteja carregada
         setTimeout(() => {
             printWindow.print();
-        }, 1000); // Ajuste o tempo conforme necessário
+        }, 1000); 
     };
 
 
@@ -688,7 +683,7 @@ const Produtos = () => {
                                             sx={{ width: { xs: '45%', sm: '50%', md: '40%', lg: '50%' }, }}
                                             value={preco}
                                             onValueChange={(values) => {
-                                                // Aqui você pode usar o valor formatado diretamente
+                                          
                                                 setPreco(values.value);
                                             }}
                                             thousandSeparator="."
