@@ -20,8 +20,6 @@ import { FormControlLabel, InputAdornment, Switch, TextField } from '@mui/materi
 const ListaCompra = () => {
     const { unidadeId } = useUnidade();
     const [produtos, setProdutos] = useState([]);
-    const [entradasSaidas, setEntradasSaidas] = useState([]);
-    const [categorias, setCategorias] = useState([]);
     const [isVisible, setIsVisible] = useState(false);
     const [limparCampos, setLimparCampos] = useState(false);
     const [cadastroAdicionais, setCadastroAdicionais] = useState(false);
@@ -31,43 +29,6 @@ const ListaCompra = () => {
     const [selectedCheckboxes, setSelectedCheckboxes] = useState({});
     const [selectAllBelowMin, setSelectAllBelowMin] = useState(false); 
 
-    const handleLimparCampos = () => {
-        setLimparCampos(!limparCampos);
-        if (!limparCampos) {
-            setCategoriaSelecionada('');
-            fetchProdutos(unidadeId);
-            handleCloseCadastroProdutos();
-        }
-    };
-
-    const calcularEstoqueAtual = (produtoNome) => {
-        let estoqueAtual = 0;
-    
-        entradasSaidas.forEach(registro => {
-            if (registro.produtoNome === produtoNome) {
-                if (registro.tipo === '1') { 
-                    estoqueAtual += registro.quantidade;
-                } else if (registro.tipo === '2' || registro.tipo === '3') {
-                    estoqueAtual -= registro.quantidade;
-                }
-            }
-        });
-    
-        return estoqueAtual > 0 ? estoqueAtual : 0; 
-    };
-    const carregarCategorias = async () => {
-        try {
-            const response = await api.get(`/categoria?unidade=${unidadeId}`);
-            if (Array.isArray(response.data.data)) {
-                setCategorias(response.data.data);
-            } else {
-                setCategorias([]);
-            }
-        } catch (error) {
-            console.error("Erro ao carregar categorias:", error);
-        }
-    };
-
     const unidades = {
         1: 'Kilograma',
         2: 'Grama',
@@ -76,29 +37,40 @@ const ListaCompra = () => {
         5: 'Unidade',
     };
 
-    const fetchEntradasSaidas = async () => {
-        try {
-            const response = await api.get(`/movimentacao?unidadeId=${unidadeId}`);
-            setEntradasSaidas(response.data.data);
-        } catch (error) {
-            console.error("Erro ao carregar entradas/saídas:", error);
+    const handleLimparCampos = () => {
+        setLimparCampos(!limparCampos);
+        if (!limparCampos) {
+            setCategoriaSelecionada('');
+            carregarProdutos();
+            handleCloseCadastroProdutos();
         }
     };
 
 
+    const carregarProdutos = async () => {
+        try {
+            const response = await api.get(`/produto?unidadeId=${unidadeId}`);
+            const produtosCadastrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
+            setProdutos(produtosCadastrados);
+            setProdutosFiltrados(produtosCadastrados);
+        } catch (error) {
+            CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
+        }
+    };
+
     const rows = produtosFiltrados.map(produto => {
-        const estoqueAtual = calcularEstoqueAtual(produto.nome);
+        const estoqueAtual = produto.quantidade || 0;
         const abaixoMinimo = estoqueAtual < produto.qtdMin;
 
         return {
             selecionado: abaixoMinimo,
             produto: produto.nome,
             categoria: produto.categoriaNome,
-            unidade: produto.unidadeMedida, 
+            unidade: unidades[produto.unidadeMedida] || produto.unidadeMedida,
             quantidadeMinima: produto.qtdMin,
             quantidade: estoqueAtual,
             precoUnitario: formatValor(produto.valor),
-            valorTotal: formatValor((produto.valor * estoqueAtual)),
+            valorTotal: formatValor((produto.valor * Math.max(estoqueAtual, 0))),
             comprar: Math.max(produto.qtdMin - estoqueAtual, 0),
             isAbaixoMinimo: abaixoMinimo
         };
@@ -203,6 +175,7 @@ const ListaCompra = () => {
             printWindow.print();
         }, 500);
     };
+
     const handleCadastroProdutos = () => setCadastroAdicionais(true);
     const handleCloseCadastroProdutos = () => setCadastroAdicionais(false);
 
@@ -218,33 +191,6 @@ const ListaCompra = () => {
         handleCloseCadastroProdutos(true);
     };
 
-    const fetchProdutos = async () => {
-        try {
-            const response = await api.get(`/produto?unidadeId=${unidadeId}`);
-            const produtosCadastrados = response.data.data.filter(produto => produto.unidadeId === unidadeId);
-            setProdutos(produtosCadastrados);
-            setProdutosFiltrados(produtosCadastrados);
-        } catch (error) {
-            CustomToast({ type: "error", message: "Erro ao carregar produtos!" });
-        }
-    };
-
-    useEffect(() => {
-        if (unidadeId) {
-            fetchProdutos();
-            fetchEntradasSaidas();
-        }
-    }, [unidadeId]);
-
-    useEffect(() => {
-        if (unidadeId) {
-            carregarCategorias(unidadeId);
-        }
-    }, [unidadeId]);
-
-    useEffect(() => {
-        setProdutosFiltrados(produtos);
-    }, [produtos]);
 
     useEffect(() => {
         const filtrados = produtos.filter(produto =>
@@ -260,11 +206,6 @@ const ListaCompra = () => {
         });
         setSelectedCheckboxes(newSelectedCheckboxes);
     }, [filtroNome, produtos]);
-
-    useEffect(() => {
-        fetchProdutos();
-        carregarCategorias();
-    }, [unidadeId]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -289,6 +230,17 @@ const ListaCompra = () => {
         setSelectedCheckboxes(newSelectedCheckboxes);
     };
 
+    // Extrair categorias únicas dos produtos para o filtro
+    const categoriasUnicas = [...new Set(
+        produtos.map(p => ({ id: p.categoriaId, nome: p.categoriaNome }))
+    )].filter((cat, index, self) => 
+        index === self.findIndex(c => c.id === cat.id)
+    );
+
+    useEffect(() => {
+        console.log("Unidade ID:", unidadeId);
+        if (unidadeId) carregarProdutos();
+      }, [unidadeId]);
     return (
         <div className="flex w-full ">
             <Navbar />
@@ -358,7 +310,6 @@ const ListaCompra = () => {
                                     selectedCheckboxes={selectedCheckboxes} 
                                     setSelectedCheckboxes={setSelectedCheckboxes} 
                                 />
-
                             </div>
                         </div>
                     </div>
@@ -381,7 +332,10 @@ const ListaCompra = () => {
                                 icon={<Category fontSize="small" />}
                                 label={'Categorias'}
                                 backgroundColor={"#D9D9D9"}
-                                options={categorias.map(categoria => ({ label: categoria.nome, value: categoria.id }))}
+                                options={categoriasUnicas.map(categoria => ({ 
+                                    label: categoria.nome, 
+                                    value: categoria.id 
+                                }))}
                                 onChange={(e) => setCategoriaSelecionada(e.target.value)}
                                 value={categoriaSelecionada}
                             />

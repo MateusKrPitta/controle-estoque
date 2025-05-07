@@ -39,6 +39,7 @@ const EntradaSaida = () => {
   const [entradasSaidas, setEntradasSaidas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filtro, setFiltro] = useState(false);
+  const [dataCadastro, setDataCadastro] = useState('');
   const [dataInicial, setDataInicial] = useState('');
   const [selectedProdutoFiltro, setSelectedProdutoFiltro] = useState('');
   const [dataFinal, setDataFinal] = useState('');
@@ -86,7 +87,9 @@ const EntradaSaida = () => {
     const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0;
 
 
-    const dataFormatada = moment().format('YYYY-MM-DD');
+    const dataFormatada = dataCadastro 
+    ? moment(dataCadastro).format('YYYY-MM-DD') 
+    : moment().format('YYYY-MM-DD');
 
     const novoRegistro = {
       data: dataFormatada,
@@ -107,6 +110,7 @@ const EntradaSaida = () => {
       setTipo('entrada');
       setProdutoSelecionado(null);
       setObservacao('');
+      setDataCadastro('');
       handleCloseCadastro();
 
       fetchEntradasSaidas();
@@ -192,27 +196,27 @@ const EntradaSaida = () => {
     }, 1000);
   };
   const valorTotalEntradas = entradasSaidas
-  .filter(registro => registro.tipo === 'entrada')
-  .reduce((acc, registro) => {
-    const valor = parseFloat(registro.valorTotal.replace(/[^\d,]/g, '').replace(',', '.'));
-    return acc + (isNaN(valor) ? 0 : valor);
-  }, 0);
+    .filter(registro => registro.tipo === 'entrada')
+    .reduce((acc, registro) => {
+      const valor = parseFloat(registro.valorTotal.replace(/[^\d,]/g, '').replace(',', '.'));
+      return acc + (isNaN(valor) ? 0 : valor);
+    }, 0);
 
-const valorTotalDesperdicio = entradasSaidas
-  .filter(registro => registro.tipo === 'desperdicio')
-  .reduce((acc, registro) => {
-    const valor = parseFloat(registro.valorTotal.replace(/[^\d,]/g, '').replace(',', '.'));
-    return acc + (isNaN(valor) ? 0 : valor);
-  }, 0);
+  const valorTotalDesperdicio = entradasSaidas
+    .filter(registro => registro.tipo === 'desperdicio')
+    .reduce((acc, registro) => {
+      const valor = parseFloat(registro.valorTotal.replace(/[^\d,]/g, '').replace(',', '.'));
+      return acc + (isNaN(valor) ? 0 : valor);
+    }, 0);
 
-const valorTotalSaidas = entradasSaidas
-  .filter(registro => registro.tipo === 'saida')
-  .reduce((acc, registro) => {
-    const valor = parseFloat(registro.valorTotal.replace(/[^\d,]/g, '').replace(',', '.'));
-    return acc + (isNaN(valor) ? 0 : valor);
-  }, 0);
+  const valorTotalSaidas = entradasSaidas
+    .filter(registro => registro.tipo === 'saida')
+    .reduce((acc, registro) => {
+      const valor = parseFloat(registro.valorTotal.replace(/[^\d,]/g, '').replace(',', '.'));
+      return acc + (isNaN(valor) ? 0 : valor);
+    }, 0);
 
-const valorTotalEstoque = valorTotalEntradas - valorTotalSaidas - valorTotalDesperdicio;
+  const valorTotalEstoque = valorTotalEntradas - valorTotalSaidas - valorTotalDesperdicio;
   const fetchProdutos = async () => {
     try {
       const response = await api.get(`/produto?unidadeId=${unidadeId}`);
@@ -239,13 +243,16 @@ const valorTotalEstoque = valorTotalEntradas - valorTotalSaidas - valorTotalDesp
     try {
       const response = await api.get(`/movimentacao?unidade=${unidadeId}`);
       const movimentacoes = response.data.data;
-      const formattedMovimentacoes = movimentacoes.map(mov => {
+      
+      // Ordenar por data mais recente primeiro
+      const sortedMovimentacoes = [...movimentacoes].sort((a, b) => {
+        return new Date(b.data) - new Date(a.data); // Decrescente (mais recente primeiro)
+      });
+  
+      const formattedMovimentacoes = sortedMovimentacoes.map(mov => {
         const valorTotal = mov.precoPorcao * mov.quantidade;
-
-
         const dataUTC = moment.utc(mov.data);
-
-
+  
         return {
           id: mov.id,
           tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === "2" ? 'saida' : 'desperdicio',
@@ -259,7 +266,7 @@ const valorTotalEstoque = valorTotalEntradas - valorTotalSaidas - valorTotalDesp
           dataFormatada: dataUTC.format('DD/MM/YYYY')
         };
       });
-
+  
       setEntradasSaidas(formattedMovimentacoes);
       setEntradasSaidasOriginais(formattedMovimentacoes);
     } catch (error) {
@@ -303,6 +310,8 @@ const valorTotalEstoque = valorTotalEntradas - valorTotalSaidas - valorTotalDesp
       const matchesTipo = selectedTipos.length > 0 ? selectedTipos.includes(registro.tipo) : true;
 
       return matchesProduto && matchesSearchTerm && matchesDataInicial && matchesDataFinal && matchesCategoria && matchesTipo;
+    }).sort((a, b) => {
+      return new Date(b.dataISO) - new Date(a.dataISO); // Ordenar por data decrescente
     });
 
     setEntradasSaidas(filteredData);
@@ -545,7 +554,7 @@ const valorTotalEstoque = valorTotalEntradas - valorTotalSaidas - valorTotalDesp
                 }}
               />
               <SelectTextFields
-                width={'320px'}
+                width={'150px'}
                 icon={<AddchartIcon fontSize="small" />}
                 label={'Tipo'}
                 backgroundColor={"#D9D9D9"}
@@ -557,6 +566,24 @@ const valorTotalEstoque = valorTotalEntradas - valorTotalSaidas - valorTotalDesp
                   { value: 'desperdicio', label: 'Desperdício' },
                 ]}
                 onChange={(e) => setTipo(e.target.value)}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Data"
+                value={dataCadastro}
+                type='date'
+                onChange={(e) => setDataCadastro(e.target.value)}
+                autoComplete="off"
+                sx={{ width: { xs: '50%', sm: '50%', md: '40%', lg: '49%' } }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DateRange />
+                    </InputAdornment>
+                  ),
+                }}
               />
             </div>
 
@@ -585,35 +612,35 @@ const valorTotalEstoque = valorTotalEntradas - valorTotalSaidas - valorTotalDesp
         >
           <div>
             <div className='mt-4 flex gap-3 flex-wrap'>
-            <Autocomplete
-        options={produtos}
-        getOptionLabel={(option) => {
-          const preco = option.valorPorcao || option.precoPorcao || 0;
-          return `${option.nome} - ${formatValor(preco)}`;
-        }}
-        value={produtos.find(p => p.nome === selectedProdutoFiltro) || null}
-        noOptionsText="Nenhum produto encontrado"
-        onChange={(event, newValue) => {
-          setSelectedProdutoFiltro(newValue ? newValue.nome : '');
-        }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Produto"
-            variant="outlined"
-            size="small"
-            sx={{ width: '320px' }}
-            InputProps={{
-              ...params.InputProps,
-              startAdornment: (
-                <InputAdornment position="start">
-                  <ProductionQuantityLimits fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-          />
-        )}
-      />
+              <Autocomplete
+                options={produtos}
+                getOptionLabel={(option) => {
+                  const preco = option.valorPorcao || option.precoPorcao || 0;
+                  return `${option.nome} - ${formatValor(preco)}`;
+                }}
+                value={produtos.find(p => p.nome === selectedProdutoFiltro) || null}
+                noOptionsText="Nenhum produto encontrado"
+                onChange={(event, newValue) => {
+                  setSelectedProdutoFiltro(newValue ? newValue.nome : '');
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Produto"
+                    variant="outlined"
+                    size="small"
+                    sx={{ width: '320px' }}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <ProductionQuantityLimits fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              />
               <TextField
                 fullWidth
                 variant="outlined"
