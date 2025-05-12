@@ -87,9 +87,9 @@ const EntradaSaida = () => {
     const valorTotal = produtoSelecionado ? produtoSelecionado.precoPorcao * quantidadeNumerica : 0;
 
 
-    const dataFormatada = dataCadastro 
-    ? moment(dataCadastro).format('YYYY-MM-DD') 
-    : moment().format('YYYY-MM-DD');
+    const dataFormatada = dataCadastro
+      ? moment(dataCadastro).format('YYYY-MM-DD')
+      : moment().format('YYYY-MM-DD');
 
     const novoRegistro = {
       data: dataFormatada,
@@ -125,51 +125,163 @@ const EntradaSaida = () => {
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
 
+    // Calcula totais
+    const totalEntradas = filteredEntradasSaidas
+      .filter(r => r.tipo === 'entrada')
+      .reduce((acc, curr) => acc + (parseFloat(curr.quantidade) || 0), 0);
+
+    const totalSaidas = filteredEntradasSaidas
+      .filter(r => r.tipo === 'saida')
+      .reduce((acc, curr) => acc + (parseFloat(curr.quantidade) || 0), 0);
+
+    const totalDesperdicio = filteredEntradasSaidas
+      .filter(r => r.tipo === 'desperdicio')
+      .reduce((acc, curr) => acc + (parseFloat(curr.quantidade) || 0), 0);
+
+    const valorTotalEntradas = filteredEntradasSaidas
+      .filter(r => r.tipo === 'entrada')
+      .reduce((acc, curr) => {
+        const valor = curr.valorTotal ? parseFloat(curr.valorTotal.replace(/[^\d,]/g, '').replace(',', '.')) : 0;
+        return acc + (isNaN(valor) ? 0 : valor);
+      }, 0);
+
+    const valorTotalSaidas = filteredEntradasSaidas
+      .filter(r => r.tipo === 'saida')
+      .reduce((acc, curr) => {
+        const valor = curr.valorTotal ? parseFloat(curr.valorTotal.replace(/[^\d,]/g, '').replace(',', '.')) : 0;
+        return acc + (isNaN(valor) ? 0 : valor);
+      }, 0);
+
+    const valorTotalDesperdicio = filteredEntradasSaidas
+      .filter(r => r.tipo === 'desperdicio')
+      .reduce((acc, curr) => {
+        const valor = curr.valorTotal ? parseFloat(curr.valorTotal.replace(/[^\d,]/g, '').replace(',', '.')) : 0;
+        return acc + (isNaN(valor) ? 0 : valor);
+      }, 0);
+
+    const valorTotalEstoque = valorTotalEntradas - valorTotalSaidas - valorTotalDesperdicio;
+
+    // Cards HTML
+    const cardsHTML = `
+    <div class="cards-container">
+      <div class="card">
+        <h4>Entradas</h4>
+        <p>Quantidade: ${totalEntradas.toFixed(2)}</p>
+        <p>Valor: ${formatValor(valorTotalEntradas)}</p>
+      </div>
+      <div class="card">
+        <h4>Saídas</h4>
+        <p>Quantidade: ${totalSaidas.toFixed(2)}</p>
+        <p>Valor: ${formatValor(valorTotalSaidas)}</p>
+      </div>
+      <div class="card">
+        <h4>Desperdício</h4>
+        <p>Quantidade: ${totalDesperdicio.toFixed(2)}</p>
+        <p>Valor: ${formatValor(valorTotalDesperdicio)}</p>
+      </div>
+     
+    </div>
+  `;
+
+    // Tabela HTML
     const tableRows = filteredEntradasSaidas.map(registro => `
     <tr>
-          <td>${registro.tipo}</td> <!-- Tipo (entrada, saída, desperdício) -->
-      <td>${registro.produtoNome}</td>
-      <td>${registro.quantidade}</td>
-      <td>${formatValor(registro.precoPorcao)}</td>
-      <td>${formatValor(registro.valorTotal)}</td>
-      <td>${registro.categoria}</td>
-      <td>${registro.observacao}</td>
-      <td>${registro.dataFormatada}</td> <!-- Data formatada -->
-
+      <td>${registro.tipo === 'entrada' ? 'Entrada' : registro.tipo === 'saida' ? 'Saída' : 'Desperdício'}</td>
+      <td>${registro.produtoNome || ''}</td>
+      <td>${registro.quantidade || ''}</td>
+      <td>${registro.precoPorcao ? registro.precoPorcao.trim() : ''}</td>
+      <td>${registro.valorTotal ? registro.valorTotal.trim() : ''}</td>
+      <td>${registro.categoria || ''}</td>
+      <td>${registro.observacao || ''}</td>
+      <td>${registro.dataFormatada || ''}</td>
     </tr>
   `).join('');
 
     const tableHTML = `
     <html>
       <head>
-        <title>Imprimir Produtos</title>
+        <title>Relatório de Entradas/Saídas</title>
         <style>
           body { 
             font-family: Arial, sans-serif; 
             margin: 20px; 
           }
+          .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .logo {
+            max-width: 150px;
+            height: auto;
+          }
+          .title {
+            text-align: center;
+            margin-bottom: 15px;
+          }
+          .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+          }
+          .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            width: 200px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .card h4 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+          }
+          .card p {
+            margin: 5px 0;
+            font-size: 14px;
+          }
           table { 
-            border-radius:10px;
             width: 100%; 
             border-collapse: collapse; 
+            margin-top: 20px;
           }
           th, td { 
-            border: 1px solid #000; 
+            border: 1px solid #ddd; 
             padding: 8px; 
             text-align: left; 
           }
           th { 
             background-color: #f2f2f2; 
           }
+          @media print {
+            .no-print {
+              display: none;
+            }
+            body {
+              margin: 0;
+              padding: 10px;
+            }
+            .card {
+              page-break-inside: avoid;
+            }
+          }
         </style>
       </head>
       <body>
-        <img src="${Logo}" alt="Logo" />
-        <h3>Entrada / Saída / Desperdício</h3>
+        <div class="logo-container">
+          <img src="${Logo}" alt="Logo" class="logo" />
+        </div>
+        <h2 class="title">Relatório de Entradas e Saídas</h2>
+        
+        ${cardsHTML}
+        
+        <h3 class="title">Detalhes das Movimentações</h3>
         <table>
           <thead>
             <tr>
-            <th>Tipo</th> <!-- Nova coluna para Tipo -->
+              <th>Tipo</th>
               <th>Nome</th>
               <th>Quantidade</th>
               <th>Preço por Porção</th>
@@ -177,13 +289,16 @@ const EntradaSaida = () => {
               <th>Categoria</th>
               <th>Observação</th>
               <th>Data</th>
-              
             </tr>
           </thead>
           <tbody>
             ${tableRows}
           </tbody>
         </table>
+        
+        <div class="no-print" style="margin-top: 20px; text-align: center; font-size: 12px; color: #777;">
+          Relatório gerado em ${new Date().toLocaleString()}
+        </div>
       </body>
     </html>
   `;
@@ -195,6 +310,7 @@ const EntradaSaida = () => {
       printWindow.print();
     }, 1000);
   };
+
   const valorTotalEntradas = entradasSaidas
     .filter(registro => registro.tipo === 'entrada')
     .reduce((acc, registro) => {
@@ -243,16 +359,16 @@ const EntradaSaida = () => {
     try {
       const response = await api.get(`/movimentacao?unidade=${unidadeId}`);
       const movimentacoes = response.data.data;
-      
+
       // Ordenar por data mais recente primeiro
       const sortedMovimentacoes = [...movimentacoes].sort((a, b) => {
         return new Date(b.data) - new Date(a.data); // Decrescente (mais recente primeiro)
       });
-  
+
       const formattedMovimentacoes = sortedMovimentacoes.map(mov => {
         const valorTotal = mov.precoPorcao * mov.quantidade;
         const dataUTC = moment.utc(mov.data);
-  
+
         return {
           id: mov.id,
           tipo: mov.tipo === "1" ? 'entrada' : mov.tipo === "2" ? 'saida' : 'desperdicio',
@@ -266,7 +382,7 @@ const EntradaSaida = () => {
           dataFormatada: dataUTC.format('DD/MM/YYYY')
         };
       });
-  
+
       setEntradasSaidas(formattedMovimentacoes);
       setEntradasSaidasOriginais(formattedMovimentacoes);
     } catch (error) {
