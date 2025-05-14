@@ -8,24 +8,37 @@ import PersonIcon from '@mui/icons-material/Person';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
 import CloseIcon from "@mui/icons-material/Close";
 import BarChartIcon from '@mui/icons-material/BarChart';
-import { Button, Drawer, IconButton, List } from '@mui/material';
+import { Button, Drawer, IconButton, List, Tooltip } from '@mui/material';
 import AddchartIcon from '@mui/icons-material/Addchart';
 import AddToQueueIcon from '@mui/icons-material/AddToQueue';
 import DataThresholdingIcon from '@mui/icons-material/DataThresholding';
 import ContentPasteSearchIcon from '@mui/icons-material/ContentPasteSearch';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const Navbar = ({ user }) => {
     const [activeRoute, setActiveRoute] = useState("");
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
     const [showCadastroSubMenu, setShowCadastroSubMenu] = useState(false);
+    const [collapsed, setCollapsed] = useState(() => {
+        // Recupera o estado do localStorage ou usa false como padrão
+        const savedState = localStorage.getItem('menuCollapsed');
+        return savedState ? JSON.parse(savedState) : false;
+    });
 
     const tipoUsuario = localStorage.getItem('tipo');
-
     const isUsuarioTipo3 = tipoUsuario === "3";
 
     const toggleMenu = () => {
         setMenuOpen(!menuOpen);
+    };
+
+    const toggleCollapse = () => {
+        const newState = !collapsed;
+        setCollapsed(newState);
+        // Salva o estado no localStorage
+        localStorage.setItem('menuCollapsed', JSON.stringify(newState));
     };
 
     const handleNavigate = (route) => {
@@ -47,81 +60,102 @@ const Navbar = ({ user }) => {
     return (
         <div className='hidden sm:hidden md:hidden lg:block' style={{ backgroundColor: 'black' }}>
             <div className="lg:block hidden h-[100%]">
-                <div className={`transition-all w-64 h-screen bg-cover bg-no-repeat bg-center flex flex-col p-5`} style={{ backgroundColor: 'black' }}>
+                <div className={`transition-all ${collapsed ? 'w-20' : 'w-64'} h-screen bg-cover bg-no-repeat bg-center flex flex-col p-5 relative`} style={{ backgroundColor: 'black',  }}>
                     <div className="flex flex-col justify-center items-center mb-5 cursor-pointer" onClick={() => handleNavigate("/dashboard")}>
-                        <img src={logo} alt="Logo" style={{ backgroundColor: 'black', padding: '15px', borderRadius: "10px", width: '65%' }} title={user ? "Clique para acessar a Dashboard" : ''} className="w-24" />
-                        <label className='text-white text-xs'>Controle de Estoque</label>
+                        <img 
+                            src={logo} 
+                            alt="Logo" 
+                            style={{ 
+                                backgroundColor: 'black', 
+                                padding: collapsed ? '5px' : '15px', 
+                                borderRadius: "10px", 
+                                width: collapsed ? '80%' : '65%' 
+                            }} 
+                            title={user ? "Clique para acessar a Dashboard" : ''} 
+                        />
+                        {!collapsed && <label className='text-white text-xs'>Controle de Estoque</label>}
+                    </div>
+
+                    <div style={{backgroundColor:'#b0d847', color:"black"}}
+                        className="absolute top-5 -right-3  rounded-full cursor-pointer"
+                        onClick={toggleCollapse}
+                        title={collapsed ? "Expandir menu" : "Recolher menu"}
+                    >
+                        {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
                     </div>
 
                     <div className="flex flex-col gap-2 text-white overflow-hidden transition-all">
+                        {!collapsed && <label className="text-sm mt-1 text-white font-bold">Home</label>}
+                        <Tooltip title="Dashboard" placement="right" arrow>
+                            <button
+                                onClick={() => handleNavigate("/dashboard")}
+                                className={`flex items-center bg-white text-black font-bold rounded p-3  py-2 gap-2 text-sm ${activeRoute === "/dashboard" ? "border-b-2 border-primary" : ""}`}
+                            >
+                                <DashboardIcon fontSize={"small"} />
+                                {!collapsed && <span>Dashboard</span>}
+                            </button>
+                        </Tooltip>
 
-                            <>
-                                <label className="text-sm mt-1 text-white font-bold">Home</label>
-                                <button
-                                    onClick={() => handleNavigate("/dashboard")}
-                                    className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/dashboard" ? "border-b-2 border-primary" : ""}`}
-                                    title={'Dashboard'}
-                                >
-                                    <DashboardIcon fontSize={"small"} />
-                                    <span>Dashboard</span>
-                                </button>
-                            </>
-
-                        <label className="text-sm mt-1 text-white font-bold">Funções</label>
-                        <button
-                            onClick={() => handleNavigate("/entrada-saida")}
-                            className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/entrada-saida" ? "border-b-2 border-primary" : ""}`}
-                            title={'Entradas/Saída'}
-                        >
-                            <AddchartIcon fontSize={"small"} />
-                            <span>Entradas/Saída</span>
-                        </button>
+                        {!collapsed && <label className="text-sm mt-1 text-white font-bold">Funções</label>}
+                        <Tooltip title="Entradas/Saída" placement="right" arrow>
+                            <button
+                                onClick={() => handleNavigate("/entrada-saida")}
+                                className={`flex items-center bg-white text-black font-bold rounded p-3  py-2 gap-2 text-sm ${activeRoute === "/entrada-saida" ? "border-b-2 border-primary" : ""}`}
+                            >
+                                <AddchartIcon fontSize={"small"} />
+                                {!collapsed && <span>Entradas/Saída</span>}
+                            </button>
+                        </Tooltip>
 
                         {/* Exibir "CMV" e "Ficha Técnica" apenas se não for usuário tipo 3 */}
                         {!isUsuarioTipo3 && (
                             <>
-                                <button
-                                    onClick={() => handleNavigate("/cmv")}
-                                    className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/cmv" ? "border-b-2 border-primary" : ""}`}
-                                    title={'CMV'}
-                                >
-                                    <AddToQueueIcon fontSize={"small"} />
-                                    <span>CMV</span>
-                                </button>
-                                <button
-                                    onClick={() => handleNavigate("/ficha-tecnica")}
-                                    className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/ficha-tecnica" ? "border-b-2 border-primary" : ""}`}
-                                    title={'Ficha Técnica'}
-                                >
-                                    <ContentPasteSearchIcon fontSize={"small"} />
-                                    <span>Ficha Técnica</span>
-                                </button>
+                                <Tooltip title="CMV" placement="right" arrow>
+                                    <button
+                                        onClick={() => handleNavigate("/cmv")}
+                                        className={`flex items-center bg-white text-black font-bold rounded p-3  py-2 gap-2 text-sm ${activeRoute === "/cmv" ? "border-b-2 border-primary" : ""}`}
+                                    >
+                                        <AddToQueueIcon fontSize={"small"} />
+                                        {!collapsed && <span>CMV</span>}
+                                    </button>
+                                </Tooltip>
+                                <Tooltip title="Ficha Técnica" placement="right" arrow>
+                                    <button
+                                        onClick={() => handleNavigate("/ficha-tecnica")}
+                                        className={`flex items-center bg-white text-black font-bold rounded p-3  py-2 gap-2 text-sm ${activeRoute === "/ficha-tecnica" ? "border-b-2 border-primary" : ""}`}
+                                    >
+                                        <ContentPasteSearchIcon fontSize={"small"} />
+                                        {!collapsed && <span>Ficha Técnica</span>}
+                                    </button>
+                                </Tooltip>
                             </>
                         )}
 
-                        <button
-                            onClick={() => handleNavigate("/relatorio")}
-                            className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm ${activeRoute === "/relatorios" ? "border-b-2 border-primary" : ""}`}
-                            title={'Relatório'}
-                        >
-                            <DataThresholdingIcon fontSize={"small"} />
-                            <span>Relatório</span>
-                        </button>
+                        <Tooltip title="Relatório" placement="right" arrow>
+                            <button
+                                onClick={() => handleNavigate("/relatorio")}
+                                className={`flex items-center bg-white text-black font-bold rounded p-3 py-2 gap-2 text-sm ${activeRoute === "/relatorios" ? "border-b-2 border-primary" : ""}`}
+                            >
+                                <DataThresholdingIcon fontSize={"small"} />
+                                {!collapsed && <span>Relatório</span>}
+                            </button>
+                        </Tooltip>
 
-
-                                <label className="text-sm mt-1 text-white font-bold">Configurações</label>
-                                <button
-                                    onClick={() => handleNavigate("/cadastro")}
-                                    className={`flex items-center bg-white text-black font-bold rounded p-3 px-2 py-2 gap-2 text-sm  ${activeRoute === "/cadastro" ? "border-b-2 border-primary" : ""}`}
-                                    title={'Cadastro de Configurações'}
-                                >
-                                    <MiscellaneousServicesIcon fontSize={"small"} />
-                                    <span>Cadastro</span>
-                                </button>
+                        {!collapsed && <label className="text-sm mt-1 text-white font-bold">Configurações</label>}
+                        <Tooltip title="Cadastro de Configurações" placement="right" arrow>
+                            <button
+                                onClick={() => handleNavigate("/cadastro")}
+                                className={`flex items-center bg-white text-black font-bold rounded p-3 py-2 gap-2 text-sm  ${activeRoute === "/cadastro" ? "border-b-2 border-primary" : ""}`}
+                            >
+                                <MiscellaneousServicesIcon fontSize={"small"} />
+                                {!collapsed && <span>Cadastro</span>}
+                            </button>
+                        </Tooltip>
                     </div>
                 </div>
             </div>
 
+            {/* Restante do código para a versão mobile permanece igual */}
             <div className="lg:hidden flex w-full h-[50px] bg-primary fixed top-0 left-0 z-10">
                 {user ?
                     <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
@@ -231,7 +265,6 @@ const Navbar = ({ user }) => {
                                 </div>
                             )}
 
-                            {/* Exibir "Relatório" para todos os usuários */}
                             <Button
                                 fullWidth
                                 onClick={() => handleNavigate("/relatorio")}

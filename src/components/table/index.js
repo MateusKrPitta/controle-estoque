@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper, 
+  IconButton, 
+  TextField,
+  TablePagination
+} from '@mui/material';
 import { useLocation } from 'react-router-dom';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, TextField } from '@mui/material';
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
@@ -11,7 +22,18 @@ import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import { Print } from '@mui/icons-material';
 
-const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowChange, rowStyle, selectedCheckboxes, setSelectedCheckboxes }) => {
+const TableComponent = ({ 
+  rows, 
+  headers, 
+  actionCalls = {}, 
+  actionsLabel, 
+  onRowChange, 
+  rowStyle, 
+  selectedCheckboxes, 
+  setSelectedCheckboxes 
+}) => {
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [pageList, setPageList] = useState([]);
     const hasActions = Object.keys(actionCalls).length > 0;
     const actionTypes = Object.keys(actionCalls);
@@ -24,11 +46,20 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
         }])
         : [...headers];
 
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
     const handleInputChange = (rowIndex, key, value) => {
-        const updatedRows = [...pageList];
+        const updatedRows = [...rows];
         updatedRows[rowIndex][key] = value;
         setPageList(updatedRows);
-        onRowChange(updatedRows);
+        onRowChange && onRowChange(updatedRows);
     };
 
     const calculateTotals = (rows) => {
@@ -198,77 +229,94 @@ const TableComponent = ({ rows, headers, actionCalls = {}, actionsLabel, onRowCh
     }, [rows]);
 
     return (
-        <TableContainer component={Paper} style={{ maxHeight: '430px', overflowY: 'auto' }} className='scrollbar'>
-            <Table stickyHeader>
-                <TableHead>
-                    <TableRow>
-                        {headersList.map(({ key, label, sort }) => (
-                            sort !== false && (
-                                <TableCell key={key} style={{
-                                    fontWeight: 'bold',
-                                    textAlign: key === 'actions' ? 'center' : 'left'
-                                }}>{label}</TableCell>
-                            )
-                        ))}
-                    </TableRow>
-                </TableHead>
-
-                <TableBody>
-                    {pageList.map((row, rowIndex) => (
-                        <TableRow key={rowIndex} style={rowStyle ? rowStyle(row) : {}}>
-                            {headersList.map(({ key, label, sort, type }) => (
+        <Paper>
+            <TableContainer style={{ maxHeight: '430px', overflowY: 'auto' }} className='scrollbar'>
+                <Table stickyHeader>
+                    <TableHead>
+                        <TableRow>
+                            {headersList.map(({ key, label, sort }) => (
                                 sort !== false && (
-                                    key === "actions" && hasActions ? (
-                                        <TableCell key={key} style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
-                                            {renderActions(row, rowIndex)} 
-                                        </TableCell>
-                                    ) : type === 'checkbox' ? (
-                                        <TableCell key={key}>
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedCheckboxes[row.produto] || false}  
-                                                onChange={(e) => {
-                                                    const updatedSelectedCheckboxes = { ...selectedCheckboxes };
-                                                    if (e.target.checked) {
-                                                        updatedSelectedCheckboxes[row.produto] = true; 
-                                                    } else {
-                                                        delete updatedSelectedCheckboxes[row.produto]; 
-                                                    }
-                                                    setSelectedCheckboxes(updatedSelectedCheckboxes);
-                                                }}
-                                            />
-                                        </TableCell>
-                                    ) : key === "tipo" ? (
-                                        <TableCell key={key} style={{
-                                            backgroundColor: row.tipo === 'entrada' ? '#006b33' :
-                                                row.tipo === 'saida' ? '#ff0000' :
-                                                    row.tipo === 'desperdicio' ? '#000000' : 'transparent',
-                                            color: '#fff'
-                                        }}>
-                                            {row.tipo === "3" ? "Desperdício" : row[key]}
-                                        </TableCell>
-                                    ) : key === "entrada" || key === "estoqueInicial" || key === "estoqueFinal" ? (
-                                        <TableCell key={key}>
-                                            <TextField
-                                                type="number"
-                                                value={row[key] || ''}
-                                                onChange={(e) => handleInputChange(rowIndex, key, e.target.value)}
-                                                variant="outlined"
-                                                size="small"
-                                            />
-                                        </TableCell>
-                                    ) : key === "cpf" ? (
-                                        <TableCell style={{ fontSize: '12px' }} key={key}>{maskCPF(row[key])}</TableCell>
-                                    ) : (
-                                        <TableCell style={{ fontSize: '12px' }} key={key}>{row[key] || "-"}</TableCell>
-                                    )
+                                    <TableCell key={key} style={{
+                                        fontWeight: 'bold',
+                                        textAlign: key === 'actions' ? 'center' : 'left'
+                                    }}>{label}</TableCell>
                                 )
                             ))}
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </TableContainer>
+                    </TableHead>
+
+                    <TableBody>
+                        {(rowsPerPage > 0
+                            ? pageList.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                            : pageList
+                        ).map((row, rowIndex) => (
+                            <TableRow key={rowIndex} style={rowStyle ? rowStyle(row) : {}}>
+                                {headersList.map(({ key, label, sort, type }) => (
+                                    sort !== false && (
+                                        key === "actions" && hasActions ? (
+                                            <TableCell key={key} style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
+                                                {renderActions(row, rowIndex)} 
+                                            </TableCell>
+                                        ) : type === 'checkbox' ? (
+                                            <TableCell key={key}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedCheckboxes[row.produto] || false}  
+                                                    onChange={(e) => {
+                                                        const updatedSelectedCheckboxes = { ...selectedCheckboxes };
+                                                        if (e.target.checked) {
+                                                            updatedSelectedCheckboxes[row.produto] = true; 
+                                                        } else {
+                                                            delete updatedSelectedCheckboxes[row.produto]; 
+                                                        }
+                                                        setSelectedCheckboxes(updatedSelectedCheckboxes);
+                                                    }}
+                                                />
+                                            </TableCell>
+                                        ) : key === "tipo" ? (
+                                            <TableCell key={key} style={{
+                                                backgroundColor: row.tipo === 'entrada' ? '#006b33' :
+                                                    row.tipo === 'saida' ? '#ff0000' :
+                                                        row.tipo === 'desperdicio' ? '#000000' : 'transparent',
+                                                color: '#fff'
+                                            }}>
+                                                {row.tipo === "3" ? "Desperdício" : row[key]}
+                                            </TableCell>
+                                        ) : key === "entrada" || key === "estoqueInicial" || key === "estoqueFinal" ? (
+                                            <TableCell key={key}>
+                                                <TextField
+                                                    type="number"
+                                                    value={row[key] || ''}
+                                                    onChange={(e) => handleInputChange(rowIndex, key, e.target.value)}
+                                                    variant="outlined"
+                                                    size="small"
+                                                />
+                                            </TableCell>
+                                        ) : key === "cpf" ? (
+                                            <TableCell style={{ fontSize: '12px' }} key={key}>{maskCPF(row[key])}</TableCell>
+                                        ) : (
+                                            <TableCell style={{ fontSize: '12px' }} key={key}>{row[key] || "-"}</TableCell>
+                                        )
+                                    )
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            
+            <TablePagination
+                rowsPerPageOptions={[5, 10, 25, { label: 'Todos', value: -1 }]}
+                component="div"
+                count={pageList.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                labelRowsPerPage="Linhas por página:"
+                labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count !== -1 ? count : `mais de ${to}`}`}
+            />
+        </Paper>
     );
 };
 
