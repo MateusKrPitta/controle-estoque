@@ -118,7 +118,10 @@ const EntradaSaida = () => {
 
     try {
       const response = await api.post("/movimentacao", novoRegistro);
-
+      CustomToast({
+        type: "success",
+        message: "Registro cadastrado com sucesso!",
+      });
       const updatedEntradasSaidas = [
         ...entradasSaidas,
         { ...novoRegistro, valorTotal },
