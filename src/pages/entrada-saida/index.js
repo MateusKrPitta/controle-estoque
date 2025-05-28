@@ -412,10 +412,9 @@ const EntradaSaida = () => {
       const response = await api.get(`/movimentacao?unidade=${unidadeId}`);
       const movimentacoes = response.data.data;
 
-      // Ordenar por data mais recente primeiro
-      const sortedMovimentacoes = [...movimentacoes].sort((a, b) => {
-        return new Date(b.data) - new Date(a.data); // Decrescente (mais recente primeiro)
-      });
+      const sortedMovimentacoes = [...movimentacoes].sort(
+        (a, b) => b.id - a.id
+      );
 
       const formattedMovimentacoes = sortedMovimentacoes.map((mov) => {
         const valorTotal = mov.precoPorcao * mov.quantidade;
@@ -451,6 +450,7 @@ const EntradaSaida = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     const categoriasSalvas =
       JSON.parse(localStorage.getItem("categorias")) || [];
