@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Autocomplete,
+  Chip,
   FormControlLabel,
   IconButton,
   InputAdornment,
@@ -44,31 +45,38 @@ import SearchIcon from "@mui/icons-material/Search";
 
 const EntradaSaida = () => {
   const [isDesativa, setDesativa] = useState(false);
-  const { unidadeId } = useUnidade();
-  const [cadastro, setCadastro] = useState(false);
-  const [categorias, setCategorias] = useState([]);
-  const navigate = useNavigate();
-  const [produtos, setProdutos] = useState([]);
-  const [entradasSaidas, setEntradasSaidas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filtro, setFiltro] = useState(false);
+  const [limparCampos, setLimparCampos] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [cadastro, setCadastro] = useState(false);
+  const [relatorioEntradasOpen, setRelatorioEntradasOpen] = useState(false);
+  const [categorias, setCategorias] = useState([]);
+  const [selectedTipos, setSelectedTipos] = useState([]);
+  const [selectedProdutosFiltro, setSelectedProdutosFiltro] = useState([]);
+  const [entradasSaidasOriginais, setEntradasSaidasOriginais] = useState([]);
+  const [produtos, setProdutos] = useState([]);
+  const [entradasSaidas, setEntradasSaidas] = useState([]);
+  const [produtosSelecionadosRelatorio, setProdutosSelecionadosRelatorio] =
+    useState([]);
+  const navigate = useNavigate();
+  const { unidadeId } = useUnidade();
   const [dataCadastro, setDataCadastro] = useState("");
+  const [dataInicialRelatorio, setDataInicialRelatorio] = useState("");
+  const [dataFinalRelatorio, setDataFinalRelatorio] = useState("");
   const [dataInicial, setDataInicial] = useState("");
   const [selectedProdutoFiltro, setSelectedProdutoFiltro] = useState("");
   const [dataFinal, setDataFinal] = useState("");
   const [selectedCategoria, setSelectedCategoria] = useState("");
   const [uniqueCategoriesCount, setUniqueCategoriesCount] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
   const [observacao, setObservacao] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTipos, setSelectedTipos] = useState([]);
   const [produto, setProduto] = useState("");
-  const [limparCampos, setLimparCampos] = useState(false);
   const [quantidade, setQuantidade] = useState("");
   const [tipo, setTipo] = useState("entrada");
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
-  const [entradasSaidasOriginais, setEntradasSaidasOriginais] = useState([]);
 
+  const TODOS = { id: "todos", nome: "Selecionar todos" };
   const filteredEntradasSaidas = entradasSaidas.filter((registro) => {
     return (
       registro.produtoNome &&
@@ -78,7 +86,6 @@ const EntradaSaida = () => {
 
   const handleCadastro = () => setCadastro(true);
   const handleCloseCadastro = () => setCadastro(false);
-
   const handleCloseFiltro = () => setFiltro(false);
 
   const handleLimparCampos = () => {
@@ -146,10 +153,184 @@ const EntradaSaida = () => {
     }
   };
 
+  const handleGerarRelatorioEntradas = () => {
+    const printWindow = window.open("", "_blank");
+
+    const entradasFiltradas = entradasSaidasOriginais.filter(
+      (registro) =>
+        registro.tipo === "entrada" &&
+        registro.observacao !== "Não considerar" &&
+        (produtosSelecionadosRelatorio.length === 0 ||
+          produtosSelecionadosRelatorio.some(
+            (p) => p.nome === registro.produtoNome
+          )) &&
+        (!dataInicialRelatorio ||
+          moment(registro.dataISO).isSameOrAfter(dataInicialRelatorio)) &&
+        (!dataFinalRelatorio ||
+          moment(registro.dataISO).isSameOrBefore(dataFinalRelatorio))
+    );
+
+    const relatorioAgrupado = entradasFiltradas.reduce((acc, entrada) => {
+      const existing = acc.find(
+        (item) => item.produtoNome === entrada.produtoNome
+      );
+      if (existing) {
+        existing.quantidadeTotal += parseFloat(entrada.quantidade);
+        existing.valorTotal += parseFloat(
+          entrada.valorTotal.replace(/[^\d,]/g, "").replace(",", ".")
+        );
+      } else {
+        acc.push({
+          produtoNome: entrada.produtoNome,
+          precoPorcao: entrada.precoPorcao,
+          quantidadeTotal: parseFloat(entrada.quantidade),
+          valorTotal: parseFloat(
+            entrada.valorTotal.replace(/[^\d,]/g, "").replace(",", ".")
+          ),
+        });
+      }
+      return acc;
+    }, []);
+
+    const totalGeralQuantidade = relatorioAgrupado.reduce(
+      (acc, item) => acc + item.quantidadeTotal,
+      0
+    );
+    const totalGeralValor = relatorioAgrupado.reduce(
+      (acc, item) => acc + item.valorTotal,
+      0
+    );
+
+    const tableRows = relatorioAgrupado
+      .map(
+        (item) => `
+      <tr>
+        <td>${item.produtoNome || ""}</td>
+        <td>${item.precoPorcao || ""}</td>
+        <td>${item.quantidadeTotal.toFixed(2)}</td>
+        <td>${formatValor(item.valorTotal)}</td>
+      </tr>
+    `
+      )
+      .join("");
+
+    const tableHTML = `
+    <html>
+      <head>
+        <title>Relatório de Entradas</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+          }
+          .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .logo {
+            max-width: 150px;
+            height: auto;
+          }
+          .title {
+            text-align: center;
+            margin-bottom: 15px;
+          }
+          .info-periodo {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #555;
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px;
+          }
+          th, td { 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+            text-align: left; 
+          }
+          th { 
+            background-color: #f2f2f2; 
+          }
+          .total-row {
+            font-weight: bold;
+            background-color: #f5f5f5;
+          }
+          @media print {
+            .no-print {
+              display: none;
+            }
+            body {
+              margin: 0;
+              padding: 10px;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="logo-container">
+          <img src="${Logo}" alt="Logo" class="logo" />
+        </div>
+        <h2 class="title">Relatório de Entradas</h2>
+        
+        <div class="info-periodo">
+          ${
+            dataInicialRelatorio || dataFinalRelatorio
+              ? `Período: ${
+                  dataInicialRelatorio
+                    ? moment(dataInicialRelatorio).format("DD/MM/YYYY")
+                    : "Início"
+                } 
+               à ${
+                 dataFinalRelatorio
+                   ? moment(dataFinalRelatorio).format("DD/MM/YYYY")
+                   : "Fim"
+               }`
+              : "Todos os períodos"
+          }
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Valor por Porção</th>
+              <th>Quantidade Total</th>
+              <th>Valor Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+            <tr class="total-row">
+              <td colspan="2">Total Geral</td>
+              <td>${totalGeralQuantidade.toFixed(2)}</td>
+              <td>${formatValor(totalGeralValor)}</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <div class="no-print" style="margin-top: 20px; text-align: center; font-size: 12px; color: #777;">
+          Relatório gerado em ${new Date().toLocaleString()}
+        </div>
+      </body>
+    </html>
+  `;
+
+    printWindow.document.write(tableHTML);
+    printWindow.document.close();
+
+    setTimeout(() => {
+      printWindow.print();
+    }, 1000);
+
+    setRelatorioEntradasOpen(false);
+  };
+
   const handlePrint = () => {
     const printWindow = window.open("", "_blank");
 
-    // Calcula totais
     const totalEntradas = filteredEntradasSaidas
       .filter((r) => r.tipo === "entrada")
       .reduce((acc, curr) => acc + (parseFloat(curr.quantidade) || 0), 0);
@@ -192,7 +373,6 @@ const EntradaSaida = () => {
     const valorTotalEstoque =
       valorTotalEntradas - valorTotalSaidas - valorTotalDesperdicio;
 
-    // Cards HTML
     const cardsHTML = `
     <div class="cards-container">
       <div class="card">
@@ -214,7 +394,6 @@ const EntradaSaida = () => {
     </div>
   `;
 
-    // Tabela HTML
     const tableRows = filteredEntradasSaidas
       .map(
         (registro) => `
@@ -433,7 +612,7 @@ const EntradaSaida = () => {
           categoria: mov.categoriaNome,
           precoPorcao: ` ${formatValor(mov.precoPorcao)}`,
           valorTotal: ` ${formatValor(valorTotal)}`,
-          observacao: mov.observacao,
+          observacao: mov.observacao ? mov.observacao.trim() : "",
           dataISO: mov.data,
           dataFormatada: dataUTC.format("DD/MM/YYYY"),
         };
@@ -466,12 +645,15 @@ const EntradaSaida = () => {
   const handlePesquisar = () => {
     const filteredData = entradasSaidasOriginais
       .filter((registro) => {
-        const matchesProduto = selectedProdutoFiltro
-          ? registro.produtoNome &&
-            registro.produtoNome
-              .toLowerCase()
-              .includes(selectedProdutoFiltro.toLowerCase())
-          : true;
+        const matchesProduto =
+          selectedProdutosFiltro.length > 0
+            ? selectedProdutosFiltro.some(
+                (produtoNome) =>
+                  registro.produtoNome &&
+                  registro.produtoNome.toLowerCase() ===
+                    produtoNome.toLowerCase()
+              )
+            : true;
 
         const matchesSearchTerm = searchTerm
           ? registro.produtoNome &&
@@ -514,7 +696,7 @@ const EntradaSaida = () => {
         );
       })
       .sort((a, b) => {
-        return new Date(b.dataISO) - new Date(a.dataISO); // Ordenar por data decrescente
+        return new Date(b.dataISO) - new Date(a.dataISO);
       });
 
     setEntradasSaidas(filteredData);
@@ -686,6 +868,22 @@ const EntradaSaida = () => {
             >
               <Print fontSize={"small"} />
             </IconButton>
+            <IconButton
+              title="Relatório de Entradas"
+              onClick={() => setRelatorioEntradasOpen(true)}
+              className="view-button w-10 h-10 "
+              sx={{
+                color: "black",
+                border: "1px solid black",
+                "&:hover": {
+                  color: "#fff",
+                  backgroundColor: "#BCDA72",
+                  border: "1px solid black",
+                },
+              }}
+            >
+              <ArticleIcon fontSize={"small"} />
+            </IconButton>
           </div>
           <div className="w-[100%]">
             {loading ? (
@@ -850,25 +1048,51 @@ const EntradaSaida = () => {
           <div>
             <div className="mt-4 flex gap-3 flex-wrap">
               <Autocomplete
-                options={produtos}
+                multiple
+                disableCloseOnSelect
+                options={[
+                  {
+                    id: "select-all",
+                    nome: "Selecionar todos",
+                    valorPorcao: 0,
+                  },
+                  ...produtos,
+                ]}
                 getOptionLabel={(option) => {
                   const preco = option.valorPorcao || option.precoPorcao || 0;
                   return `${option.nome} - ${formatValor(preco)}`;
                 }}
-                value={
-                  produtos.find((p) => p.nome === selectedProdutoFiltro) || null
-                }
+                value={[
+                  ...produtos.filter((p) =>
+                    selectedProdutosFiltro.includes(p.nome)
+                  ),
+                ]}
                 noOptionsText="Nenhum produto encontrado"
                 onChange={(event, newValue) => {
-                  setSelectedProdutoFiltro(newValue ? newValue.nome : "");
+                  const ultimoSelecionado = newValue[newValue.length - 1];
+
+                  if (ultimoSelecionado?.nome === "Selecionar todos") {
+                    if (selectedProdutosFiltro.length === produtos.length) {
+                      setSelectedProdutosFiltro([]);
+                    } else {
+                      setSelectedProdutosFiltro(
+                        produtos.map((item) => item.nome)
+                      );
+                    }
+                  } else {
+                    setSelectedProdutosFiltro(
+                      newValue.map((item) => item.nome)
+                    );
+                  }
                 }}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Produto"
+                    label="Produtos"
                     variant="outlined"
                     size="small"
-                    sx={{ width: "320px" }}
+                    sx={{ width: "340px" }}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
@@ -879,7 +1103,46 @@ const EntradaSaida = () => {
                     }}
                   />
                 )}
+                renderOption={(props, option, { selected }) => (
+                  <li
+                    {...props}
+                    style={{
+                      backgroundColor: selected ? "#b0d847" : "inherit",
+                      fontWeight: selected ? 600 : 400,
+                    }}
+                  >
+                    {option.nome === "Selecionar todos" ? (
+                      <strong>{option.nome}</strong>
+                    ) : (
+                      `${option.nome} - ${formatValor(
+                        option.valorPorcao || option.precoPorcao || 0
+                      )}`
+                    )}
+                  </li>
+                )}
+                renderTags={(value, getTagProps) => (
+                  <div
+                    style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}
+                  >
+                    {value.map((option, index) => {
+                      const preco =
+                        option.valorPorcao || option.precoPorcao || 0;
+                      return (
+                        <Chip
+                          {...getTagProps({ index })}
+                          key={option.id}
+                          label={`${option.nome} - ${formatValor(preco)}`}
+                          style={{
+                            backgroundColor: "#e0e0e0",
+                            fontWeight: "bold",
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
               />
+
               <TextField
                 fullWidth
                 variant="outlined"
@@ -968,6 +1231,136 @@ const EntradaSaida = () => {
                 subtitle={"Pesquisar"}
                 startIcon={<SearchIcon />}
                 onClick={handlePesquisar}
+              />
+            </div>
+          </div>
+        </CentralModal>
+
+        <CentralModal
+          tamanhoTitulo={"81%"}
+          maxHeight={"90vh"}
+          top={"28%"}
+          left={"28%"}
+          width={"400px"}
+          icon={<ArticleIcon fontSize="small" />}
+          open={relatorioEntradasOpen}
+          onClose={() => setRelatorioEntradasOpen(false)}
+          title="Relatório de Entradas"
+        >
+          <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
+            <div className="mt-4 flex gap-3 flex-wrap">
+              <Autocomplete
+                multiple
+                disableCloseOnSelect
+                options={[TODOS, ...produtos]}
+                getOptionLabel={(option) => {
+                  if (option.id === "todos") return option.nome;
+                  const preco = option.valorPorcao || option.precoPorcao || 0;
+                  return `${option.nome} - ${formatValor(preco)}`;
+                }}
+                value={produtosSelecionadosRelatorio}
+                onChange={(event, newValue) => {
+                  const isSelectAll = newValue.some(
+                    (item) => item.id === "todos"
+                  );
+
+                  if (isSelectAll) {
+                    setProdutosSelecionadosRelatorio(produtos);
+                  } else {
+                    setProdutosSelecionadosRelatorio(newValue);
+                  }
+                }}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                noOptionsText="Nenhum produto encontrado"
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => {
+                    const preco = option.valorPorcao || option.precoPorcao || 0;
+                    return (
+                      <Chip
+                        label={`${option.nome} - ${formatValor(preco)}`}
+                        {...getTagProps({ index })}
+                        key={option.id}
+                      />
+                    );
+                  })
+                }
+                renderOption={(props, option, { selected }) => (
+                  <li
+                    {...props}
+                    style={{
+                      backgroundColor: selected ? "#b0d847" : "white",
+                      fontWeight: selected ? 600 : 400,
+                    }}
+                  >
+                    {option.id === "todos"
+                      ? option.nome
+                      : `${option.nome} - ${formatValor(
+                          option.valorPorcao || option.precoPorcao || 0
+                        )}`}
+                  </li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Produtos"
+                    variant="outlined"
+                    size="small"
+                    sx={{ width: "340px" }}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <ProductionQuantityLimits fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              />
+
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Data Inicial "
+                value={dataInicialRelatorio}
+                type="date"
+                onChange={(e) => setDataInicialRelatorio(e.target.value)}
+                autoComplete="off"
+                sx={{ width: { xs: "50%", sm: "50%", md: "40%", lg: "49%" } }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DateRange />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Data Final "
+                type="date"
+                value={dataFinalRelatorio}
+                onChange={(e) => setDataFinalRelatorio(e.target.value)}
+                autoComplete="off"
+                sx={{ width: { xs: "42%", sm: "43%", md: "40%", lg: "43%" } }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DateRange />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </div>
+            <div className="w-[95%] mt-2 flex items-end justify-end">
+              <ButtonComponent
+                title={"Gerar Relatório"}
+                subtitle={"Gerar Relatório"}
+                startIcon={<Print />}
+                onClick={handleGerarRelatorioEntradas}
               />
             </div>
           </div>
