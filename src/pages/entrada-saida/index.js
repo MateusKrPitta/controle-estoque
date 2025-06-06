@@ -64,6 +64,8 @@ const EntradaSaida = () => {
   const [dataCadastro, setDataCadastro] = useState("");
   const [dataInicialRelatorio, setDataInicialRelatorio] = useState("");
   const [dataFinalRelatorio, setDataFinalRelatorio] = useState("");
+  const [selectedCategoriaRelatorio, setSelectedCategoriaRelatorio] =
+    useState("");
   const [dataInicial, setDataInicial] = useState("");
   const [selectedProdutoFiltro, setSelectedProdutoFiltro] = useState("");
   const [dataFinal, setDataFinal] = useState("");
@@ -748,6 +750,10 @@ const EntradaSaida = () => {
 
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    setProdutosSelecionadosRelatorio([]);
+  }, [selectedCategoriaRelatorio]);
   return (
     <div className="flex w-full ">
       <Navbar />
@@ -1249,10 +1255,35 @@ const EntradaSaida = () => {
         >
           <div className="overflow-y-auto overflow-x-hidden max-h-[300px]">
             <div className="mt-4 flex gap-3 flex-wrap">
+              <SelectTextFields
+                width={"340px"}
+                icon={<CategoryIcon fontSize="small" />}
+                label={"Categorias"}
+                backgroundColor={"#D9D9D9"}
+                name={"categoriaRelatorio"}
+                fontWeight={500}
+                options={[
+                  { label: "Todas categorias", value: "" },
+                  ...categorias.map((categoria) => ({
+                    label: categoria.nome,
+                    value: categoria.nome,
+                  })),
+                ]}
+                onChange={(e) => setSelectedCategoriaRelatorio(e.target.value)}
+                value={selectedCategoriaRelatorio}
+              />
+
               <Autocomplete
                 multiple
                 disableCloseOnSelect
-                options={[TODOS, ...produtos]}
+                options={[
+                  TODOS,
+                  ...produtos.filter(
+                    (produto) =>
+                      selectedCategoriaRelatorio === "" ||
+                      produto.categoriaNome === selectedCategoriaRelatorio
+                  ),
+                ]}
                 getOptionLabel={(option) => {
                   if (option.id === "todos") return option.nome;
                   const preco = option.valorPorcao || option.precoPorcao || 0;
@@ -1265,7 +1296,13 @@ const EntradaSaida = () => {
                   );
 
                   if (isSelectAll) {
-                    setProdutosSelecionadosRelatorio(produtos);
+                    setProdutosSelecionadosRelatorio(
+                      produtos.filter(
+                        (produto) =>
+                          selectedCategoriaRelatorio === "" ||
+                          produto.categoriaNome === selectedCategoriaRelatorio
+                      )
+                    );
                   } else {
                     setProdutosSelecionadosRelatorio(newValue);
                   }
